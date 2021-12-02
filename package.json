@@ -1,0 +1,78 @@
+{
+  "name": "hard-work",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel index.js — out-file index-compiled.js",
+    "dev": "nodemon — exec babel-node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.15.8",
+    "@babel/node": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "@vonage/server-sdk": "^2.10.10",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "custom-id": "^1.2.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-formidable": "^1.2.0",
+    "formidable": "^1.2.2",
+    "http-errors": "^1.8.0",
+    "joi": "^17.4.2",
+    "jsonwebtoken": "^8.5.1",
+    "module-alias": "^2.2.2",
+    "moment": "^2.29.1",
+    "mongoose": "^6.0.12",
+    "multer": "^1.4.3",
+    "multiparty": "^4.2.2",
+    "nodemailer": "^6.7.0",
+    "nodemailer-express-handlebars": "^4.0.0",
+    "nodemon": "^2.0.14",
+    "pusher": "^5.0.0",
+    "redis": "^3.1.2",
+    "remove": "^0.1.5",
+    "sharp": "^0.29.2",
+    "uuid": "^8.3.2"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "esmodules": true
+          }
+        }
+      ],
+      "@babel/preset-react",
+      "@babel/preset-flow"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
+  },
+  "_moduleAliases": {
+    "@root": ".",
+    "@controller": "./app/controllers/",
+    "@exception": "./app/exception/",
+    "@router": "./router/routes",
+    "@model": "./app/models",
+    "@helper": "./app/helpers",
+    "@validation": "./app/validation",
+    "@utility": "./app/utilities",
+    "@middleware": "./router/middleware",
+    "@service": "./app/services",
+    "@responser": "./app/helpers/apiResponser.js",
+    "@mailService": "./app/mails",
+    "@mailTemplate": "./app/views/template/email"
+  },
+  "devDependencies": {
+    "pretty-error": "^4.0.0"
+  }
+}

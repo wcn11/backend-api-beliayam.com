@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":2,"key":{"_id":1},"name":"_id_","ns":"beliayamcom_main.carts"},{"v":2,"unique":true,"key":{"sku":1},"name":"sku_1","ns":"beliayamcom_main.carts","background":true},{"v":2,"unique":true,"key":{"name":1},"name":"name_1","ns":"beliayamcom_main.carts","background":true}],"uuid":"41938702bf3444d9b8a295628fef4c22"}
