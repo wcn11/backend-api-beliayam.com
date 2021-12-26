@@ -12,7 +12,8 @@ const {
     getProductsValidation,
     getProductByIdValidation,
     updateProductByIdValidation,
-    deleteProductByIdValidation
+    deleteProductByIdValidation,
+    getProductsByCategoryIdValidation
 
 } = require('@validation/product/product.validation')
 
@@ -46,7 +47,10 @@ const ProductController = class ProductController {
             }
             orderBy = req.query.orderBy ?? 1
 
-            let user = await ProductModel.find({}).sort({
+            let user = await ProductModel.find({
+                active: true,
+            }).populate(['category', 'hasPromo'])
+                .sort({
                 orderBy: sortBy
             }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
@@ -58,6 +62,60 @@ const ProductController = class ProductController {
         }
     }
 
+    async getProductsByCategoryId(req, res) {
+
+        const { error } = getProductsByCategoryIdValidation(req.query)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let isValid = await this.isIdValid(req.params.categoryId)
+
+        if (!isValid) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Produk Yang Dicari Tidak Ditemukan", HttpStatus.BAD_REQUEST)
+            );
+        }
+
+        try {
+
+            let page = req.query.page ?? 1
+            let show = req.query.show ?? 10
+
+            let sortBy;
+
+            let orderBy;
+
+            if (!req.query.sortBy) {
+                sortBy = req.query.sortBy === "ASC" ? 1 : -1
+            }
+            sortBy = req.query.sortBy ?? 1
+
+            if (!req.query.orderBy) {
+                orderBy = req.query.orderBy ?? "name"
+            }
+            orderBy = req.query.orderBy ?? 1
+
+            let user = await ProductModel.find({
+                category: {
+                    $in: [req.params.categoryId]
+                },
+                active: true,
+
+            }).populate(['category', 'hasPromo'])
+                .sort({
+                    orderBy: sortBy
+                }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+
+            return res.status(HttpStatus.OK).send(responser.success(user, HttpStatus.OK));
+
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
     // async getProductByName(){
 
     // }
@@ -80,7 +138,7 @@ const ProductController = class ProductController {
 
         let product = await ProductModel.findOne({
             _id: req.params.productId
-        })
+        }).populate(['category', 'hasPromo'])
 
         if (!product) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Tidak Ditemukan", HttpStatus.NOT_FOUND))
@@ -103,11 +161,11 @@ const ProductController = class ProductController {
 
         // buat jika ada sku duplikat
 
-        try {
+        // try {
 
-            let input = req.body
+        let input = req.body
 
-            let category = await this.isCategoryExists(input.category_id)
+        let category = await this.isCategoryExists(input.category_id)
 
             if (!category) {
                 return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Kategori Tidak Ditemukan", HttpStatus.NOT_FOUND))
@@ -115,26 +173,22 @@ const ProductController = class ProductController {
 
             let productObject = {
 
-                category: {
-                    _id: category._id,
-                    sku: category.sku,
-                    position: category.position,
-                    name: category.name,
-                    image: category.image,
-                    status: category.status,
-                    additional: category.additional,
-                    description: category.description
-                },
+                category: [
+                    category._id,
+                ],
                 sku: input.sku,
                 name: input.name,
                 position: input.position,
-                image_product: req.file ? req.file.path : "images/product/default.jpg",
                 price: input.price,
                 stock: input.stock,
                 status: input.status,
                 additional: input.additional,
                 description: input.description
             }
+
+        if (req.file) {
+            productObject.image = req.file ? req.file.url : "images/product/default.jpg"
+        }
 
             if (input.isDiscount) {
                 productObject.hasDiscount = {
@@ -147,17 +201,17 @@ const ProductController = class ProductController {
                 }
             }
 
-            let product = new ProductModel(productObject)
+        let product = new ProductModel(productObject)
 
             const savedProduct = await product.save()
 
             return res.status(HttpStatus.OK).send(responser.success(savedProduct, "Produk Ditambahkan"))
 
-        } catch (err) {
+        // } catch (err) {
 
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambahkan Produk, Harap Cek Duplikasi", HttpStatus.BAD_REQUEST))
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambahkan Produk, Harap Cek Duplikasi", HttpStatus.BAD_REQUEST))
 
-        }
+        // }
     }
 
     async deleteProductById(req, res) {
@@ -227,16 +281,9 @@ const ProductController = class ProductController {
 
             let productObject = {
 
-                category: {
-                    _id: category._id,
-                    sku: category.sku,
-                    position: category.position,
-                    name: category.name,
-                    image: category.image,
-                    status: category.status,
-                    additional: category.additional,
-                    description: category.description
-                },
+                category: [
+                    category._id,
+                ],
                 sku: input.sku,
                 name: input.name,
                 position: input.position,

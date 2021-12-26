@@ -23,6 +23,7 @@ var storage = multer.diskStorage({
 
                         cb(message, null)
                     }
+
                     cb(null, path.join('public/images/category'))
                     break;
                 case "image_product":

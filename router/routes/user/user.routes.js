@@ -10,6 +10,8 @@ const UserController = require('@controller/User/User.controller')
 
 router.get('/', verifyToken, (req, res) => UserController.getUsers(req, res))
 
+router.get('/me', verifyToken, (req, res) => UserController.getCurrentUser(req, res))
+
 router.put('/active', verifyToken, (req, res) => UserController.updateActiveUser(req, res))
 
 router.put('/profile/name/change', verifyToken, (req, res) => UserController.changeName(req, res))

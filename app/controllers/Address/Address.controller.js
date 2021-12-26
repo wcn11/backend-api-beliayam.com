@@ -7,7 +7,7 @@ const responser = require('@responser')
 
 const {
     addAddress,
-    getPhoneById,
+    getAddressById,
     updateAddress,
     deleteAddressByAddressId
 } = require('@validation/address/address.validation')
@@ -22,12 +22,18 @@ const AddressController = class AddressController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
+
+        if (req.user.user._id !== req.body.user_id) {
+
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Pengguna Tidak Sesuai Dengan Sesi Login Saat Ini", HttpStatus.UNAUTHORIZED))
+        }
+
         const addressFull = await User.aggregate([
             {
                 $unwind: "$addresses",
             }, {
                 $match: {
-                    "addresses.user_id": req.user._id
+                    "addresses.user_id": req.body.user_id
                 }
             },
             {
@@ -59,7 +65,8 @@ const AddressController = class AddressController {
 
             let addresses = {
                 "_id": customId({}),
-                "user_id": req.user._id,
+                "label": req.body.label,
+                "user_id": req.body.user_id,
                 "address1": req.body.address1,
                 "address2": req.body.address2,
                 "city": req.body.city,
@@ -69,12 +76,19 @@ const AddressController = class AddressController {
                 "postcode": req.body.postcode,
                 "phone": req.body.phone,
                 "default": setDefault,
-                "details": req.body.details
+                "details": req.body.details,
+            }
+
+            if (req.body.maps) {
+                addresses.maps = {
+                    "latitude": req.body.maps.latitude,
+                    "longitude": req.body.maps.longitude
+                }
             }
 
             await User.updateOne(
                 {
-                    _id: req.user._id
+                    _id: req.body.user_id
                 }, {
                 $push: {
                     addresses: addresses
@@ -114,7 +128,8 @@ const AddressController = class AddressController {
 
             let addresses = {
                 "_id": req.params.addressId,
-                "user_id": req.user._id,
+                "label": req.body.label,
+                "user_id": req.body.user_id,
                 "address1": req.body.address1,
                 "address2": req.body.address2,
                 "city": req.body.city,
@@ -127,8 +142,16 @@ const AddressController = class AddressController {
                 "details": req.body.details
             }
 
+            if (req.body.maps) {
+                addresses.maps = {
+                    "latitude": req.body.maps.latitude,
+                    "longitude": req.body.maps.longitude
+                }
+            }
+
             const addressUpdate = await User.updateOne({
-                _id: req.user._id
+                _id: req.user.user._id,
+                "addresses._id": req.params.addressId,
             }, {
                 $set: {
                     addresses
@@ -149,7 +172,7 @@ const AddressController = class AddressController {
         let address = await User.aggregate([
             {
                 $match: {
-                    "addresses.user_id": req.user._id,
+                    "addresses.user_id": req.query.user_id,
                 }
             },
             { $unwind: "$addresses" },
@@ -170,9 +193,9 @@ const AddressController = class AddressController {
     async getAddressByUserId(req, res) {
 
         req.body.address_id = req.params.addressId
-        req.body.user_id = req.user._id
+        req.body.user_id = req.user.user._id
 
-        const { error } = getPhoneById(req.body)
+        const { error } = getAddressById(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
@@ -216,7 +239,7 @@ const AddressController = class AddressController {
             {
                 $match: {
                     "addresses._id": req.params.addressId,
-                    "addresses.user_id": req.user._id,
+                    "addresses.user_id": req.user.user._id,
                 }
             },
             { $unwind: "$addresses" },

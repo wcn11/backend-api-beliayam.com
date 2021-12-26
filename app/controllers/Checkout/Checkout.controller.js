@@ -9,14 +9,23 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
+const { BadRequest } = require('@utility/errors')
+
+
 const moment = require('moment')
 moment.locale('id-ID');
 
+const redis = require("redis");
 
 const {
     calculateCheckoutValidation,
     applyVoucherValidation
 } = require('@validation/checkout/checkout.validation')
+
+const client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+})
 
 const CheckoutController = class CheckoutController {
 
@@ -37,6 +46,13 @@ const CheckoutController = class CheckoutController {
             );
         }
 
+        let isCartExist = await this.isCartExist(req.body.cart.cart_id)
+
+        if (!isCartExist) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Keranjang Tidak Ditemukan", HttpStatus.BAD_REQUEST))
+        }
+
         let isUserValid = await this.isIdValid(req.body.user_id)
 
         if (!isUserValid) {
@@ -45,86 +61,105 @@ const CheckoutController = class CheckoutController {
             );
         }
 
-        let isCartExist = await this.isCartExist(req.body.cart.cart_id)
-
-        if (!isCartExist) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Keranjang Tidak Ditemukan", HttpStatus.BAD_REQUEST))
-        }
-
         const user = await this.getUserById(req.body.user_id)
 
-        if (user.addresses.length < 0) {
+        if (user.addresses.length <= 0) {
             return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Belum Mempunyai Alamat, Minimal Mempunyai 1 Alamat Pengiriman", HttpStatus.BAD_REQUEST))
+                responser.error("Memiliki 1 Alamat Minimal Untuk Pengiriman", HttpStatus.BAD_REQUEST))
         }
 
-        // if (!user.isEmailVerified && !user.isPhoneVerified) {
-        //     return res.status(HttpStatus.BAD_REQUEST).send(
-        //         responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Alamat Email", HttpStatus.BAD_REQUEST))
-        // }
+        if (!user.isEmailVerified && !user.isPhoneVerified) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Alamat Email", HttpStatus.BAD_REQUEST))
+        }
 
-        // if (!user.isPhoneVerified) {
-        //     return res.status(HttpStatus.BAD_REQUEST).send(
-        //         responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Nomor Telepon Anda", HttpStatus.BAD_REQUEST))
-        // }
+        if (!user.isPhoneVerified) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Nomor Telepon Anda", HttpStatus.BAD_REQUEST))
+        }
 
-        const productObject = []
+        //check product on real inventory
+        let isProductExist = await this.getProductByProductId(req.body.cart.products, req.body.cart.cart_id)
 
-        let products = await Promise.all(req.body.cart.products.map(async (product) => {
+        if (!isProductExist && isProductExist.length !== req.body.cart.products.length) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia", HttpStatus.BAD_REQUEST))
+        }
 
-            let isProductValid = await this.isIdValid(product._id)
+        let calculateItem = 0
+        let productDiscount = 0
+        let allProducts = []
 
-            if (!isProductValid) {
+        //check if product at cart exist in inventory products
+        const products = await isProductExist.map(async (product) => {
+
+            let isProductAtCartExist = await req.body.cart.products.includes(product._id)
+
+            if (!isProductAtCartExist) {
                 return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error(`ID Produk ${product.name} Tidak Valid`, HttpStatus.BAD_REQUEST))
+                    responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia. Mohon Cek Ketersediaan Barang", HttpStatus.BAD_REQUEST))
             }
 
-            let productData = await ProductModel.findOne({
-                _id: product._id
-            })
-
-            if (!productData) {
+            if (product.status.toLowerCase() !== "active") {
                 return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error(`Produk ${product.name} Tidak Ditemukan`, HttpStatus.BAD_REQUEST))
+                    responser.error(`Produk ${product.name} Sedang Tidak Tidak Tersedia`, HttpStatus.BAD_REQUEST))
             }
 
-            if (productData.status.toLowerCase() !== "active") {
+            if (product.stock < 0) {
                 return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error(`Produk ${product.name} Telah Di Non-aktifkan`, HttpStatus.BAD_REQUEST))
+                    responser.error(`Produk ${product.name} Kehabisan Persediaan`, HttpStatus.BAD_REQUEST))
             }
 
-            if (productData.stock < 0) {
-                return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error(`Stok Produk ${product.name} Kehabisan Persediaan`, HttpStatus.BAD_REQUEST))
+            var currentDate = moment().toDate();
+
+            let discount = product.hasDiscount
+
+            var productAtCart = await this.getProductAtCart(req.body.cart.cart_id, product._id)
+
+            if (discount.isDiscount) {
+                if (discount.discountStart <= currentDate && discount.discountEnd >= currentDate) {
+
+                    if (discount.discountBy === "percent") {
+
+                        calculateItem += ((discount.discount / 100) * product.price) * productAtCart.quantity
+                        productDiscount += 1
+
+                    } else if (discount.discountBy === "price") {
+
+                        calculateItem += (productAtCart.quantity * product.price)
+                        productDiscount += 1
+
+                    }
+                }
+            } else {
+
+                // add more math for promo on product
+                calculateItem += product.price * productAtCart.quantity
             }
 
-            await productObject.push({
-                _id: product._id,
-                name: product.name,
-                quantity: product.quantity,
-                price: product.price,
-                note: product.note ?? ""
-            })
+            product.quantity = productAtCart.quantity
+            product.note = productAtCart.note
 
-            return Promise.resolve(productObject)
-        }))
+            allProducts.push(product)
+        })
 
         try {
 
-            let charges = await this.getAllCharge()
+            let type = req.body.type || ""
+            let platform = req.body.platform || ""
+            let isActive = req.body.isActive || true
 
-            const calculateItem = products[0].reduce((accumulator, product) => {
-                return accumulator + (product.quantity * product.price)
-            }, 0)
+            let charges = await this.getAllCharge(type, platform, isActive)
 
             const calculateCharge = charges.reduce((accumulator, charge) => {
 
                 if (charge.chargeBy === "price") {
                     return accumulator + parseInt(charge.chargeValue)
-                } else if (charge.chargeBy === "percent") {
-                    return accumulator + ((charge.chargeValue / 100) * calculateItem)
-                } else {
+                }
+                // else if (charge.chargeBy === "percent") {
+                //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
+                // }
+                else {
                     return accumulator
                 }
             }, 0)
@@ -159,7 +194,7 @@ const CheckoutController = class CheckoutController {
                     continue
                 }
 
-                if (isVoucherExist.discountEnd > currentDate) {
+                if (isVoucherExist.discountEnd < currentDate) {
 
                     let voucherName = isVoucherExist.voucherName ?? "Anda"
 
@@ -176,7 +211,7 @@ const CheckoutController = class CheckoutController {
 
                     if (!isUserExist) {
 
-                        voucherNotValid.push(`Voucher ${voucherName} Privat. Tidak Dapat Digunakan Oleh Anda`)
+                        voucherNotValid.push(`Voucher ${voucherName}, Bersifat Private. Tidak Dapat Digunakan Oleh Anda`)
 
                         continue
                     }
@@ -184,11 +219,10 @@ const CheckoutController = class CheckoutController {
 
                 vouchersApplied.push(isVoucherExist)
 
-                switch (isVoucherExist.discountBy) {
-                    case "percent":
-                        subTotalVoucher += (isVoucherExist.discountValue / 100) * calculateItem
-                    case "price":
-                        subTotalVoucher += isVoucherExist.discountValue
+                if (isVoucherExist.discountBy === "percent") {
+                    subTotalVoucher += (isVoucherExist.discountValue / 100) * calculateItem
+                } else if (isVoucherExist.discountBy === "price") {
+                    subTotalVoucher += isVoucherExist.discountValue
                 }
 
             }
@@ -196,7 +230,7 @@ const CheckoutController = class CheckoutController {
             let grandTotal = (calculateItem + calculateCharge) - subTotalVoucher
 
             var response = {
-                products: products[0],
+                products: allProducts,
                 charges,
                 subTotalProducts: calculateItem,
                 subTotalCharges: calculateCharge,
@@ -207,9 +241,57 @@ const CheckoutController = class CheckoutController {
             }
 
             return res.status(HttpStatus.OK).send(responser.success(response, HttpStatus.OK));
+
         } catch (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Tidak Dapat Checkout", HttpStatus.BAD_REQUEST))
         }
+
+    }
+
+    async getProductAtCart(cart_id, productId) {
+
+        const products = await CartModel.findOne({
+            _id: cart_id
+        })
+
+        const product = products.products.filter(prod => prod._id === productId)[0]
+
+        return product
+
+    }
+
+    async getProductByProductId(product_ids = [], cart_id) {
+
+        // if (product_ids instanceof Array) {
+        //     return new Error("Product ID's Not An Array")
+        // }
+
+        return new Promise((resolve) => {
+
+            client.get(`checkout.${cart_id}`, async function (err, data) {
+                if (err) {
+                    resolve(null)
+                }
+                else {
+                    if (!data) {
+
+                        const products = await ProductModel.find({
+                            "_id": {
+                                $in: product_ids
+                            }
+
+                        })
+
+                        // expire at 10 minutes on seconds
+                        client.set(`checkout.${cart_id}`, JSON.stringify(products), 'EX', 600);
+
+                        resolve(products)
+                    }
+
+                    resolve(JSON.parse(data))
+                }
+            })
+        })
 
     }
 
@@ -233,7 +315,7 @@ const CheckoutController = class CheckoutController {
             return this.sendError("ID Keranjang Tidak Valid", HttpStatus.BAD_REQUEST)
         }
 
-        let isUserIdValid = await this.isIdValid(req.body.user_id)
+        let isUserIdValid = await this.isIdValid(req.body.cart.user_id)
 
         if (!isUserIdValid) {
             return this.sendError("ID User Tidak Valid", HttpStatus.BAD_REQUEST)
@@ -283,8 +365,10 @@ const CheckoutController = class CheckoutController {
         const charges = await ChargeModel.find(
             {
                 "default": defaultCharge,
-                "plaform": platform,
-                "isActive": isActive
+                "isActive": isActive,
+                "platform": {
+                    "$in": [platform]
+                },
             }
         );
 

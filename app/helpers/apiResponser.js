@@ -1,5 +1,4 @@
 
-const HttpStatus = require('@helper/http_status')
 
 exports.success = (data, message = "OK", statusCode = 200) => {
     return {

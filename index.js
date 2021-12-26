@@ -11,7 +11,7 @@ require('pretty-error').start();
 // require('./config/redis')
 require('module-alias/register')
 
-require('./database/database')
+require('./config/database')
 
 const handleErrors = require('./middleware/handleErrors');
 
@@ -40,9 +40,6 @@ const router = require('./router/bootstrap')
 
 app.use(router)
 app.use(express.static(__dirname + '/public'));
-// app.post('/', (req, res) => {
-//     throw new BadRequest('Gak Ada');
-// })
 
 app.use(handleErrors) // Errors middleware must be the last of any routes
 

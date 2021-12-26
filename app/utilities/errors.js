@@ -1,16 +1,17 @@
 class GeneralError extends Error {
-    constructor(message, error) {
+    constructor(message, error, statusCode) {
         super();
         this.message = message;
-        this.success = error;
+        this.error = error;
+        this.code = statusCode
 
     }
 
     getCode() {
         if (this instanceof BadRequest) {
-            return this.error;
+            return this.code;
         } if (this instanceof NotFound) {
-            return this.error;
+            return this.code;
         }
         return 500;
     }

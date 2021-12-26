@@ -75,6 +75,14 @@ const UserController = class UserController {
             );
         }
 
+        const isPhoneAlreadyExist = await User.findOne({ phone: req.body.phone })
+
+        if (isPhoneAlreadyExist) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Nomor Yang Anda Masukkan Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            );
+        }
+
         if (user.phone) {
             if (user.isPhoneVerified) {
                 return res.status(HttpStatus.NOT_ACCEPTABLE).send(
@@ -85,12 +93,11 @@ const UserController = class UserController {
 
         var otp = parseInt(Math.random() * 10000);
 
-        // let sendSms = SMSGateway.sendSms({
-        //     from: "BELIAYAMCOM",
-        //     to: "62895402275040",
-        //     text: `Kode OTP Anda Adalah: ${otp} \r\nJANGAN MEMBERITAHU KODE RAHASIA INI KE SIAPAPUN TERMASUK PIHAK PT. BELI AYAM COM
-        //     `
-        // });
+        let sendSms = SMSGateway.sendSms({
+            to: req.body.phone,
+            text: `Masukan Kode text: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+
+        });
 
         //5 minutes on milliseconds
         let expiredTime = 300000
@@ -172,6 +179,23 @@ const UserController = class UserController {
 
     }
 
+    async getCurrentUser(req, res) {
+
+        try {
+            const user = req.user.user
+
+            res.status(HttpStatus.OK).send(responser.success(user,
+                "OK",
+                HttpStatus.OK))
+        }
+        catch (err) {
+
+            res.status(HttpStatus.UNAUTHORIZED).send(responser.success([],
+                "Tidak Bisa Perbarui Email",
+                HttpStatus.UNAUTHORIZED))
+        }
+    }
+
     async changeEmail(req, res) {
 
         const { error } = changeEmailUser(req.body)
@@ -221,7 +245,7 @@ const UserController = class UserController {
                 HttpStatus.OK))
         } catch (err) {
 
-            res.status(HttpStatus.BAD_REQUEST).send(responser.success([],
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error(
                 "Tidak Bisa Perbarui Email",
                 HttpStatus.BAD_REQUEST))
         }

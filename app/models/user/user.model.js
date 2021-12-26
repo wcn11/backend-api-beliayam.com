@@ -3,17 +3,18 @@ const mongoose = require('mongoose');
 const UserSchema = mongoose.Schema({
     name: {
         type: String,
-        required: true,
+        required: false,
         min: 6,
         max: 255,
     },
     email: {
         type: String,
-        required: true,
+        required: false,
         max: 255,
         min: 6,
         trim: true,
         unique: true,
+        lowercase: true,
     },
     isEmailVerified: {
         type: Boolean,
@@ -76,7 +77,7 @@ const UserSchema = mongoose.Schema({
         type: String,
         required: false,
         min: 6,
-        max: 15,
+        max: 20,
         trim: true
     },
     isPhoneVerified: {
@@ -103,8 +104,9 @@ const UserSchema = mongoose.Schema({
         type: Date,
         default: Date.now()
     },
-    addresses: {
+    addresses: [{
         _id: String,
+        label: String,
         user_id: String,
         address1: String,
         address2: String,
@@ -128,7 +130,7 @@ const UserSchema = mongoose.Schema({
                 required: false,
             },
         }
-    }
+    }]
 })
 
 module.exports = mongoose.model('users', UserSchema)

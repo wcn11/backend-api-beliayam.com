@@ -1,32 +1,43 @@
 const mongoose = require('mongoose');
 const User = require('@model/user/user.model')
 const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const SMSGateway = require('@service/SMS.gateway')
 const SendVerifyEmail = require('@mailService/SendVerifyEmail.mail')
 const SendForgetPassword = require('@mailService/SendForgetPassword.mail')
-
-// const PusherNotification = require('@service/PushNotification')
-const moment = require('moment')
+const jwt = require('@helper/jwt')
+const { v4: uuidv4 } = require('uuid');
 
 const redis = require("redis");
+
 const client = redis.createClient({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT
 })
+
+const crypto = require('crypto');
+
+// const PusherNotification = require('@service/PushNotification')
+const moment = require('moment')
+moment.locale('id-ID');
 
 const {
     login,
     byPhone,
     register,
     emailVerify,
-    changePassword,
+    registerByPhone,
     resendEmailVerify,
     resendPhoneVerify,
     verifyPhoneByUserOTP,
-    sendEmailForgetPassword
+    refreshTokenValidator,
+    loginBySocialValidator,
+    changePasswordValidator,
+    resendSmsOtpRegisterValidator,
+    verifySmsOtpRegisterValidator,
+    sendEmailForgetPasswordValidator,
+    verifyLinkForgetPasswordValidator,
 } = require('@validation/auth/auth.validation')
 
 const AuthController = class AuthController {
@@ -51,14 +62,13 @@ const AuthController = class AuthController {
         let expiredTime = 1200000
         let expired = moment().add(expiredTime, 'milliseconds')
 
-        let registeredBy = req.body.registerBy // ?? 'email'
-        let registerAt = req.body.registerAt //?? 'website'
+        let registeredBy = req.body.registerBy
+        let registerAt = req.body.registerAt
 
-        // try {
+        try {
 
             let setPassword = await bcrypt.hash(req.body.password, salt)
 
-            // buat queue expired otp
             const userObject = new User({
                 name: req.body.name,
                 email: req.body.email,
@@ -71,9 +81,9 @@ const AuthController = class AuthController {
                     expiredDate: expired
                 }
             })
+
             const savedUsers = await userObject.save()
 
-            // buat queue
             SendVerifyEmail.send({
                 to: savedUsers.email,
                 subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
@@ -82,33 +92,124 @@ const AuthController = class AuthController {
                 code: otp
             })
 
-            client.setex(`emailOtp.${savedUsers._id}`, expiredTime, JSON.stringify(otp));
+            client.set(`emailOtp.${savedUsers._id}`, JSON.stringify(otp), 'EX', expiredTime);
 
             let user = await User.findOne({ email: req.body.email })
 
             user.password = undefined
-            user['otpEmail']['code'] = undefined
-            user['otpSms']['code'] = undefined
+            user.otpEmail = undefined
+            user.otpSms = undefined
+            user.addresses = undefined
 
             const loggedUser = {
                 user
             }
 
-            const token = jwt.sign({
-                user: loggedUser
-            }, process.env.TOKEN_SECRET)
+            const token = jwt.sign(loggedUser, user._id)
 
-            loggedUser['token'] = token
+            const refreshToken = uuidv4().toUpperCase()
 
-            return res.status(HttpStatus.OK)
+            jwt.setCache(user._id, token, refreshToken)
+
+            const tokenList = {
+
+                "accessToken": token,
+                "refreshToken": refreshToken
+            }
+
+            loggedUser['token'] = tokenList
+
+            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK)
                 .send(responser.success(
                     loggedUser,
                     "Akun Dibuat, Segera Verifikasi Email Anda",
                     HttpStatus.OK));
 
-        // } catch (err) {
-        //     res.status(HttpStatus.BAD_REQUEST).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar"))
-        // }
+        } catch (err) {
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+        }
+    }
+
+    async registerByPhone(req, res) {
+
+        const { error } = registerByPhone(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        const isPhoneExist = await User.findOne({ phone: req.body.phone })
+
+        if (isPhoneExist && isPhoneExist.isPhoneVerified !== true) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Nomor Telah Terdaftar Namun Belum Diverifikasi, Harap Segera Verifikasi Untuk Melanjutkan", HttpStatus.BAD_REQUEST)
+            );
+        } else if (isPhoneExist) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            );
+        }
+
+        const salt = await bcrypt.genSalt(10);
+
+        let registeredBy = req.body.registerBy // ?? 'phone'
+        let registerAt = req.body.registerAt //?? 'website'
+
+        try {
+
+            let setPassword = await bcrypt.hash(req.body.password, salt)
+
+            const userObject = new User({
+                phone: req.body.phone,
+                isPhoneVerified: false,
+                password: setPassword,
+                registeredBy: registeredBy,
+                registeredAt: registerAt
+            })
+
+            await userObject.save()
+
+            var otp = parseInt(Math.random() * 10000);
+
+            SMSGateway.sendSms({
+                to: req.body.phone,
+                text: `Masukan Kode OTP: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+
+            });
+
+            //5 minutes on seconds
+            let expiredTime = 300
+            let expired = moment().add(expiredTime, 'seconds')
+
+            await User.updateOne({
+                phone: req.body.phone,
+            }, {
+                isPhoneVerified: false,
+                otpSms: {
+                    code: otp,
+                    attempts: 0,
+                    expiredDate: expired,
+                    expired: false
+                }
+            }, {
+                upsert: true
+            })
+
+            client.set(`smsOtp.${req.body.phone}`, JSON.stringify(otp), 'EX', expiredTime);
+
+            return res.status(HttpStatus.OK).send(
+                responser.success(
+                    {
+                        otpSms: {
+                            expiredDate: expired,
+                            expired: false
+                        }
+                    }, `Kode OTP Telah Dikirm Ke Nomor ${req.body.phone}, Harap Cek Telepon Anda`)
+            );
+
+        } catch (err) {
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+        }
     }
 
     async login(req, res) {
@@ -128,23 +229,96 @@ const AuthController = class AuthController {
 
         if (!validPass) return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.BAD_REQUEST));
 
-        if(!user.isActive) {
+        if (!user.isActive) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan", HttpStatus.BAD_REQUEST));
         }
         user.password = undefined
+        user.otpEmail = undefined
+        user.otpSms = undefined
+        user.addresses = undefined
 
         const loggedUser = {
             user
         }
 
-        const token = jwt.sign({
-            user: loggedUser
-        }, process.env.TOKEN_SECRET)
+        const token = jwt.sign(loggedUser, user._id)
 
-        loggedUser['token'] = token
+        const refreshToken = uuidv4().toUpperCase()
 
-        return res.header("Authorization", token).status(HttpStatus.OK).send(responser.success(loggedUser, HttpStatus.OK));
+        jwt.setCache(user._id, token, refreshToken)
 
+        const tokenList = {
+
+            "accessToken": token,
+            "refreshToken": refreshToken
+        }
+
+        loggedUser['token'] = tokenList
+
+        return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, HttpStatus.OK));
+
+    }
+
+    async loginBySocial(req, res) {
+
+        const { error } = loginBySocialValidator(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        const emailExist = await User.findOne({ email: req.body.email })
+
+        try {
+
+            if (!emailExist) {
+
+                const userObject = new User({
+                    name: req.body.name,
+                    email: req.body.email,
+                    registeredBy: req.body.registeredBy,
+                    registeredAt: req.body.registerAt,
+                    isEmailVerified: true
+                })
+
+                await userObject.save()
+            }
+
+            let user = await User.findOne({ email: req.body.email })
+
+            user.password = undefined
+            user.otpEmail = undefined
+            user.otpSms = undefined
+            user.addresses = undefined
+
+            const loggedUser = {
+                user
+            }
+
+            const token = jwt.sign(loggedUser, user._id)
+
+            const refreshToken = uuidv4().toUpperCase()
+
+            jwt.setCache(user._id, token, refreshToken)
+
+            const tokenList = {
+
+                "accessToken": token,
+                "refreshToken": refreshToken
+            }
+
+            loggedUser['token'] = tokenList
+
+            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK)
+                .send(responser.success(
+                    loggedUser,
+                    "OK",
+                    HttpStatus.OK));
+
+        } catch (err) {
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Tidak Bisa Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+
+        }
     }
 
     async loginByPhone(req, res) {
@@ -163,45 +337,205 @@ const AuthController = class AuthController {
 
         if (!validPass) return res.status(HttpStatus.NOT_FOUND).send("Telepon Atau Password Salah")
 
-        // var otp = parseInt(Math.random() * 10000);
+        user.otpEmail = undefined
+        user.otpSms = undefined
+        user.password = undefined
+        user.addresses = undefined
 
-        // let sendSms = SMSGateway.sendSms({
-        //     from: "BELIAYAMCOM",
-        //     to: "62895402275040",
-        //     text: `Kode OTP Anda Adalah: ${otp} \r\nJANGAN MEMBERITAHU KODE RAHASIA INI KE SIAPAPUN TERMASUK PIHAK PT. BELI AYAM COM
-        //     `
-        // });
+        const loggedUser = {
+            user
+        }
 
-        // expired 10 menit
-        // let expired = moment().add(600000, 'milliseconds')
+        const token = jwt.sign(loggedUser, user._id)
 
-        // const updateOtp = {
-        //     otp: {
-        //         code: otp,
-        //         expiredDate: expired,
-        //         expired: false
-        //     }
-        // }
+        const refreshToken = uuidv4().toUpperCase()
 
-        // await User.updateOne({
-        //     _id: user._id
-        // }, updateOtp)
+        jwt.setCache(user._id, token, refreshToken)
 
-        // buat message queue untuk expired
+        const tokenList = {
 
-        // const loggedUser = {
-        //     _id: user._id,
-        //     name: user.name,
-        //     email: user.email
-        // }
+            "accessToken": token,
+            "refreshToken": refreshToken
+        }
 
-        const token = jwt.sign({
-            user: user
-        }, process.env.TOKEN_SECRET)
+        loggedUser['token'] = tokenList
 
-        user['token'] = token
+        return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser), "OK", HttpStatus.OK)
+    }
 
-        return res.status(HttpStatus.OK).send(responser.success(user), "OK", HttpStatus.OK)
+    // buat resend sms otp register by number
+    async verifySmsOtpRegister(req, res) {
+
+        const { error } = verifySmsOtpRegisterValidator(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        const isPhoneExist = await User.findOne({ phone: req.body.phone })
+
+        if (isPhoneExist && isPhoneExist.isPhoneVerified) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            );
+        }
+
+        client.get(`smsOtp.${req.body.phone}`, async (err, request) => {
+
+            if (!request) {
+
+                await User.updateOne({
+                    phone: req.body.phone
+                }, {
+                    $set: {
+                        "otpSms.code": 0,
+                        "otpSms.attempts": 0,
+                        "otpSms.expired": true,
+                        "otpSms.expiredDate": Date.now(),
+
+                    }
+                }, { upsert: true })
+
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Telah Kadaluarsa", HttpStatus.NOT_ACCEPTABLE));
+            }
+
+            const user = await User.findOne({ phone: req.body.phone })
+
+            if (user['otpSms']['attempts'] >= 5) {
+
+                await User.updateOne({
+                    phone: req.body.phone
+                }, {
+                    $set: {
+                        "otpSms.code": 0,
+                        "otpSms.attempts": 0,
+                        "otpSms.expired": true,
+                        "otpSms.expiredDate": Date.now(),
+
+                    }
+                })
+
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Terlalu Banyak Percobaan, Harap Kirim Ulang SMS Verifikasi", HttpStatus.NOT_ACCEPTABLE));
+
+            }
+
+            if (parseInt(req.body.code) !== parseInt(user.otpSms.code) && user.otpSms.expired) {
+
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Verifikasi Gagal, Harap Kirim Ulang SMS Verifikasi", HttpStatus.NOT_ACCEPTABLE));
+
+            } else if (parseInt(req.body.code) !== parseInt(user.otpSms.code)) {
+
+                await User.updateOne({
+                    _id: user._id
+                }, {
+                    $inc: {
+                        "otpSms.attempts": 1
+                    }
+                })
+
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Verifikasi Salah", HttpStatus.NOT_ACCEPTABLE));
+
+            }
+
+            await User.updateOne({
+                phone: req.body.phone
+            }, {
+                $set: {
+                    "otpSms.code": 0,
+                    "otpSms.attempts": 0,
+                    "otpSms.expired": true,
+                    "otpSms.expiredDate": Date.now(),
+                    "isPhoneVerified": true,
+
+                }
+            }, { upsert: true })
+
+            client.expireat(`smsOtp.${req.body.phone}`, 0);
+
+            const UserData = await User.findOne({ phone: req.body.phone })
+
+            user.otpEmail = undefined
+            user.otpSms = undefined
+            user.password = undefined
+            user.addresses = undefined
+
+            const loggedUser = {
+                UserData
+            }
+
+            const token = jwt.sign(loggedUser, user._id)
+
+            const refreshToken = uuidv4().toUpperCase()
+
+            jwt.setCache(user._id, token, refreshToken)
+
+            const tokenList = {
+
+                "accessToken": token,
+                "refreshToken": refreshToken
+            }
+
+            loggedUser['token'] = tokenList
+
+            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser), "OK", HttpStatus.OK)
+        })
+
+    }
+
+    async resendSmsOtpRegister(req, res) {
+
+        const { error } = resendSmsOtpRegisterValidator(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        const isPhoneExist = await User.findOne({ phone: req.body.phone })
+
+        if (isPhoneExist && isPhoneExist.isPhoneVerified) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            );
+        }
+
+        var otp = parseInt(Math.random() * 10000);
+
+        SMSGateway.sendSms({
+            to: req.body.phone,
+            text: `Masukan Kode text: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+
+        });
+
+        //5 minutes on seconds
+        let expiredTime = 300
+        let expired = moment().add(expiredTime, 'seconds')
+
+        await User.updateOne({
+            phone: req.body.phone,
+        }, {
+            isPhoneVerified: false,
+            otpSms: {
+                code: otp,
+                attempts: 0,
+                expiredDate: expired,
+                expired: false
+            }
+        }, {
+            upsert: true
+        })
+
+        client.set(`smsOtp.${req.body.phone}`, JSON.stringify(otp), 'EX', expiredTime);
+
+        return res.status(HttpStatus.OK).send(
+            responser.success(
+                {
+                    otpSms: {
+                        expiredDate: expired,
+                        expired: false
+                    }
+                }, `Kode OTP Telah Dikirm Ke Nomor ${req.body.phone}, Harap Cek Telepon Anda`)
+        );
+
     }
 
     async verifyPhoneByUserId(req, res) {
@@ -282,25 +616,6 @@ const AuthController = class AuthController {
 
             }
 
-            client.expireat(`otpSms.${user._id}`, 0);
-
-            await User.updateOne({
-                _id: user.id
-            }, {
-                $set: {
-                    "otpSms.code": 0,
-                    "otpSms.attempts": 0,
-                    "otpSms.expired": true,
-                    "otpSms.expiredDate": Date.now(),
-                    "isPhoneVerified": true,
-
-                }
-            }, { upsert: true })
-
-            const newUser = await User.findOne({ _id: user.id })
-
-            return res.status(HttpStatus.OK).send(responser.success({ user: newUser }, HttpStatus.OK));
-
         })
 
     }
@@ -333,12 +648,11 @@ const AuthController = class AuthController {
 
         var otp = parseInt(Math.random() * 10000);
 
-        // let sendSms = SMSGateway.sendSms({
-        //     from: "BELIAYAMCOM",
-        //     to: "62895402275040",
-        //     text: `Kode OTP Anda Adalah: ${otp} \r\nJANGAN MEMBERITAHU KODE RAHASIA INI KE SIAPAPUN TERMASUK PIHAK PT. BELI AYAM COM
-        //     `
-        // });
+        let sendSms = SMSGateway.sendSms({
+            to: req.body.phone,
+            text: `Masukan Kode text: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+
+        });
 
         //5 minutes on milliseconds
         let expiredTime = 300000
@@ -359,7 +673,7 @@ const AuthController = class AuthController {
             upsert: true
         })
 
-        client.setex(`smsOtp.${req.body.user_id}`, expiredTime, JSON.stringify(otp));
+        client.set(`smsOtp.${req.body.user_id}`, JSON.stringify(otp), 'EX', expiredTime);
 
         return res.status(HttpStatus.OK).send(
             responser.success(
@@ -465,12 +779,9 @@ const AuthController = class AuthController {
             newUser.password = undefined
             newUser.otpEmail = undefined
             newUser.otpSms = undefined
+            newUser.addresses = undefined
 
-            const token = jwt.sign({
-                user: newUser
-            }, process.env.TOKEN_SECRET)
-
-            return res.status(HttpStatus.OK).setHeader('Authorization', `Bearer ${token}`).send(responser.success({ user: newUser, token: token }));
+            return res.status(HttpStatus.OK).send(responser.success({ user: newUser }));
 
         })
     }
@@ -487,6 +798,10 @@ const AuthController = class AuthController {
 
         if (!userExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Tidak Terdaftar", HttpStatus.NOT_FOUND));
+        }
+
+        if (userExist.isEmailVerified) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Telah Diverifikasi", HttpStatus.NOT_FOUND));
         }
 
         var otp = parseInt(Math.random() * 10000);
@@ -509,10 +824,11 @@ const AuthController = class AuthController {
         SendVerifyEmail.send({
             to: userExist.email,
             subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
-            text: `Kode Verifikasi Email Anda Adalah ${otp}`
+            text: `Kode Verifikasi Email Anda Adalah ${otp}`,
+            name: userExist.name ?? ""
         })
 
-        client.setex(`emailOtp.${userExist._id}`, expiredTime, JSON.stringify(otp));
+        client.set(`emailOtp.${userExist._id}`, JSON.stringify(otp), 'EX', expiredTime);
 
         res.status(HttpStatus.OK).send(responser.success({
             email: userExist.email,
@@ -525,7 +841,7 @@ const AuthController = class AuthController {
 
     async sendEmailForgetPassword(req, res) {
 
-        const { error } = sendEmailForgetPassword(req.body)
+        const { error } = sendEmailForgetPasswordValidator(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
@@ -537,10 +853,23 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Tidak Terdaftar", HttpStatus.NOT_FOUND));
         }
 
+        const token = crypto.randomBytes(32).toString("hex")
+
+        const signature = crypto.createHmac('sha1', process.env.SIGNATURE_SECRET)
+            .digest('hex')
+
+        client.set(`reset-password.${userExist._id}`, JSON.stringify({
+            token: token,
+            signature: signature
+        }), 'EX', process.env.SIGNATURE_TTL);
+
+        const link = `${process.env.CLIENT_URL}/reset-password?token=${token}&id=${userExist._id}&signature=${signature}`
+
         SendForgetPassword.send({
             to: userExist.email,
             subject: "Reset Password | PT. BELI AYAM COM",
-            text: `Reset Kata Sandi Anda Dengan Klik Tombol Dibawah`
+            text: `Reset Kata Sandi Anda Dengan Klik Tombol Dibawah`,
+            link,
         })
 
         res.status(HttpStatus.OK).send(responser.success({
@@ -550,56 +879,269 @@ const AuthController = class AuthController {
             HttpStatus.OK))
     }
 
-    async changePassword(req, res) {
+    async verifyLinkForgetPassword(req, res) {
 
-        const { error } = changePassword(req.body)
+        const { error } = verifyLinkForgetPasswordValidator(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = await this.isIdValid(req.body.user_id)
+        client.get(`reset-password.${req.body.id}`, async (err, data) => {
+            if (err) {
+                return res.status(HttpStatus.CONFLICT).send(responser.error(err, HttpStatus.CONFLICT));
+            }
 
-        if (!isValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("User ID Tidak Valid", HttpStatus.BAD_REQUEST)
-            );
+            if (!data) {
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Link Kadaluarsa", HttpStatus.FORBIDDEN));
+            }
+
+            const payload = JSON.parse(data)
+
+            if (payload.token !== req.body.token) {
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Token Signature", HttpStatus.FORBIDDEN));
+            }
+
+            if (payload.signature !== req.body.signature) {
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Signature", HttpStatus.FORBIDDEN));
+            }
+
+            res.status(HttpStatus.OK).send(responser.success([], "OK", HttpStatus.OK))
+        })
+
+    }
+
+    async changePassword(req, res) {
+
+        const { error } = changePasswordValidator(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        const userExist = await User.findOne({ _id: req.body.user_id })
-
-        if (!userExist) {
-            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
+        if (!req.header('signature')) {
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.validation("Signature Not Provided", HttpStatus.UNAUTHORIZED))
         }
 
-        const validPass = await bcrypt.compare(req.body.old_password, userExist.password)
-
-        if (!validPass) return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kata Sandi Salah", HttpStatus.NOT_ACCEPTABLE))
-
-        const salt = await bcrypt.genSalt(10);
-        const newPassword = await bcrypt.hash(req.body.new_password, salt)
-        console.log(newPassword)
-
-        try {
-            const user = await User.updateOne({
-                _id: req.body.user_id
-            }, {
-                password: newPassword,
-                passwordLastUpdate: Date.now()
-            }, {
-                upsert: true
-            })
-
-            res.status(HttpStatus.OK).send(responser.success([],
-                "Kata Sandi Berhasil Di Perbarui",
-                HttpStatus.OK))
-        } catch (err) {
-
-            res.status(HttpStatus.BAD_REQUEST).send(responser.success([],
-                "Tidak Bisa Mengganti Kata Sandi",
-                HttpStatus.BAD_REQUEST))
+        if (req.body.password !== req.body.password_confirmation) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Password Tidak Sesuai", HttpStatus.BAD_REQUEST))
         }
 
+        client.get(`reset-password.${req.body.id}`, async (err, data) => {
+
+            if (err) {
+                return res.status(HttpStatus.CONFLICT).send(responser.error(err, HttpStatus.CONFLICT));
+            }
+
+            if (!data) {
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Link Kadaluarsa", HttpStatus.FORBIDDEN));
+            }
+
+            const payload = JSON.parse(data)
+
+            if (payload.signature !== req.header('signature')) {
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Signature", HttpStatus.FORBIDDEN));
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const newPassword = await bcrypt.hash(req.body.password, salt)
+
+            try {
+
+                await User.updateOne({
+                    _id: req.body.id
+                }, {
+                    password: newPassword,
+                    passwordLastUpdate: Date.now()
+                }, {
+                    upsert: true
+                })
+
+                const user = await User.findOne({ _id: req.body.id })
+
+                user.otpEmail = undefined
+                user.otpSms = undefined
+                user.password = undefined
+                user.addresses = undefined
+
+                const loggedUser = {
+                    user
+                }
+
+                const token = jwt.sign(loggedUser, user._id)
+
+                const refreshToken = uuidv4().toUpperCase()
+
+                jwt.setCache(user._id, token, refreshToken)
+
+                const tokenList = {
+
+                    "accessToken": token,
+                    "refreshToken": refreshToken
+                }
+
+                loggedUser['token'] = tokenList
+
+                client.del(`reset-password.${req.body.id}`);
+
+                return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, "Kata Sandi Berhasil Di Perbarui", HttpStatus.OK))
+
+            } catch (err) {
+                return res.status(HttpStatus.BAD_REQUEST).send(
+                    responser.error("Tidak Bisa Mengubah Kata Sandi", HttpStatus.BAD_REQUEST)
+                );
+            }
+        })
+    }
+
+    // async changePassword(req, res) {
+
+    //     const { error } = changePassword(req.body)
+
+    //     if (error) {
+    //         return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+    //     }
+
+    //     let isValid = await this.isIdValid(req.body.user_id)
+
+    //     if (!isValid) {
+    //         return res.status(HttpStatus.BAD_REQUEST).send(
+    //             responser.error("User ID Tidak Valid", HttpStatus.BAD_REQUEST)
+    //         );
+    //     }
+
+    //     const userExist = await User.findOne({ _id: req.body.user_id })
+
+    //     if (!userExist) {
+    //         return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
+    //     }
+
+    //     const validPass = await bcrypt.compare(req.body.old_password, userExist.password)
+
+    //     if (!validPass) return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kata Sandi Salah", HttpStatus.NOT_ACCEPTABLE))
+
+    //     const salt = await bcrypt.genSalt(10);
+    //     const newPassword = await bcrypt.hash(req.body.new_password, salt)
+    //     console.log(newPassword)
+
+    //     try {
+    //         const user = await User.updateOne({
+    //             _id: req.body.user_id
+    //         }, {
+    //             password: newPassword,
+    //             passwordLastUpdate: Date.now()
+    //         }, {
+    //             upsert: true
+    //         })
+
+    //         res.status(HttpStatus.OK).send(responser.success([],
+    //             "Kata Sandi Berhasil Di Perbarui",
+    //             HttpStatus.OK))
+    //     } catch (err) {
+    //         return res.status(HttpStatus.BAD_REQUEST).send(
+    //             responser.error("Tidak Bisa Mengubah Kata Sandi", HttpStatus.BAD_REQUEST)
+    //         );
+    //     }
+
+    // }
+
+    async refreshToken(req, res) {
+
+        const { error } = refreshTokenValidator(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        if (!req.header('Authorization')) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
+
+        const token = req.header('Authorization').split(" ")[1]
+
+        if (!token) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
+
+        const decode = jwt.decode(token);
+
+        if (!decode) {
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Token", HttpStatus.UNAUTHORIZED))
+        }
+
+        client.get(`${decode.aud}`, async (err, request) => {
+
+            if (err) {
+                return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error(err, HttpStatus.INTERNAL_SERVER_ERROR))
+            }
+
+            if (!request) {
+                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Refresh Token", HttpStatus.UNAUTHORIZED))
+            }
+
+            const payload = JSON.parse(request)
+
+            if (token !== payload.token) {
+                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Token Not Match", HttpStatus.BAD_REQUEST))
+            }
+
+            if (req.body.refreshToken.toUpperCase() !== payload.refreshToken.toUpperCase()) {
+                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Refresh Token Not Match", HttpStatus.BAD_REQUEST))
+            }
+
+            try {
+
+                const user = await User.findOne({ _id: decode.aud })
+
+                if (!user) {
+                    return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Payload Refresh Token", HttpStatus.UNAUTHORIZED))
+                }
+
+                user.otpEmail = undefined
+                user.otpSms = undefined
+                user.password = undefined
+                user.addresses = undefined
+
+                const loggedUser = {
+                    user
+                }
+
+                const token = jwt.sign(loggedUser, user._id)
+
+                const refreshToken = uuidv4().toUpperCase()
+
+                jwt.setCache(user._id, token, refreshToken)
+
+                const tokenList = {
+
+                    "accessToken": token,
+                    "refreshToken": refreshToken
+                }
+
+                loggedUser['token'] = tokenList
+
+                return res.status(HttpStatus.OK).send(responser.success(loggedUser, "OK", HttpStatus.OK))
+
+            } catch (err) {
+                console.error(err)
+                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Session Expired", HttpStatus.UNAUTHORIZED))
+            }
+        })
+    }
+
+    async logout(req, res) {
+
+        const token = req.header('Authorization').split(" ")[1]
+
+        if (!token) {
+            return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.UNAUTHORIZED).send(responser.error("Unauthorized", HttpStatus.UNAUTHORIZED))
+        }
+
+        const decodedToken = jwt.decode(token);
+
+        if (!decodedToken) {
+            return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.UNAUTHORIZED).send(responser.error("Unauthorized", HttpStatus.UNAUTHORIZED))
+        }
+
+        client.del(decodedToken.aud);
+
+        return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.OK).send(responser.success([], "Anda Telah Logout", HttpStatus.OK))
     }
 
     isIdValid(id) {

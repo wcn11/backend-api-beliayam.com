@@ -44,11 +44,20 @@ const CartController = class CartController {
 
             orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
 
-            let cart = await CartModel.find({
-                "user._id": req.user.user._id,
-            })            .sort({
-                orderBy: sortBy
-            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+            let cart = await CartModel.findOne({
+                "user": {
+                    "$in": [req.user.user._id]
+                },
+            }).populate('users')
+                .sort({
+                    orderBy: sortBy
+                }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+
+            if (cart) {
+                cart.users.otpEmail = undefined
+                cart.users.otpSms = undefined
+                cart.users.password = undefined
+            }
 
             return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
 
@@ -94,6 +103,10 @@ const CartController = class CartController {
 
             if (product.stock <= 0) {
                 return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation("Stok Tidak Tersedia", HttpStatus.NOT_ACCEPTABLE))
+            }
+
+            if (product.stock < input.quantity) {
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation("Melebihi Stok Tersedia", HttpStatus.NOT_ACCEPTABLE))
             }
 
             let carts = await CartModel.findOne({
@@ -151,7 +164,8 @@ const CartController = class CartController {
                             image: product.image,
                             status: product.status,
                             additional: product.additional,
-                            description: product.description
+                            description: product.description,
+                            note: input.note ?? ""
                         },
                     }
                 }, {
@@ -172,21 +186,12 @@ const CartController = class CartController {
                     position: product.position,
                     quantity: input.quantity,
                     price: product.price,
-                    image: product.image,
+                    image: product.image ?? "images/product/default.jpg",
                     status: product.status,
                     additional: product.additional,
                     description: product.description
                 },
-                user: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    isEmailVerified: user.isEmailVerified,
-                    gender: user.gender,
-                    status: user.status,
-                    isPhoneVerified: user.isPhoneVerified,
-                    addresses: user.addresses
-                },
+                user: user['_id'],
                 totalQuantity: input.quantity,
                 subTotal: product.price * input.quantity,
                 baseTotal: product.price * input.quantity
@@ -273,7 +278,7 @@ const CartController = class CartController {
 
         let isProductExist = await this.isProductExist(req.body.product_id)
 
-        if(!isProductExist) {
+        if (!isProductExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Ini Sudah Tidak Tersedia", HttpStatus.NOT_FOUND))
         }
 

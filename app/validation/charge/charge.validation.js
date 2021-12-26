@@ -3,7 +3,7 @@ const Joi = require('joi');
 const createNewChargeValidation = (data) => {
     const schema = Joi.object({
         chargeName: Joi.string().min(3).required(),
-        chargeBy: Joi.string().valid('percent', 'price').required(),
+        chargeBy: Joi.string().valid('price').required(),
         chargeValue: Joi.number(),
         shortDescription: Joi.string().min(10).max(100).required(),
         description: Joi.string().min(10).max(500).required(),

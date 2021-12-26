@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 const CartSchema = mongoose.Schema({
     products: [{
@@ -20,13 +21,9 @@ const CartSchema = mongoose.Schema({
             type: String
         }
     }],
-    user: {
-        _id: String,
-        name: String,
-        email: String,
-        isEmailVerified: Boolean,
-        status: String,
-        isPhoneVerified: Boolean
+    users: {
+        type: Schema.Types.ObjectId,
+        ref: 'users'
     },
     totalQuantity: Number,
     subTotal: {

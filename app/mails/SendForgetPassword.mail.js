@@ -1,6 +1,9 @@
 var nodemailer = require('nodemailer');
+const hbs = require("nodemailer-express-handlebars");
+var fs = require('fs');
+// const email = require('../../view/template/email/sendOtpEmail.hbs')
 
-const SendForgetPassword = class SendForgetPassword {
+const SendForgetPasswordEmail = class SendForgetPasswordEmail {
 
     constructor() {
         this.setTransport()
@@ -18,12 +21,29 @@ const SendForgetPassword = class SendForgetPassword {
     }
 
     send(data) {
+        var fs = require('fs');
 
+        this.transporter.use(
+            "compile",
+            hbs({
+                viewEngine: {
+                    extname: '.hbs', // handlebars extension
+                    layoutsDir: 'views/email/', // location of handlebars templates
+                    defaultLayout: 'sendForgetPassword', // name of main template
+                },
+                viewPath: 'views/email',
+                extName: '.hbs',
+            })
+        )
         let mailOptions = {
             from: process.env.MAIL_FROM,
             to: data.to,
             subject: data.subject,
-            text: data.text
+            template: "sendForgetPassword",
+            context: {
+                host: process.env.BASE_URL,
+                link: data.link
+            }
         };
 
         this.transporter.sendMail(mailOptions, (err, info) => {
@@ -33,4 +53,4 @@ const SendForgetPassword = class SendForgetPassword {
     }
 }
 
-module.exports = new SendForgetPassword
+module.exports = new SendForgetPasswordEmail

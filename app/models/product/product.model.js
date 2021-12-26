@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 const ProductSchema = mongoose.Schema({
-    category: {
-        _id: String,
-        sku: String,
-        name: String,
-        image: String,
-        status: String,
-        additional: String,
-        description: String
-    },
+    category: [{
+        type: Schema.Types.ObjectId,
+        ref: 'category'
+    }],
     sku: {
         type: String,
         required: true,
@@ -70,35 +66,10 @@ const ProductSchema = mongoose.Schema({
             default: 0
         }
     },
-    hasPromo: {
-        isPromo: {
-            type: Boolean
-        },
-        promoId: {
-            type: String,
-        },
-        name: {
-            type: String
-        },
-        tags: {
-            type: String
-        },
-        banner: {
-            type: String
-        },
-        promoValue: {
-            type: Number
-        },
-        promoBy: {
-            type: String
-        },
-        promoStart: {
-            type: Date
-        },
-        promoEnd: {
-            type: Date
-        }
-    },
+    hasPromo: [{
+        type: Schema.Types.ObjectId,
+        ref: 'promo'
+    }],
     status: {
         type: String,
         default: 'active'

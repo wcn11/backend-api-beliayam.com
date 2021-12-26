@@ -14,6 +14,8 @@ var imageProduct = multer({ storage: storage })
 
 router.get('/', verifyToken, (req, res) => ProductController.getProducts(req, res))
 
+router.get('/category/:categoryId', verifyToken, (req, res) => ProductController.getProductsByCategoryId(req, res))
+
 router.get('/:productId', verifyToken, (req, res) => ProductController.getProductById(req, res))
 
 router.post('/', verifyToken, imageProduct.single('image_product'), (req, res) => ProductController.createProduct(req, res))

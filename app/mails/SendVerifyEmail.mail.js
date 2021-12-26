@@ -40,9 +40,9 @@ const SendVerifyEmail = class SendVerifyEmail {
             subject: data.subject,
             template: "sendOtpEmail",
             context: {         
-                host: process.env.BASE_URL,
+                host: process.env.BASE_URL, // for production, use CLIENT_URL instead,
                 name: data.name,
-                code: data.code
+                text: data.text
             }
         };
 

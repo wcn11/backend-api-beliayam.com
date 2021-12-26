@@ -117,7 +117,9 @@ const CategoryController = class CategoryController {
         const isCategoryExists = await CategoryModel.findOne({ _id: req.params.categoryId })
 
         if (!isCategoryExists) {
-            return res.status(HttpStatus.OK).send(responser.success(isCategoryExists))
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("Kategori Tidak Ditemukan", HttpStatus.BAD_REQUEST)
+            );
         }
 
         // buat jika ada sku duplikat
@@ -153,7 +155,7 @@ const CategoryController = class CategoryController {
                 description: 1,
             })
 
-            return res.status(HttpStatus.OK).send(responser.success(category, "Kategori Diperbarui"))
+            return res.status(HttpStatus.OK).send(responser.success(category, `Kategori ${input.name} Diperbarui`))
 
         } catch (err) {
 

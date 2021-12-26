@@ -1,11 +1,12 @@
 {
-  "name": "hard-work",
+  "name": "beliayamcom",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "babel index.js — out-file index-compiled.js",
-    "dev": "nodemon — exec babel-node index.js"
+    "dev": "nodemon — exec babel-node index.js",
+    "test": "mocha"
   },
   "author": "",
   "license": "ISC",
@@ -14,7 +15,9 @@
     "@babel/node": "^7.15.8",
     "@babel/preset-env": "^7.15.8",
     "@vonage/server-sdk": "^2.10.10",
+    "axios": "^0.24.0",
     "bcryptjs": "^2.4.3",
+    "bee-queue": "^1.4.0",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
@@ -34,6 +37,8 @@
     "nodemailer": "^6.7.0",
     "nodemailer-express-handlebars": "^4.0.0",
     "nodemon": "^2.0.14",
+    "passport": "^0.5.2",
+    "passport-google-oauth": "^2.0.0",
     "pusher": "^5.0.0",
     "redis": "^3.1.2",
     "remove": "^0.1.5",
@@ -60,6 +65,7 @@
   "_moduleAliases": {
     "@root": ".",
     "@controller": "./app/controllers/",
+    "@config": "./config",
     "@exception": "./app/exception/",
     "@router": "./router/routes",
     "@model": "./app/models",

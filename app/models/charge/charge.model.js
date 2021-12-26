@@ -40,12 +40,12 @@ const ChargeSchema = mongoose.Schema({
         type: Boolean,
         default: true
     },
-    plaform: {
+    platform: [{
         type: String,
         enum: ['all', 'website', "mobile"],
         default: 'all',
         required: false
-    }
+    }]
 
 }, {
     timestamps: { Date }
