@@ -618,6 +618,21 @@ const AuthController = class AuthController {
 
         })
 
+        await User.updateOne({
+            _id: user.id
+        }, {
+            $set: {
+                "otpSms.code": 0,
+                "otpSms.attempts": 0,
+                "otpSms.expired": true,
+                "otpSms.expiredDate": Date.now(),
+                "isPhoneVerified": true,
+
+            }
+        })
+
+        return res.status(HttpStatus.OK).send(responser.error("Nomor Telepon Berhasil Diverifikasi", HttpStatus.OK));
+
     }
 
     async resendOtpVerifyPhone(req, res) {

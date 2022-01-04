@@ -55,10 +55,10 @@ const AddressController = class AddressController {
 
             }
 
-            if (addressFull[0].count < 0) {
-                setDefault = true
-            }
+        }
 
+        if (addressFull[0] === undefined) {
+            setDefault = true
         }
 
         try {
@@ -75,7 +75,7 @@ const AddressController = class AddressController {
                 "sub_district": req.body.sub_district,
                 "postcode": req.body.postcode,
                 "phone": req.body.phone,
-                "default": setDefault,
+                "default": setDefault || false,
                 "details": req.body.details,
             }
 

@@ -165,7 +165,7 @@ const ChargeController = class ChargeController {
                 users: input.users,
                 termsAndConditions: input.termsAndConditions,
                 isActive: input.isActive,
-                plaform: input.plaform
+                platform: input.platform
             }
 
             let charge = new ChargeModel(chargeObject)

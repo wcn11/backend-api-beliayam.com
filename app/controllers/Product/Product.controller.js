@@ -47,14 +47,14 @@ const ProductController = class ProductController {
             }
             orderBy = req.query.orderBy ?? 1
 
-            let user = await ProductModel.find({
+            let products = await ProductModel.find({
                 active: true,
             }).populate(['category', 'hasPromo'])
                 .sort({
-                orderBy: sortBy
-            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+                    orderBy: sortBy
+                }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
-            return res.status(HttpStatus.OK).send(responser.success(user, HttpStatus.OK));
+            return res.status(HttpStatus.OK).send(responser.success(products, HttpStatus.OK));
 
         } catch (err) {
 
@@ -161,11 +161,11 @@ const ProductController = class ProductController {
 
         // buat jika ada sku duplikat
 
-        // try {
+        try {
 
-        let input = req.body
+            let input = req.body
 
-        let category = await this.isCategoryExists(input.category_id)
+            let category = await this.isCategoryExists(input.category_id)
 
             if (!category) {
                 return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Kategori Tidak Ditemukan", HttpStatus.NOT_FOUND))
@@ -186,9 +186,9 @@ const ProductController = class ProductController {
                 description: input.description
             }
 
-        if (req.file) {
-            productObject.image = req.file ? req.file.url : "images/product/default.jpg"
-        }
+            if (req.file) {
+                productObject.image = req.file ? req.file.url : "images/product/default.jpg"
+            }
 
             if (input.isDiscount) {
                 productObject.hasDiscount = {
@@ -201,17 +201,17 @@ const ProductController = class ProductController {
                 }
             }
 
-        let product = new ProductModel(productObject)
+            let product = new ProductModel(productObject)
 
             const savedProduct = await product.save()
 
             return res.status(HttpStatus.OK).send(responser.success(savedProduct, "Produk Ditambahkan"))
 
-        // } catch (err) {
+        } catch (err) {
 
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambahkan Produk, Harap Cek Duplikasi", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambahkan Produk, Harap Cek Duplikasi", HttpStatus.BAD_REQUEST))
 
-        // }
+        }
     }
 
     async deleteProductById(req, res) {
@@ -304,20 +304,12 @@ const ProductController = class ProductController {
                     discount: input.discount,
                     discountBy: input.discountBy,
                     discountStart: input.discountStart,
-                    discountEnd: input.discountEnd,
-                    priceAfterDiscount: input.priceAfterDiscount,
+                    discountEnd: input.discountEnd
                 }
             }
 
-            if (input.isPromotion) {
-                productObject.hasPromotion = {
-                    isPromotion: input.isPromotion,
-                    promotion: input.promotion,
-                    promotionBy: input.promotionBy,
-                    promotionStart: input.promotionStart,
-                    promotionEnd: input.promotionEnd,
-                    priceAfterPromotion: input.priceAfterPromotion,
-                }
+            if (input.promo) {
+                productObject.hasPromo = input.promo
             }
 
             const product = await ProductModel.findOneAndUpdate(

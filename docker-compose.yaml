@@ -1,0 +1,9 @@
+version: 3,
+
+services:
+  back-end: 
+    container_name: "back-end-container"
+    image: node, mongo, redis
+    ports:
+      - 5000:4000
+    build: .

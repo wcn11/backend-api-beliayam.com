@@ -12,7 +12,8 @@ const createNewChargeValidation = (data) => {
         users: Joi.string(),
         termsAndConditions: Joi.string().max(500),
         isActive: Joi.boolean(),
-        plaform: Joi.string().valid('all', 'website', "mobile").default('all')
+        platform: Joi.array()
+            .items(Joi.string().valid('all', 'website', 'mobile')),
     })
 
     return schema.validate(data)

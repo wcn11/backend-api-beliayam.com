@@ -15,7 +15,7 @@ const VoucherSchema = mongoose.Schema({
     },
     discountBy: {
         type: String,
-        enum: ['percent', 'price']
+        enum: ['price']
     },
     discountValue: {
         type: Number,
@@ -61,11 +61,11 @@ const VoucherSchema = mongoose.Schema({
     description: {
         type: String
     },
-    platform: {
+    platform: [{
         type: Object,
         enum: ['all', 'website', "mobile"],
         default: ['all']
-    }
+    }]
 
 }, {
     timestamps: { Date }

@@ -1,10 +1,3 @@
-// const Vonage = require('@vonage/server-sdk')
-
-// const vonage = new Vonage({
-//     apiKey: process.env.SMS_GATEWAY_API_KEY,
-//     apiSecret: process.env.SMS_GATEWAY_API_SECRET
-// })
-
 const axios = require('axios')
 
 const SMSGateway = class SMSGateway {
@@ -25,22 +18,8 @@ const SMSGateway = class SMSGateway {
             .catch((err) => {
                 console.log(`get error while sending sms: ${err}`)
             });
-
-        // vonage.message.sendSms(from, to, text, (err, responseData) => {
-        //     if (err) {
-        //         console.log(err);
-        //     } else {
-        //         if (responseData.messages[0]['status'] === "0") {
-        //             return "Sms Verifikasi Berhasil Dikirim"
-        //         } else {
-        //             console.log(`Message failed with error: ${responseData.messages[0]['error-text']}`);
-        //         }
-        //     }
-        // })
     }
 
 }
-
-
 
 module.exports = new SMSGateway

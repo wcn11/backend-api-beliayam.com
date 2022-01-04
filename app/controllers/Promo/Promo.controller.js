@@ -60,7 +60,7 @@ const PromoController = class PromoController {
             }
             orderBy = req.query.orderBy ?? 1
 
-            var currentDate = moment().toDate();
+            let currentDate = moment().add(7, 'hour').toDate()
 
             let isActive
 

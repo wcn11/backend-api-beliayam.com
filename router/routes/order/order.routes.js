@@ -4,7 +4,7 @@ const router = require('express').Router();
 const verifyToken = require('@middleware/auth/verifyToken')
 
 // controller
-const CheckoutController = require('@controller/Checkout/Checkout.controller')
+const OrderController = require('@controller/Order/Order.controller')
 
 // router.get('/', verifyToken, (req, res) => VoucherController.getAllVouchers(req, res))
 
@@ -12,11 +12,11 @@ const CheckoutController = require('@controller/Checkout/Checkout.controller')
 
 // router.get('/:voucherId', verifyToken, (req, res) => VoucherController.getVoucherByVoucherId(req, res))
 
-router.get('/cart', verifyToken, (req, res) => CheckoutController.getUserCheckoutData(req, res))
+// router.get('/cart', verifyToken, (req, res) => CheckoutController.getUserCheckoutData(req, res))
 
-router.post('/cart', verifyToken, (req, res) => CheckoutController.calculateCheckout(req, res))
+router.post('/', verifyToken, (req, res) => OrderController.placeOrder(req, res))
 
-router.post('/voucher/apply', verifyToken, (req, res) => CheckoutController.applyVoucher(req, res))
+// router.post('/voucher/apply', verifyToken, (req, res) => CheckoutController.applyVoucher(req, res))
 
 // router.post('/voucher/remove', verifyToken, (req, res) => CheckoutController.removeVoucher(req, res))
 

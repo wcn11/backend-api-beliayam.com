@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const CheckoutSchema = mongoose.Schema({
+const OrderSchema = mongoose.Schema({
     cart_id: {
         type: String,
         required: true
@@ -26,15 +26,25 @@ const CheckoutSchema = mongoose.Schema({
     baseTotal: {
         type: Number,
     },
+    grandTotal: {
+        type: Number,
+    },
     subTotalProduct: {
         type: Number,
     },
     subTotalCharges: {
         type: Number,
     },
+    subTotalVoucher: {
+        type: Number,
+    },
     charges: [{
         type: Schema.Types.ObjectId,
         ref: 'charge'
+    }],
+    vouchersApplied: [{
+        type: Schema.Types.ObjectId,
+        ref: 'voucher'
     }],
     platform: [{
         type: String,
@@ -44,10 +54,16 @@ const CheckoutSchema = mongoose.Schema({
     user: {
         type: Schema.Types.ObjectId,
         ref: 'users'
+    },
+    shipping: {
+        address: {
+            type: Schema.Types.ObjectId,
+            ref: 'users.addresses'
+        }
     }
 
 }, {
     timestamps: { Date }
 })
 
-module.exports = mongoose.model('checkout', CheckoutSchema)
+module.exports = mongoose.model('order', OrderSchema)

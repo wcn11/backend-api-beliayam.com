@@ -21,7 +21,6 @@ const applyVoucherValidation = (data) => {
 
     const schema = Joi.object({
         voucherCode: Joi.string().required(),
-        cart_id: Joi.string().required(),
         user_id: Joi.string().required(),
         platform: Joi.string().valid('all', 'website', 'mobile'),
     })
@@ -29,7 +28,18 @@ const applyVoucherValidation = (data) => {
     return schema.validate(data)
 }
 
+const removeVoucherValidation = (data) => {
+
+    const schema = Joi.object({
+        voucher_id: Joi.string().required(),
+        user_id: Joi.string().required()
+    })
+
+    return schema.validate(data)
+}
+
 module.exports = {
     calculateCheckoutValidation,
-    applyVoucherValidation
+    applyVoucherValidation,
+    removeVoucherValidation
 }
