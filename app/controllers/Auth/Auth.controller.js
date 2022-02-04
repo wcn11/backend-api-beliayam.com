@@ -100,9 +100,6 @@ const AuthController = class AuthController {
             let user = await User.findOne({ email: req.body.email })
 
             user.password = undefined
-            user.otpEmail = undefined
-            user.otpSms = undefined
-            user.addresses = undefined
 
             const loggedUser = {
                 user

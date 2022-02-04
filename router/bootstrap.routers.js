@@ -1,7 +1,7 @@
 const Router = require('express').Router();
 
 // routes
-const AdminRouter = require('@router/admin/admin.routes')
+const AdminRouter = require('@router/admin/bootstrap.routers')
 const AuthRouter = require('@router/auth/auth.routes')
 
 const CategoryRouter = require('@router/category/category.routes')

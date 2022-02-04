@@ -51,6 +51,9 @@ module.exports = {
         register: {
             email_exist: "Email Telah Terdaftar",
             username_exist: "Username Telah Terdaftar"
+        },
+        account: {
+            created: "Akun Dibuat"
         }
     }
 

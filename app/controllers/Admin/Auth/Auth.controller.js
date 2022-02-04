@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 const AdminModel = require('@model/admin/admin.model')
 const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
+const jwt = require('@helper/jwtAdmin')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const customId = require("custom-id");
+const { v4: uuidv4 } = require('uuid');
 // const SMSGateway = require('@service/SMS.gateway')
 // const SendVerifyEmail = require('@mailService/SendVerifyEmail.mail')
 // const SendForgetPassword = require('@mailService/SendForgetPassword.mail')
@@ -12,29 +13,31 @@ const customId = require("custom-id");
 // const PusherNotification = require('@service/PushNotification')
 const moment = require('moment')
 
-const redis = require("redis");
-const client = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT
-})
+const redis = require("@config/redis");
 
 const {
-    loginEmail,
+    loginValidator,
     byPhone,
-    register,
+    registerValidator,
     emailVerify,
-    changePassword,
+    registerByPhone,
     resendEmailVerify,
     resendPhoneVerify,
-    verifyPhoneByUserOTP,
-    sendEmailForgetPassword
-} = require('@validation/admin/admin.validation')
+    verifyPhoneByUserOTPValidator,
+    refreshTokenValidator,
+    loginBySocialValidator,
+    changePasswordValidator,
+    resendSmsOtpRegisterValidator,
+    verifySmsOtpRegisterValidator,
+    sendEmailForgetPasswordValidator,
+    verifyLinkForgetPasswordValidator,
+} = require('@validation/admin/auth/auth.validation')
 
 const AdminController = class AdminController {
 
     async register(req, res) {
 
-        const { error } = register(req.body)
+        const { error } = registerValidator(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
@@ -44,62 +47,62 @@ const AdminController = class AdminController {
 
         if (emailExist) return res.status(HttpStatus.OK).send(responser.error(translate('admin.register.email_exist'), HttpStatus.OK))
 
-        if (emailExist.username === req.body.username) return res.status(HttpStatus.OK).send(responser.error(translate('admin.username_exist'), HttpStatus.OK))
+        const usernameExist = await AdminModel.findOne({ username: req.body.username })
+
+        if (usernameExist) return res.status(HttpStatus.OK).send(responser.error(translate('admin.username_exist'), HttpStatus.OK))
 
         const salt = await bcrypt.genSalt(10);
 
-        // try {
+        try {
 
-        let setPassword = await bcrypt.hash(req.body.password, salt)
+            let setPassword = await bcrypt.hash(req.body.password, salt)
 
-        req.body.password = setPassword
+            req.body.password = setPassword
 
-        let adminObject = req.body
+            let adminObject = req.body
 
-        const adminData = new AdminModel(
-            adminObject
-        )
-        const savedAdmin = await adminData.save()
+            if (req.body.roleId !== NaN) {
+                adminObject.role = {
+                    roleId: req.body.roleId
+                }
+            }
 
-        let admin = await AdminModel.findOne({ email: req.body.email })
+            const adminData = new AdminModel(
+                adminObject
+            )
 
-        admin.password = undefined
+            await adminData.save()
 
-        const loggedUser = {
-            admin
+            let admin = await AdminModel.findOne({ email: req.body.email })
+
+            admin.password = undefined
+
+            const loggedAdmin = {
+                admin
+            }
+
+            const token = jwt.sign(loggedAdmin, admin._id)
+
+            const refreshToken = uuidv4().toUpperCase()
+
+            jwt.setCache('admin.' + admin._id, token, refreshToken)
+
+            const tokenList = {
+
+                "accessToken": token,
+                "refreshToken": refreshToken
+            }
+
+            loggedAdmin['token'] = tokenList
+
+            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK)
+                .send(responser.success(
+                    loggedAdmin,
+                    translate('admin.account.created'),
+                    HttpStatus.OK));
+        } catch (err) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar"))
         }
-
-        const accessToken = jwt.sign({
-            admin: loggedUser
-        }, process.env.TOKEN_SECRET, {
-            algorithm: "HS256",
-            expiresIn: process.env.TOKEN_TTL
-
-        })
-
-        const refreshToken = jwt.sign({
-            admin: loggedUser
-        }, process.env.REFRESH_TOKEN_SECRET, {
-            algorithm: "HS256",
-            expiresIn: process.env.REFRESH_TOKEN_TTL
-        })
-
-        loggedUser['token'] = {
-            "accessToken": accessToken,
-            "refreshToken": refreshToken
-        }
-
-        res.cookie("jwt", accessToken, { secure: true, httpOnly: true })
-
-        return res.status(HttpStatus.OK)
-            .send(responser.success(
-                loggedUser,
-                "Akun Ditambahkan",
-                HttpStatus.OK));
-
-        // } catch (err) {
-        //     res.status(HttpStatus.BAD_REQUEST).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar"))
-        // }
     }
 
     async getCurrentSession(req, res) {
@@ -113,33 +116,80 @@ const AdminController = class AdminController {
 
     async refreshToken(req, res) {
 
-        // const token = req.header('Authorization').split(" ")[1]
-        // const decode = jwt.verify(req.body.refreshToken, process.env.REFRESH_TOKEN_SECRET)
+        const { error } = refreshTokenValidator(req.body)
 
-        const oldToken = jwt.decode(req.header('Authorization').split(" ")[1]);
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
 
-        // client.setex(`accesTokenAdmin.${oldToken}`, expiredTime, JSON.stringify(otp));
+        if (!req.header('Authorization')) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
 
-        // const accessToken = jwt.sign(
-        //     decode['admin']
-        // , process.env.TOKEN_SECRET, {
-        //     algorithm: "HS256",
-        //     expiresIn: process.env.TOKEN_TTL
+        const token = req.header('Authorization').split(" ")[1]
 
-        // })
+        if (!token) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
 
-        // const refreshToken = jwt.sign(decode['admin'],
-        // process.env.REFRESH_TOKEN_SECRET, {
-        //     algorithm: "HS256",
-        //     expiresIn: process.env.REFRESH_TOKEN_TTL
-        // })
+        const decode = jwt.decode(token);
 
-        return res.status(HttpStatus.OK).send(responser.success((oldToken.exp * 1000), HttpStatus.OK));
+        if (!decode) {
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Token", HttpStatus.UNAUTHORIZED))
+        }
+
+        const cache = await redis.get(`admin.${decode.aud}`)
+
+        if (!cache) {
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Refresh Token", HttpStatus.UNAUTHORIZED))
+        }
+
+        const payload = cache
+
+        if (token !== payload.token) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Token Not Match", HttpStatus.BAD_REQUEST))
+        }
+
+        if (req.body.refreshToken.toUpperCase() !== payload.refreshToken.toUpperCase()) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Refresh Token Not Match", HttpStatus.BAD_REQUEST))
+        }
+
+        try {
+
+            const admin = await AdminModel.findOne({ _id: decode.aud })
+
+            if (!admin) {
+                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Payload Refresh Token", HttpStatus.UNAUTHORIZED))
+            }
+
+            admin.password = undefined
+
+            const loggedAdmin = {
+                admin
+            }
+
+            const token = jwt.sign(loggedAdmin, admin._id)
+
+            const refreshToken = uuidv4().toUpperCase()
+
+            jwt.setCache(admin._id, token, refreshToken)
+
+            const tokenList = {
+
+                "accessToken": token,
+                "refreshToken": refreshToken
+            }
+
+            loggedAdmin['token'] = tokenList
+
+            return res.status(HttpStatus.OK).send(responser.success(loggedAdmin, "OK", HttpStatus.OK))
+
+        } catch (err) {
+            console.error(err)
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Session Expired", HttpStatus.UNAUTHORIZED))
+        }
+
     }
 
     async login(req, res) {
 
-        const { error } = loginEmail(req.body)
+        const { error } = loginValidator(req.body)
 
         if (error) {
 
@@ -164,26 +214,19 @@ const AdminController = class AdminController {
             admin
         }
 
-        const token = jwt.sign({
-            admin: loggedAdmin
-        }, process.env.TOKEN_SECRET, {
-            algorithm: "HS256",
-            expiresIn: process.env.TOKEN_TTL
-        })
+        const token = jwt.sign(loggedAdmin, admin._id)
 
-        const refreshToken = jwt.sign({
-            admin: loggedAdmin
-        }, process.env.REFRESH_TOKEN_SECRET, {
-            algorithm: "HS256",
-            expiresIn: process.env.REFRESH_TOKEN_TTL
-        })
+        const refreshToken = uuidv4().toUpperCase()
 
-        loggedAdmin['token'] = {
+        jwt.setCache(admin._id, token, refreshToken)
+
+        const tokenList = {
+
             "accessToken": token,
-            "expire": process.env.TOKEN_TTL,
-            "tokenType": "Bearer",
             "refreshToken": refreshToken
         }
+
+        loggedAdmin['token'] = tokenList
 
         return res.header("Authorization", token).status(HttpStatus.OK).send(responser.success(loggedAdmin, HttpStatus.OK));
 

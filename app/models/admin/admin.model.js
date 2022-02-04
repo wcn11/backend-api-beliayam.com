@@ -17,8 +17,14 @@ const AdminSchema = mongoose.Schema({
         unique: true,
     },
     role: {
-        roleId: Number,
-        roleName: String,
+        roleId: {
+            default: 0,
+            type: Number,
+        },
+        roleName: {
+            default: 'Administrator',
+            type: String,
+        }
     },
     gender: {
         type: String,
