@@ -33,6 +33,19 @@ const getAllVouchersValidation = (data) => {
     return schema.validate(data)
 }
 
+const getAllVouchersByUserValidation = (data) => {
+    const schema = Joi.object({
+        page: Joi.number().min(1).max(20).required(),
+        show: Joi.number().min(1).max(100).required(),
+        sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC').required(),
+        orderBy: Joi.string().min(1).max(10).valid('voucherCode').required(),
+        platform: Joi.string().valid('all', 'website', 'mobile'),
+        isActive: Joi.bool(),
+    })
+
+    return schema.validate(data)
+}
+
 const getVoucherByVoucherCodeValidation = (data) => {
     const schema = Joi.object({
         voucherCode: Joi.string().required(),
@@ -73,7 +86,7 @@ const updateVoucherByVoucherIdValidation = (data) => {
         discountEnd: Joi.date().required(),
         isActive: Joi.bool(),
         description: Joi.string().max(500),
-        plaform: Joi.string().valid('all', 'website', 'mobile'),
+        platform: Joi.string().valid('all', 'website', 'mobile'),
     })
 
     return schema.validate(data)
@@ -103,6 +116,7 @@ const updateVoucherByVoucherIdValidation = (data) => {
 module.exports = {
     createNewVoucherValidation,
     getAllVouchersValidation,
+    getAllVouchersByUserValidation,
     getVoucherByVoucherCodeValidation,
     getVoucherByVoucherIdValidation,
     updateVoucherByVoucherIdValidation,

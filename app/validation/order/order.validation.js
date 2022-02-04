@@ -19,29 +19,28 @@ const placeOrderValidation = (data) => {
     return schema.validate(data)
 }
 
-// const applyVoucherValidation = (data) => {
+const getOrderByIdValidation = (data) => {
 
-//     const schema = Joi.object({
-//         voucherCode: Joi.string().required(),
-//         user_id: Joi.string().required(),
-//         platform: Joi.string().valid('all', 'website', 'mobile'),
-//     })
+    const schema = Joi.object({
+        order_id: Joi.string().required(),
+    })
 
-//     return schema.validate(data)
-// }
+    return schema.validate(data)
+}
 
-// const removeVoucherValidation = (data) => {
+const cancelOrderValidation = (data) => {
 
-//     const schema = Joi.object({
-//         voucher_id: Joi.string().required(),
-//         user_id: Joi.string().required()
-//     })
+    const schema = Joi.object({
+        trx_id: Joi.string().required(),
+        bill_no: Joi.string().required(),
+        order_id: Joi.string().required(),
+    })
 
-//     return schema.validate(data)
-// }
+    return schema.validate(data)
+}
 
 module.exports = {
     placeOrderValidation,
-    // applyVoucherValidation,
-    // removeVoucherValidation
+    getOrderByIdValidation,
+    cancelOrderValidation
 }

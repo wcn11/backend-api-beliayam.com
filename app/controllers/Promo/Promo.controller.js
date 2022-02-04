@@ -15,9 +15,7 @@ moment.locale('id-ID');
 
 const handleErrors = require('../../../middleware/handleErrors');
 
-
 const { BadRequest } = require('@utility/errors');
-
 
 const {
     createNewPromoValidation,
@@ -26,7 +24,9 @@ const {
     updatePromoByPromoIdValidation,
     deletePromoByPromoIdValidation,
     getAllPromoProductValidation,
-    updateStatusByPromoIdValidation
+    updateStatusByPromoIdValidation,
+    addProductToPromoValidation,
+    removeProductFromPromoValidation
 
 } = require('@validation/promo/promo.validation')
 
@@ -73,12 +73,12 @@ const PromoController = class PromoController {
             }
 
             let promo = await PromoModel.find({
-                promoStart: {
-                    $lte: currentDate
-                },
-                promoEnd: {
-                    $gte: currentDate
-                },
+                // promoStart: {
+                //     $lte: currentDate
+                // },
+                // promoEnd: {
+                //     $gte: currentDate
+                // },
                 isActive: isActive,
                 platform: {
                     $in: [req.query.platform]
@@ -96,7 +96,21 @@ const PromoController = class PromoController {
         }
     }
 
-    async getPromoProductByPromoId(req, res) {
+    async getPromoBySlug(req, res) {
+        try {
+
+            let category = await PromoModel.findOne({
+                slug: req.query.key
+            })
+
+            return res.status(HttpStatus.OK).send(responser.success(category, "OK"));
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
+
+    async getPromoProductByPromoIdOrSlug(req, res) {
 
         const { error } = getAllPromoProductValidation(req.query)
 
@@ -104,6 +118,8 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
+
+        let isPromoExist = false
 
         let isActive
 
@@ -115,12 +131,31 @@ const PromoController = class PromoController {
             isActive = true
         }
 
+        if (this.validateId(req.params.slug)) {
+
+
+            promoObject = await PromoModel.findOne({
+                _id: req.params.slug,
+            })
+
+        } else {
+
+
+            promoObject = await PromoModel.findOne({
+                slug: req.params.slug,
+            })
+        }
+
+        if (!promoObject) {
+            return res.status(HttpStatus.OK).send(responser.success([], "OK"));
+        }
+
         var currentDate = moment().toDate();
 
         // benerin dan buat paginasi
         let promo = await ProductModel.find({
-            hasDicount: {
-                $in: [req.params.promoId]
+            hasPromo: {
+                $in: [promoObject._id]
             },
             promoStart: {
                 $lte: currentDate
@@ -133,12 +168,8 @@ const PromoController = class PromoController {
                 $in: [req.query.platform]
             },
         })
-        // .sort({
-        //     orderBy: sortBy,
 
-        // }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
-
-        return res.status(HttpStatus.OK).send(responser.success(promo, HttpStatus.OK));
+        return res.status(HttpStatus.OK).send(responser.success(promo, "OK"));
     }
 
     async getPromoByPromoId(req, res) {
@@ -188,9 +219,10 @@ const PromoController = class PromoController {
 
             let promoObject = {
                 name: input.name,
+                slug: input.slug,
                 tags: input.tags,
                 products: [],
-                // banner: req.file ? req.file.path : "images/promo/default.jpg",
+                image_promo: req.file ? `images/promo/${req.file.filename}` : "images/promo/default.jpg",
                 termsAndConditions: input.termsAndConditions,
                 promoValue: input.promoValue,
                 promoBy: input.promoBy,
@@ -201,6 +233,8 @@ const PromoController = class PromoController {
                 platform: []
             }
 
+            if (input.products) {
+
             if (input.products.length < 0) {
                 return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST))
             }
@@ -210,15 +244,9 @@ const PromoController = class PromoController {
                 if (!this.isIdValid(input.products[i])) {
                     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST))
                 }
-
-                // let isProductExist = this.isProductExist(input.products[i])
-
-                // if (!isProductExist) {
-                //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Beberapa Produk Tidak Ditemukan Atau Telah Dihapus", HttpStatus.BAD_REQUEST))
-                // }
-
                 promoObject['products'].push(input.products[i])
             }
+        }
 
             if (input.platform.length > 0) {
 
@@ -231,32 +259,31 @@ const PromoController = class PromoController {
 
             const savedPromo = await promo.save()
 
-            let productObject = {
-                isPromo: true,
-                promoId: savedPromo.id,
-                name: input.name,
-                tags: input.tags,
-                banner: req.file ? `images/promo/${req.file.originalname}` : "",
-                promoValue: input.promoValue,
-                promoBy: input.promoBy,
-                promoStart: input.promoStart,
-                promoEnd: input.promoEnd
-            }
 
-            input.products.map(async product => {
+            // let productObject = {
+            //     isPromo: true,
+            //     promoId: savedPromo.id,
+            //     name: input.name,
+            //     tags: input.tags,
+            //     image_promo: req.file ? `images/promo/${req.file.originalname}` : "",
+            //     promoValue: input.promoValue,
+            //     promoBy: input.promoBy,
+            //     promoStart: input.promoStart,
+            //     promoEnd: input.promoEnd
+            // }
 
-                let productUpdate = await ProductModel.findOneAndUpdate(
-                    product, {
-                    $set: {
-                        hasPromo: productObject
-                    }
-                }, {
-                    new: true
-                })
+            // input.products.map(async product => {
 
-                console.log(productUpdate)
+            //     let productUpdate = await ProductModel.findOneAndUpdate(
+            //         product, {
+            //         $set: {
+            //                 hasPromo: [savedPromo._id]
+            //         }
+            //     }, {
+            //         new: true
+            //     })
 
-            })
+            // })
 
             return res.status(HttpStatus.OK).send(responser.success(savedPromo, "Promo Ditetapkan"))
 
@@ -323,6 +350,124 @@ const PromoController = class PromoController {
         }
     }
 
+    async addProductToPromo(req, res) {
+
+        const { error } = addProductToPromoValidation(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let promo = await this.isPromoExist(req.params.promoId)
+
+        if (!promo) {
+            return res.status(HttpStatus.OK).send(
+                responser.error(translate('promo.not_found'), HttpStatus.OK))
+        }
+
+        let products = await this.getProductByProductId(req.body.product_id)
+
+        if (!products && products.length !== req.body.cart.products.length) {
+            return res.status(HttpStatus.OK).send(
+                responser.error(translate('product.some_product_not_available'), HttpStatus.OK))
+        }
+
+        try {
+
+            const product_ids = req.body.product_id.concat(promo.products)
+
+            await PromoModel.updateOne(
+                {
+                    _id: req.params.promoId
+                },
+
+                { $addToSet: { products: product_ids } }
+                , {
+                    $project: {
+                        _id: 1
+                    }
+                })
+
+            await ProductModel.updateMany(
+                {
+                    _id: {
+                        $in: [req.body.product_id]
+                    }
+                },
+                {
+                    $set: {
+                        hasPromo: req.params.promoId
+                    }
+                }, {
+                new: true
+            })
+
+            return res.status(HttpStatus.OK).send(responser.success([], translate('promo.product_updated')))
+        } catch (err) {
+
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error(translate('promo.cant_update_promo'), HttpStatus.INTERNAL_SERVER_ERROR))
+        }
+    }
+
+    async removeProductFromPromo(req, res) {
+
+        const { error } = removeProductFromPromoValidation(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let promo = await this.isPromoExist(req.params.promoId)
+
+        if (!promo) {
+            return res.status(HttpStatus.OK).send(
+                responser.error(translate('promo.not_found'), HttpStatus.OK))
+        }
+
+        let products = await this.getProductByProductId(req.body.product_id)
+
+        if (!products && products.length !== req.body.cart.products.length) {
+            return res.status(HttpStatus.OK).send(
+                responser.error(translate('product.some_product_not_available'), HttpStatus.OK))
+        }
+
+        try {
+
+            await PromoModel.updateMany(
+                { _id: req.params.promoId },
+                {
+                    $pullAll: {
+                        products: [req.body.product_id]
+                    }
+                }, {
+                upsert: true
+            }
+
+            );
+
+            await ProductModel.updateMany(
+                {
+                    _id: {
+                        $in: [req.body.product_id]
+                    }
+                },
+                {
+                    $set: {
+                        hasPromo: null
+                    }
+                }, {
+                upsert: true
+            }
+
+            );
+
+            return res.status(HttpStatus.OK).send(responser.success([], translate('promo.product_updated')))
+        } catch (err) {
+
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error(translate('promo.cant_update_promo'), HttpStatus.INTERNAL_SERVER_ERROR))
+        }
+    }
+
     async updateStatusByPromoId(req, res) {
 
         const { error } = updateStatusByPromoIdValidation(req.body)
@@ -341,7 +486,7 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Promo Tidak Ditemukan", HttpStatus.NOT_FOUND))
         }
 
-        let message = req.body.isActive ? "Diaktifkan": "Di Non-Aktifkan"
+        let message = req.body.isActive ? "Diaktifkan" : "Di Non-Aktifkan"
 
         try {
 
@@ -438,6 +583,19 @@ const PromoController = class PromoController {
 
         return voucher
 
+    }
+
+    async getProductByProductId(product_ids = []) {
+
+        let products = await ProductModel.find({
+            _id: {
+                $in: product_ids
+            }
+        }).populate({
+            path: 'hasPromo'
+        })
+
+        return products
     }
 
     async isProductExist(productId) {

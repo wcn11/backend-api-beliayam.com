@@ -5,11 +5,8 @@ const register = (data) => {
         name: Joi.string().min(6).max(100).required(),
         username: Joi.string().min(3).max(16).required(),
         email: Joi.string().min(6).max(255).required().email(),
-        role: Joi.string().min(1).max(25).required(),
-        ability: Joi.array().items(Joi.object().keys({
-            action: Joi.string().min(3).max(15).required(),
-            subject: Joi.string().min(3).max(15).required(),
-        })),
+        roleId: Joi.int(),
+        roleName: Joi.string().min(1).max(25),
         password: Joi.string().min(6).max(255).required()
     })
 

@@ -5,7 +5,7 @@ const addToCartValidation = (data) => {
         product_id: Joi.string().min(1).required(),
         user_id: Joi.string().min(1).required(),
         quantity: Joi.number().min(1).required(),
-        note: Joi.string().max(250)
+        note: Joi.string().min(0).max(250)
     })
 
     return schema.validate(data)
@@ -13,10 +13,10 @@ const addToCartValidation = (data) => {
 
 const getCartsValidation = (data) => {
     const schema = Joi.object({
-        page: Joi.number().min(1).max(20).required(),
-        show: Joi.number().min(1).max(100).required(),
-        sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC').required(),
-        orderBy: Joi.string().min(1).max(10).valid('name', 'position').required()
+        page: Joi.number().min(1).max(20),
+        show: Joi.number().min(1).max(100),
+        sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC'),
+        orderBy: Joi.string().min(1).max(10).valid('name', 'position')
     })
 
     return schema.validate(data)
@@ -44,7 +44,7 @@ const updateProductQuantityByProductIdValidation = (data) => {
         user_id: Joi.string().max(255).required(),
         product_id: Joi.string().max(255).required(),
         type: Joi.string().min(1).max(10).valid('plus', 'minus', 'multiply').required(),
-        quantity: Joi.number().min(1).required()
+        quantity: Joi.number().required()
     })
 
     return schema.validate(data)

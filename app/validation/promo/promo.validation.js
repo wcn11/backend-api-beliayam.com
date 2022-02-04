@@ -3,9 +3,14 @@ const Joi = require('joi');
 const createNewPromoValidation = (data) => {
     const schema = Joi.object({
         name: Joi.string().min(3).required(),
+        slug: Joi.string().required().regex(/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/).label('Slug')
+            .messages({
+                "any.required": `{{#label}} dibutuhkan`,
+                "any.regex": "Slug tidak valid"
+            }),
         tags: Joi.string().min(2).max(10),
-        products: Joi.array().required(),
-        banner: Joi.any(),
+        products: Joi.array(),
+        image_promo: Joi.any(),
         termsAndConditions: Joi.string().max(1024),
         promoValue: Joi.number().min(1).required(),
         promoBy: Joi.string().valid('percent', 'price'),
@@ -34,6 +39,7 @@ const getAllPromoValidation = (data) => {
 
     return schema.validate(data)
 }
+
 const getAllPromoProductValidation = (data) => {
     const schema = Joi.object({
         page: Joi.number().min(1).max(20).required(),
@@ -74,6 +80,23 @@ const updatePromoByPromoIdValidation = (data) => {
 
     return schema.validate(data)
 }
+
+const addProductToPromoValidation = (data) => {
+    const schema = Joi.object({
+        product_id: Joi.array()
+    })
+
+    return schema.validate(data)
+}
+
+const removeProductFromPromoValidation = (data) => {
+    const schema = Joi.object({
+        product_id: Joi.array()
+    })
+
+    return schema.validate(data)
+}
+
 
 const updateStatusByPromoIdValidation = (data) => {
     const schema = Joi.object({
@@ -120,5 +143,7 @@ module.exports = {
     updatePromoByPromoIdValidation,
     deletePromoByPromoIdValidation,
     getAllPromoProductValidation,
-    updateStatusByPromoIdValidation
+    updateStatusByPromoIdValidation,
+    addProductToPromoValidation,
+    removeProductFromPromoValidation
 }

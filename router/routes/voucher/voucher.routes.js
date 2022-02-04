@@ -14,6 +14,8 @@ var imageVoucher = multer({ storage: storage })
 
 router.get('/', verifyToken, (req, res) => VoucherController.getAllVouchers(req, res))
 
+router.get('/user', verifyToken, (req, res) => VoucherController.getVouchersByUser(req, res))
+
 router.get('/code/:voucherCode', verifyToken, (req, res) => VoucherController.getVoucherByVoucherCode(req, res))
 
 router.get('/:voucherId', verifyToken, (req, res) => VoucherController.getVoucherByVoucherId(req, res))

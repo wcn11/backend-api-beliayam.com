@@ -3,8 +3,10 @@ const Schema = mongoose.Schema;
 
 const CartSchema = mongoose.Schema({
     products: [{
+
         _id: String,
         sku: String,
+        slug: String,
         name: String,
         price: Number,
         hasDiscount: Object,
@@ -18,7 +20,9 @@ const CartSchema = mongoose.Schema({
         description: String,
         quantity: 'Number',
         note: {
-            type: String
+                type: String,
+                required: false
+
         }
     }],
     users: {

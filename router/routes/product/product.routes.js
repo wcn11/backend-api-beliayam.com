@@ -5,7 +5,7 @@ const verifyToken = require('@middleware/auth/verifyToken')
 
 const multer = require('multer');
 
-const storage = require('@middleware/images/Image.middleware')
+const storage = require('@middleware/images/ImageProduct.middleware')
 
 // controller
 const ProductController = require('@controller/Product/Product.controller')
@@ -16,7 +16,7 @@ router.get('/', verifyToken, (req, res) => ProductController.getProducts(req, re
 
 router.get('/category/:categoryId', verifyToken, (req, res) => ProductController.getProductsByCategoryId(req, res))
 
-router.get('/:productId', verifyToken, (req, res) => ProductController.getProductById(req, res))
+router.get('/:slug', (req, res) => ProductController.getProductBySlug(req, res))
 
 router.post('/', verifyToken, imageProduct.single('image_product'), (req, res) => ProductController.createProduct(req, res))
 

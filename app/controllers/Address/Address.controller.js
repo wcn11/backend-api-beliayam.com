@@ -28,7 +28,7 @@ const AddressController = class AddressController {
             return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Pengguna Tidak Sesuai Dengan Sesi Login Saat Ini", HttpStatus.UNAUTHORIZED))
         }
 
-        const addressFull = await User.aggregate([
+        const addressFull = await User.egate([
             {
                 $unwind: "$addresses",
             }, {
@@ -67,6 +67,7 @@ const AddressController = class AddressController {
                 "_id": customId({}),
                 "label": req.body.label,
                 "user_id": req.body.user_id,
+                "receiver_name": req.body.receiver_name,
                 "address1": req.body.address1,
                 "address2": req.body.address2,
                 "city": req.body.city,
@@ -130,6 +131,7 @@ const AddressController = class AddressController {
                 "_id": req.params.addressId,
                 "label": req.body.label,
                 "user_id": req.body.user_id,
+                "receiver_name": req.body.receiver_name,
                 "address1": req.body.address1,
                 "address2": req.body.address2,
                 "city": req.body.city,

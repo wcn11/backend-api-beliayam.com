@@ -14,6 +14,13 @@ const ProductSchema = mongoose.Schema({
         trim: true,
         unique: true
     },
+    slug: {
+        type: String,
+        required: true,
+        min: 1,
+        trim: true,
+        unique: true
+    },
     name: {
         type: String,
         required: true,
@@ -40,6 +47,11 @@ const ProductSchema = mongoose.Schema({
         default: 0,
         required: false
     },
+    weight: {
+        type: 'Number',
+        default: 0,
+        required: true
+    },
     hasDiscount: {
         isDiscount: {
             type: Boolean,
@@ -64,12 +76,12 @@ const ProductSchema = mongoose.Schema({
         priceAfterDiscount: {
             type: 'Number',
             default: 0
-        }
+        },
     },
-    hasPromo: [{
+    hasPromo: {
         type: Schema.Types.ObjectId,
         ref: 'promo'
-    }],
+    },
     status: {
         type: String,
         default: 'active'

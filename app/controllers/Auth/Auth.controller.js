@@ -9,6 +9,9 @@ const SendForgetPassword = require('@mailService/SendForgetPassword.mail')
 const jwt = require('@helper/jwt')
 const { v4: uuidv4 } = require('uuid');
 
+const { customAlphabet } = require('nanoid')
+const nanoid = customAlphabet('1234567890', 4) // NO LETTER 
+
 const redis = require("redis");
 
 const client = redis.createClient({
@@ -23,14 +26,14 @@ const moment = require('moment')
 moment.locale('id-ID');
 
 const {
-    login,
+    loginValidator,
     byPhone,
     register,
     emailVerify,
     registerByPhone,
     resendEmailVerify,
     resendPhoneVerify,
-    verifyPhoneByUserOTP,
+    verifyPhoneByUserOTPValidator,
     refreshTokenValidator,
     loginBySocialValidator,
     changePasswordValidator,
@@ -56,7 +59,7 @@ const AuthController = class AuthController {
 
         const salt = await bcrypt.genSalt(10);
 
-        var otp = parseInt(Math.random() * 10000);
+        const otp = nanoid();
 
         //20 minutes on milliseconds
         let expiredTime = 1200000
@@ -159,41 +162,33 @@ const AuthController = class AuthController {
 
             let setPassword = await bcrypt.hash(req.body.password, salt)
 
-            const userObject = new User({
-                phone: req.body.phone,
-                isPhoneVerified: false,
-                password: setPassword,
-                registeredBy: registeredBy,
-                registeredAt: registerAt
-            })
-
-            await userObject.save()
-
-            var otp = parseInt(Math.random() * 10000);
-
-            SMSGateway.sendSms({
-                to: req.body.phone,
-                text: `Masukan Kode OTP: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
-
-            });
+            const otp = nanoid();
 
             //5 minutes on seconds
             let expiredTime = 300
             let expired = moment().add(expiredTime, 'seconds')
 
-            await User.updateOne({
+            const userObject = new User({
                 phone: req.body.phone,
-            }, {
                 isPhoneVerified: false,
+                password: setPassword,
+                registeredBy: registeredBy,
+                registeredAt: registerAt,
                 otpSms: {
                     code: otp,
                     attempts: 0,
                     expiredDate: expired,
                     expired: false
                 }
-            }, {
-                upsert: true
             })
+
+            await userObject.save()
+
+            SMSGateway.sendSms({
+                to: req.body.phone,
+                text: `Masukan Kode OTP: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+
+            });
 
             client.set(`smsOtp.${req.body.phone}`, JSON.stringify(otp), 'EX', expiredTime);
 
@@ -214,24 +209,25 @@ const AuthController = class AuthController {
 
     async login(req, res) {
 
-        const { error } = login(req.body)
+        const { error } = loginValidator(req.body)
 
         if (error) {
 
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error(error.details[0].message, HttpStatus.BAD_REQUEST));
+            return res.status(HttpStatus.OK).send(responser.error(error.details[0].message, HttpStatus.OK));
         }
 
         let user = await User.findOne({ email: req.body.email })
 
-        if (!user) return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.BAD_REQUEST));
+        if (!user) return res.status(HttpStatus.OK).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.OK));
 
         const validPass = await bcrypt.compare(req.body.password, user.password)
 
-        if (!validPass) return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.BAD_REQUEST));
+        if (!validPass) return res.status(HttpStatus.OK).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.OK));
 
         if (!user.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan", HttpStatus.BAD_REQUEST));
+            return res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
+
         user.password = undefined
         user.otpEmail = undefined
         user.otpSms = undefined
@@ -269,15 +265,23 @@ const AuthController = class AuthController {
 
         const emailExist = await User.findOne({ email: req.body.email })
 
+        if (emailExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
         try {
+
+            // if(emailExist){
+            //     if (emailExist.registeredBy === "email")
+            // }
 
             if (!emailExist) {
 
                 const userObject = new User({
                     name: req.body.name,
                     email: req.body.email,
-                    registeredBy: req.body.registeredBy,
-                    registeredAt: req.body.registerAt,
+                    registeredBy: req.body.loginBy,
+                    registeredAt: req.body.loginAt,
                     isEmailVerified: true
                 })
 
@@ -312,8 +316,7 @@ const AuthController = class AuthController {
             return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK)
                 .send(responser.success(
                     loggedUser,
-                    "OK",
-                    HttpStatus.OK));
+                    "OK"));
 
         } catch (err) {
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Tidak Bisa Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
@@ -331,11 +334,25 @@ const AuthController = class AuthController {
 
         const user = await User.findOne({ phone: req.body.phone, isPhoneVerified: true })
 
-        if (!user) return res.status(HttpStatus.NOT_FOUND).send("Telepon Atau Password Salah")
+        if (!user) {
+
+            return res.status(HttpStatus.NOT_FOUND).send(
+                responser.error("Telepon Atau Password Salah", HttpStatus.NOT_FOUND)
+            );
+        }
 
         const validPass = await bcrypt.compare(req.body.password, user.password)
 
-        if (!validPass) return res.status(HttpStatus.NOT_FOUND).send("Telepon Atau Password Salah")
+        if (!validPass) {
+
+            return res.status(HttpStatus.NOT_FOUND).send(
+                responser.error("Telepon Atau Password Salah", HttpStatus.NOT_FOUND)
+            );
+        }
+
+        if (!user.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
 
         user.otpEmail = undefined
         user.otpSms = undefined
@@ -378,6 +395,10 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
             );
+        }
+
+        if (!isPhoneExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
         client.get(`smsOtp.${req.body.phone}`, async (err, request) => {
@@ -454,10 +475,10 @@ const AuthController = class AuthController {
 
             const UserData = await User.findOne({ phone: req.body.phone })
 
-            user.otpEmail = undefined
-            user.otpSms = undefined
-            user.password = undefined
-            user.addresses = undefined
+            UserData.otpEmail = undefined
+            UserData.otpSms = undefined
+            UserData.password = undefined
+            UserData.addresses = undefined
 
             const loggedUser = {
                 UserData
@@ -492,13 +513,25 @@ const AuthController = class AuthController {
 
         const isPhoneExist = await User.findOne({ phone: req.body.phone })
 
+        console.log(parseInt(req.body.phone))
+
+        if (!isPhoneExist) {
+            return res.status(HttpStatus.NOT_FOUND).send(
+                responser.error("Nomor Tidak Terdaftar", HttpStatus.NOT_FOUND)
+            );
+        }
+
         if (isPhoneExist && isPhoneExist.isPhoneVerified) {
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
             );
         }
 
-        var otp = parseInt(Math.random() * 10000);
+        if (!isPhoneExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
+        const otp = nanoid();
 
         SMSGateway.sendSms({
             to: req.body.phone,
@@ -540,7 +573,7 @@ const AuthController = class AuthController {
 
     async verifyPhoneByUserId(req, res) {
 
-        const { error } = verifyPhoneByUserOTP(req.body)
+        const { error } = verifyPhoneByUserOTPValidator(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
@@ -558,6 +591,10 @@ const AuthController = class AuthController {
 
         if (!user) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
+        }
+
+        if (!user.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
         client.get(`smsOtp.${user.id}`, async (err, request) => {
@@ -661,7 +698,11 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Tidak Bisa Mem-verifikasi Ulang Nomor Yang Telah Terverifikasi Sebelumnya", HttpStatus.NOT_ACCEPTABLE));
         }
 
-        var otp = parseInt(Math.random() * 10000);
+        if (!user.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
+        const otp = nanoid();
 
         let sendSms = SMSGateway.sendSms({
             to: req.body.phone,
@@ -714,6 +755,10 @@ const AuthController = class AuthController {
 
         if (!userExist) {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Email Atau Kode Verifikasi Salah", HttpStatus.NOT_ACCEPTABLE));
+        }
+
+        if (!userExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
         client.get(`emailOtp.${userExist.id}`, async (err, request) => {
@@ -819,7 +864,11 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Telah Diverifikasi", HttpStatus.NOT_FOUND));
         }
 
-        var otp = parseInt(Math.random() * 10000);
+        if (!userExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
+        const otp = nanoid();
 
         let expiredTime = 1200000 //20 minutes on milliseconds
         let expired = moment().add(expiredTime, 'milliseconds')
@@ -866,6 +915,10 @@ const AuthController = class AuthController {
 
         if (!userExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Tidak Terdaftar", HttpStatus.NOT_FOUND));
+        }
+
+        if (!userExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
         const token = crypto.randomBytes(32).toString("hex")
@@ -921,6 +974,20 @@ const AuthController = class AuthController {
                 return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Signature", HttpStatus.FORBIDDEN));
             }
 
+            const getUserById = User.findOne({
+                _id: req.body.id
+            })
+
+            if (!getUserById) {
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Tidak Ditemukan", HttpStatus.FORBIDDEN));
+            }
+
+            if (!getUserById.isActive) {
+                res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+            }
+
+            // client.expireat(`smsOtp.${req.body.phone}`, 0);
+
             res.status(HttpStatus.OK).send(responser.success([], "OK", HttpStatus.OK))
         })
 
@@ -962,6 +1029,18 @@ const AuthController = class AuthController {
             const newPassword = await bcrypt.hash(req.body.password, salt)
 
             try {
+
+                const getUserById = User.findOne({
+                    _id: req.body.id
+                })
+
+                if (!getUserById) {
+                    return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Tidak Ditemukan", HttpStatus.FORBIDDEN));
+                }
+
+                if (!getUserById.isActive) {
+                    res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+                }
 
                 await User.updateOne({
                     _id: req.body.id

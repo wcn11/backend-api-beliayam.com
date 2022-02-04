@@ -6,7 +6,7 @@ const verifyToken = require('@middleware/auth/verifyToken')
 // controller
 const OrderController = require('@controller/Order/Order.controller')
 
-// router.get('/', verifyToken, (req, res) => VoucherController.getAllVouchers(req, res))
+router.get('/:order_id', verifyToken, (req, res) => OrderController.getOrderById(req, res))
 
 // router.get('/code/:voucherCode', verifyToken, (req, res) => VoucherController.getVoucherByVoucherCode(req, res))
 
@@ -15,6 +15,8 @@ const OrderController = require('@controller/Order/Order.controller')
 // router.get('/cart', verifyToken, (req, res) => CheckoutController.getUserCheckoutData(req, res))
 
 router.post('/', verifyToken, (req, res) => OrderController.placeOrder(req, res))
+
+router.post('/cancel-order', verifyToken, (req, res) => OrderController.cancelPayment(req, res))
 
 // router.post('/voucher/apply', verifyToken, (req, res) => CheckoutController.applyVoucher(req, res))
 

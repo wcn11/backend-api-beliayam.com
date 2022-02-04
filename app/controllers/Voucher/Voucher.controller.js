@@ -6,6 +6,10 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
+const { currentTime } = require('@helper/date')
+
+const moment = require('moment')
+moment.locale('id-ID');
 
 
 const {
@@ -14,7 +18,8 @@ const {
     getVoucherByVoucherCodeValidation,
     getVoucherByVoucherIdValidation,
     updateVoucherByVoucherIdValidation,
-    deleteVoucherByVoucherIdValidation
+    deleteVoucherByVoucherIdValidation,
+    getAllVouchersByUserValidation
 
 } = require('@validation/voucher/voucher.validation')
 
@@ -60,6 +65,75 @@ const VoucherController = class VoucherController {
         }
     }
 
+    async getVouchersByUser(req, res) {
+
+        const { error } = getAllVouchersByUserValidation(req.query)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        try {
+
+            let page = req.query.page ?? 1
+            let show = req.query.show ?? 10
+
+            let sortBy;
+
+            let orderBy;
+
+            if (!req.query.sortBy) {
+                sortBy = req.query.sortBy === "ASC" ? 1 : -1
+            }
+            sortBy = req.query.sortBy ?? 1
+
+            if (!req.query.orderBy) {
+                orderBy = req.query.orderBy ?? "voucherCode"
+            }
+            orderBy = req.query.orderBy ?? 1
+
+            var currentDate = moment().add(7, 'hour').toDate()
+
+            const userId = req.user.user._id
+
+            const platform = req.query.platform
+
+            const isActive = req.query.isActive ?? false
+
+            const voucher = await VoucherModel.find({
+                $or: [
+                    {
+                        "isPrivate.private": true,
+                        "isPrivate.users": {
+                            $in: [`${userId}`]
+                        },
+                    },
+                    {
+                        "isPrivate.private": false
+                    },
+                ],
+                platform: {
+                    $in: [platform, 'all']
+                },
+                isActive: isActive,
+                discountStart: {
+                    $lte: currentDate
+                },
+                discountEnd: {
+                    $gte: currentDate
+                }
+            }).sort({
+                orderBy: sortBy
+            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+
+            return res.status(HttpStatus.OK).send(responser.success(voucher, "OK"));
+
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
     async getVoucherByVoucherCode(req, res) {
 
         const { error } = getVoucherByVoucherCodeValidation(req.params)
@@ -133,7 +207,7 @@ const VoucherController = class VoucherController {
         let input = req.body
 
         let isVoucherExist = await this.isVoucherExist(input.voucherCode)
-        
+
         if (isVoucherExist) {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation("Kode Voucher Telah Digunakan", HttpStatus.NOT_ACCEPTABLE))
         }

@@ -4,14 +4,14 @@ const responser = require('@responser')
 const path = require('path')
 
 const {
-    addProductValidation
-} = require('@validation/product/product.validation')
+    addCategory
+} = require('@validation/category/category.validation')
 
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
 
-        const { error } = addProductValidation(req.body)
+        const { error } = addCategory(req.body)
 
         if (file) {
 

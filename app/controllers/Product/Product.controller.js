@@ -10,7 +10,7 @@ const responser = require('@responser')
 const {
     addProductValidation,
     getProductsValidation,
-    getProductByIdValidation,
+    getProductBySlugValidation,
     updateProductByIdValidation,
     deleteProductByIdValidation,
     getProductsByCategoryIdValidation
@@ -40,6 +40,7 @@ const ProductController = class ProductController {
             if (!req.query.sortBy) {
                 sortBy = req.query.sortBy === "ASC" ? 1 : -1
             }
+
             sortBy = req.query.sortBy ?? 1
 
             if (!req.query.orderBy) {
@@ -116,35 +117,24 @@ const ProductController = class ProductController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
         }
     }
-    // async getProductByName(){
 
-    // }
+    async getProductBySlug(req, res) {
 
-    async getProductById(req, res) {
-
-        const { error } = getProductByIdValidation(req.params)
+        const { error } = getProductBySlugValidation(req.params)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = await this.isIdValid(req.params.productId)
-
-        if (!isValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Produk ID Tidak Valid", HttpStatus.BAD_REQUEST)
-            );
-        }
-
         let product = await ProductModel.findOne({
-            _id: req.params.productId
+            slug: req.params.slug
         }).populate(['category', 'hasPromo'])
 
-        if (!product) {
-            return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Tidak Ditemukan", HttpStatus.NOT_FOUND))
-        }
+        // if (!product) {
+        //     return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Tidak Ditemukan", HttpStatus.NOT_FOUND))
+        // }
 
-        return res.status(HttpStatus.OK).send(responser.success(product, HttpStatus.OK));
+        return res.status(HttpStatus.OK).send(responser.success(product ?? {}, HttpStatus.OK));
     }
 
     async createProduct(req, res) {
@@ -174,20 +164,22 @@ const ProductController = class ProductController {
             let productObject = {
 
                 category: [
-                    category._id,
+                    input.category_id,
                 ],
+                slug: input.slug,
                 sku: input.sku,
                 name: input.name,
                 position: input.position,
                 price: input.price,
                 stock: input.stock,
+                weight: input.weight,
                 status: input.status,
                 additional: input.additional,
                 description: input.description
             }
 
             if (req.file) {
-                productObject.image = req.file ? req.file.url : "images/product/default.jpg"
+                productObject.image = req.file ? `images/product/${req.file.filename}` : "images/product/default.jpg"
             }
 
             if (input.isDiscount) {
@@ -285,17 +277,19 @@ const ProductController = class ProductController {
                     category._id,
                 ],
                 sku: input.sku,
+                slug: input.slug,
                 name: input.name,
                 position: input.position,
                 price: input.price,
                 stock: input.stock,
+                weight: input.weight,
                 status: input.status,
                 additional: input.additional,
                 description: input.description
             }
 
             if (req.file) {
-                productObject.image = req.file.path
+                productObject.image = req.file ? `images/product/${req.file.filename}` : "images/product/default.jpg"
             }
 
             if (input.isDiscount) {
@@ -306,10 +300,6 @@ const ProductController = class ProductController {
                     discountStart: input.discountStart,
                     discountEnd: input.discountEnd
                 }
-            }
-
-            if (input.promo) {
-                productObject.hasPromo = input.promo
             }
 
             const product = await ProductModel.findOneAndUpdate(

@@ -1,11 +1,5 @@
 const mongoose = require('mongoose');
 
-
-const AbilitySchema = mongoose.Schema({
-    action: String,
-    subject: String,
-})
-
 const AdminSchema = mongoose.Schema({
     name: {
         type: String,
@@ -22,9 +16,10 @@ const AdminSchema = mongoose.Schema({
         trim: true,
         unique: true,
     },
-    ability: [AbilitySchema],
-    avatar: String,
-    role: String,
+    role: {
+        roleId: Number,
+        roleName: String,
+    },
     gender: {
         type: String,
         required: false,

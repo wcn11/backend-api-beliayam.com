@@ -2,12 +2,18 @@ const Joi = require('joi');
 
 const addProductValidation = (data) => {
     const schema = Joi.object({
-        category_id: Joi.string().min(1),
+        category_id: Joi.string(),
         sku: Joi.string().min(1).max(20).required(),
+        slug: Joi.string().min(1).required().regex(/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/).label('Slug')
+            .messages({
+                "any.required": `{{#label}} dibutuhkan`,
+                "any.regex": "Slug tidak valid"
+            }),
         name: Joi.string().min(6).max(100).required(),
         position: Joi.number().min(1).max(10),
         image_product: Joi.any(),
         price: Joi.number().min(3),
+        weight: Joi.number().required(),
         stock: Joi.number().min(3),
         isDiscount: Joi.boolean(),
         discount: Joi.number().min(1).max(100),
@@ -52,9 +58,9 @@ const getProductsByCategoryIdValidation = (data) => {
     return schema.validate(data)
 }
 
-const getProductByIdValidation = (data) => {
+const getProductBySlugValidation = (data) => {
     const schema = Joi.object({
-        productId: Joi.string().max(255).required()
+        slug: Joi.string().max(255).required()
     })
 
     return schema.validate(data)
@@ -72,11 +78,17 @@ const updateProductByIdValidation = (data) => {
     const schema = Joi.object({
         category_id: Joi.string().min(1),
         sku: Joi.string().min(1).max(20).required(),
+        slug: Joi.string().min(1).required().regex(/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/).label('Slug')
+            .messages({
+                "any.required": `{{#label}} dibutuhkan`,
+                "any.regex": "Slug tidak valid"
+            }),
         name: Joi.string().min(6).max(100).required(),
         position: Joi.number().min(1).max(10),
         image_product: Joi.any(),
         price: Joi.number().min(3),
         stock: Joi.number().min(3),
+        weight: Joi.number().required(),
         isDiscount: Joi.boolean(),
         discount: Joi.number().min(1).max(100),
         discountBy: Joi.string().min(1).max(10).valid('percent', 'price'),
@@ -95,7 +107,7 @@ const updateProductByIdValidation = (data) => {
 module.exports = {
     addProductValidation,
     getProductsValidation,
-    getProductByIdValidation,
+    getProductBySlugValidation,
     updateProductByIdValidation,
     deleteProductByIdValidation,
     getProductsByCategoryIdValidation

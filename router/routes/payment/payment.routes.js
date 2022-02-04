@@ -16,7 +16,11 @@ const PaymentController = require('@controller/Payment/Payment.controller')
 
 router.get('/', verifyToken, (req, res) => PaymentController.getAllPaymentChannel(req, res))
 
-router.post('/pay', verifyToken, (req, res) => PaymentController.createPayment(req, res))
+// router.post('/pay', verifyToken, (req, res) => PaymentController.createPayment(req, res))
+
+router.post('/checkout/bill/notification', verifyToken, (req, res) => PaymentController.setBillPaymentStatus(req, res))
+
+// router.post('/checkout/bill/callback', verifyToken, (req, res) => PaymentController.createPayment(req, res))
 
 // router.post('/voucher/remove', verifyToken, (req, res) => CheckoutController.removeVoucher(req, res))
 

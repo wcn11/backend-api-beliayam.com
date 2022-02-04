@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const CartModel = require('@model/cart/cart.model')
 const UserModel = require('@model/user/user.model')
@@ -29,7 +28,7 @@ const CartController = class CartController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        try {
+        // try {
 
             let page = req.query.page ?? 1
             let show = req.query.show ?? 10
@@ -53,18 +52,18 @@ const CartController = class CartController {
                     orderBy: sortBy
                 }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
-            if (cart) {
-                cart.users.otpEmail = undefined
-                cart.users.otpSms = undefined
-                cart.users.password = undefined
-            }
+            // if (cart) {
+            //     cart.users.otpEmail = undefined
+            //     cart.users.otpSms = undefined
+            //     cart.users.password = undefined
+            // }
 
             return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
 
-        } catch (err) {
+        // } catch (err) {
 
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
-        }
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        // }
     }
 
     async addToCart(req, res) {

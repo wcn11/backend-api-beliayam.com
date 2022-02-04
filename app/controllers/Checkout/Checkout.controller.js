@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const CheckoutModel = require('@model/checkout/checkout.model')
 const ChargeModel = require('@model/charge/charge.model')
@@ -198,36 +197,38 @@ const CheckoutController = class CheckoutController {
             })
         }
 
-        try {
+        // try {
 
-            let type = req.body.type || ""
-            let platform = req.body.platform || ""
-            let isActive = req.body.isActive || true
+        let type = req.body.type || ""
+        let platform = req.body.platform || ""
+        let isActive = req.body.isActive || true
 
-            let charges = await this.getAllCharge(type, platform, isActive)
+        let charges = await this.getAllCharge(type, platform, isActive)
 
-            let chargesObjectIds = []
+        let chargesObjectIds = []
 
-            const calculateCharge = charges.reduce((accumulator, charge) => {
+        const calculateCharge = charges.reduce((accumulator, charge) => {
 
-                if (charge.chargeBy === "price") {
-                    chargesObjectIds.push(charge._id)
-                    return accumulator + parseInt(charge.chargeValue)
-                }
-                // else if (charge.chargeBy === "percent") {
-                //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
-                // }
-                else {
-                    chargesObjectIds.push(charge._id)
-                    return accumulator
-                }
-            }, 0)
+            if (charge.chargeBy === "price") {
+                chargesObjectIds.push(charge._id)
+                return accumulator + parseInt(charge.chargeValue)
+            }
+            // else if (charge.chargeBy === "percent") {
+            //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
+            // }
+            else {
+                chargesObjectIds.push(charge._id)
+                return accumulator
+            }
+        }, 0)
 
-            let voucherNotValid = []
+        let voucherNotValid = []
 
-            let vouchers = []
+        let vouchers = []
 
-            let allVouchers = req.body.vouchers
+        let allVouchers = req.body.vouchers || []
+
+        if (allVouchers && allVouchers > 0) {
 
             for (let i = 0; i < allVouchers.length; i++) {
 
@@ -277,61 +278,62 @@ const CheckoutController = class CheckoutController {
                 vouchers.push(isVoucherExist)
 
             }
-
-            let checkIfCheckoutIsExist = await CheckoutModel.findOne({
-                user: req.body.user_id
-            })
-
-            if (checkIfCheckoutIsExist) {
-                await CheckoutModel.deleteOne({
-                    user: req.body.user_id
-                })
-            }
-
-            let saveCheckout = new CheckoutModel({
-                cart_id: req.body.cart.cart_id,
-                items: objectProduct,
-                baseTotal: calculateItem + calculateCharge,
-                subTotalProduct: calculateItem,
-                subTotalCharges: calculateCharge,
-                charges: chargesObjectIds,
-                platform: [req.body.platform],
-                user: req.body.user_id,
-            })
-
-            await saveCheckout.save()
-
-            let newCheckout = await CheckoutModel.findOne({
-                user: req.body.user_id
-            }).lean().populate([
-                { path: 'charges' },
-                {
-                    path: 'items.product',
-                    populate: {
-                        path: 'category'
-                    },
-                    populate: {
-                        path: 'hasPromo'
-                    },
-                },
-                { path: 'user' },
-            ])
-
-            newCheckout.user.otpEmail = undefined
-
-            newCheckout.user.otpSms = undefined
-
-            newCheckout.user.password = undefined
-
-            newCheckout.vouchers = vouchers
-
-            newCheckout.voucherNotValid = voucherNotValid
-
-            return res.status(HttpStatus.OK).send(responser.success(newCheckout, HttpStatus.OK));
-
-        } catch (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Tidak Dapat Checkout", HttpStatus.BAD_REQUEST))
         }
+
+        let checkIfCheckoutIsExist = await CheckoutModel.findOne({
+            user: req.body.user_id
+        })
+
+        if (checkIfCheckoutIsExist) {
+            await CheckoutModel.deleteOne({
+                user: req.body.user_id
+            })
+        }
+
+        let saveCheckout = new CheckoutModel({
+            cart_id: req.body.cart.cart_id,
+            items: objectProduct,
+            baseTotal: calculateItem + calculateCharge,
+            subTotalProduct: calculateItem,
+            subTotalCharges: calculateCharge,
+            charges: chargesObjectIds,
+            platform: [req.body.platform],
+            user: req.body.user_id,
+        })
+
+        await saveCheckout.save()
+
+        let newCheckout = await CheckoutModel.findOne({
+            user: req.body.user_id
+        }).lean().populate([
+            { path: 'charges' },
+            {
+                path: 'items.product',
+                populate: {
+                    path: 'category'
+                },
+                populate: {
+                    path: 'hasPromo'
+                },
+            },
+            { path: 'user' },
+        ])
+
+        newCheckout.user.otpEmail = undefined
+
+        newCheckout.user.otpSms = undefined
+
+        newCheckout.user.password = undefined
+
+        newCheckout.vouchers = vouchers
+
+        newCheckout.voucherNotValid = voucherNotValid
+
+        return res.status(HttpStatus.OK).send(responser.success(newCheckout, HttpStatus.OK));
+
+        // } catch (error) {
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Tidak Dapat Checkout", HttpStatus.BAD_REQUEST))
+        // }
 
     }
 
@@ -399,15 +401,15 @@ const CheckoutController = class CheckoutController {
             }
         })
 
-        if (isVoucherExist.discountBy === "percent") {
-            let priceAfterDiscount = (isVoucherExist.discountValue / 100) * checkoutObject.baseTotal
-            discountValue = priceAfterDiscount
-            afterPrice = checkoutObject.baseTotal - priceAfterDiscount
+        // if (isVoucherExist.discountBy === "percent") {
+        //     let priceAfterDiscount = (isVoucherExist.discountValue / 100) * checkoutObject.baseTotal
+        //     discountValue = priceAfterDiscount
+        //     afterPrice = checkoutObject.baseTotal - priceAfterDiscount
 
-        } else if (isVoucherExist.discountBy === "price") {
-            afterPrice = checkoutObject.baseTotal - isVoucherExist.discountValue
-            discountValue = isVoucherExist.discountValue
-        }
+        // } else if (isVoucherExist.discountBy === "price") {
+        //     afterPrice = checkoutObject.baseTotal - isVoucherExist.discountValue
+        //     discountValue = isVoucherExist.discountValue
+        // }
 
         if (!platform) {
 

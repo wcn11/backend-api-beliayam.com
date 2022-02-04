@@ -9,6 +9,13 @@ const CategorySchema = mongoose.Schema({
         trim: true,
         unique: true
     },
+    slug: {
+        type: String,
+        required: true,
+        min: 3,
+        trim: true,
+        unique: true
+    },
     name: {
         type: String,
         required: true,

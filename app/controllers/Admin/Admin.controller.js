@@ -42,7 +42,9 @@ const AdminController = class AdminController {
 
         const emailExist = await AdminModel.findOne({ email: req.body.email })
 
-        if (emailExist) return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Email Telah Terdaftar", HttpStatus.BAD_REQUEST))
+        if (emailExist) return res.status(HttpStatus.OK).send(responser.error(translate('admin.register.email_exist'), HttpStatus.OK))
+
+        if (emailExist.username === req.body.username) return res.status(HttpStatus.OK).send(responser.error(translate('admin.username_exist'), HttpStatus.OK))
 
         const salt = await bcrypt.genSalt(10);
 

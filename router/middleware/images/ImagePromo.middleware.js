@@ -1,41 +1,30 @@
 const multer = require('multer');
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
-const { BadRequest } = require('@utility/errors');
 const path = require('path')
 
 const {
-    createNewPromoValidation,
-    updatePromoByPromoIdValidation
+    createNewPromoValidation
 } = require('@validation/promo/promo.validation')
 
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
+
+        const { error } = createNewPromoValidation(req.body)
+
         if (file) {
 
             switch (file.fieldname) {
                 case "image_promo":
 
-                    if (req.method === "POST") {
+                    if (error) {
+                        const message = responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST)
 
-                        const { error } = createNewPromoValidation(req.body)
-
-                        if(error) {
-                            cb(new BadRequest(error.details[0].message, HttpStatus.BAD_REQUEST), null)
-                        }
-
-                    } else if (req.method.toUpperCase() === "PUT") {
-
-                        const { error } = updatePromoByPromoIdValidation(req.body)
-
-                        if (error) {
-                            cb(new BadRequest(error.details[0].message, HttpStatus.BAD_REQUEST), null)
-                        }
-
+                        cb(message, null)
                     }
 
-                    cb(null, path.join(__dirname, '../../../public/images/promo'))
+                    cb(null, path.join('public/images/promo'))
                     break;
             }
         }
@@ -48,6 +37,7 @@ var storage = multer.diskStorage({
             "image/jpeg": ".jpeg",
             "image/jpg": ".jpg"
         };
+
         if (fileObj[file.mimetype] == undefined) {
 
             const message = responser.validation("Format File Tidak Valid", HttpStatus.BAD_REQUEST)
@@ -55,7 +45,10 @@ var storage = multer.diskStorage({
             cb(message, null)
 
         } else {
-            cb(null, Date.now() + "-" + file.originalname)
+            let date = Date.now()
+
+            file.url = `images/promo/${date}-${file.originalname}`
+            cb(null, date + "-" + file.originalname)
         }
     }
 })

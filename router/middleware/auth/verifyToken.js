@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
+const redis = require("redis");
+
+const client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+})
 
 module.exports = function(req, res, next) {
 
@@ -20,7 +26,22 @@ module.exports = function(req, res, next) {
 
         req.user = verified['data']
 
-        next()
+        client.get(`${req.user.user._id}`, async (err, request) => {
+
+            if (!request) {
+
+                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Required", HttpStatus.UNAUTHORIZED))
+            }
+
+            if (!req.user.user.isActive) {
+
+                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.UNAUTHORIZED))
+            }
+
+            next()
+
+        })
+
     }catch(err) {
 
         if (err.name === "TokenExpiredError") {

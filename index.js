@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 
 const cors = require('cors');
+var path = require('path');
 
 // const bodyParser = require('body-parser');
 
@@ -13,20 +14,30 @@ require('module-alias/register')
 
 require('./config/database')
 
+global.globalConfig = require('./config/main')
+
+global.translate = require('./config/lang').trans
+
 const handleErrors = require('./middleware/handleErrors');
 
-// const whitelist = ['http://developer1.com', 'http://developer2.com']
+const setError = require('@utility/errors')
+
+const Whitelist = require('@utility/ipwhitelist')
+
 app.use(cors({
-    origin: ['http://localhost:8080'],
-    // origin: (origin, callback) => {
-    //     if (whitelist.indexOf(origin) !== -1) {
+    credentials: true,
+    origin: '*',
+    // (origin, callback) => {
+    //     if (Whitelist.indexOf(origin) !== -1) {
     //         callback(null, true)
     //     } else {
-    //         callback(new Error())
+    //         callback(new setError.GeneralError("Request Has Been Blocked By CORS policy", true, 301))
     //     }
     // },
-    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH']
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH', 'OPTIONS']
 }));
+
+app.options('*', cors()) 
 
 const PORT = 4000;
 
@@ -35,12 +46,11 @@ app.use(express.urlencoded({
 }));
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-const router = require('./router/bootstrap')
+const router = require('./router/bootstrap.routers')
 
 app.use(router)
-app.use(express.static(__dirname + '/public'));
-
 app.use(handleErrors) // Errors middleware must be the last of any routes
 
 app.listen(PORT, () => console.log(`Listen ${PORT}`))

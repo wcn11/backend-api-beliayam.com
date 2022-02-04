@@ -12,6 +12,7 @@ const maps = (data) => {
 const addAddress = (data) => {
     const schema = Joi.object({
         user_id: Joi.string().max(50).required(),
+        receiver_name: Joi.string().max(50).required(),
         label: Joi.string().min(3).max(20),
         address1: Joi.string().min(6).max(255).required(),
         address2: Joi.string().min(6).max(255),
@@ -35,6 +36,7 @@ const updateAddress = (data) => {
     const schema = Joi.object({
         _id: Joi.string().max(50).required(),
         user_id: Joi.string().max(50).required(),
+        receiver_name: Joi.string().max(50).required(),
         label: Joi.string().min(3).max(20),
         address1: Joi.string().min(6).max(255).required(),
         address2: Joi.string().min(6).max(255),

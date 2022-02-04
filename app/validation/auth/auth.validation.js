@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const register = (data) => {
+const registerValidator = (data) => {
     const schema = Joi.object({
         name: Joi.string().min(6).max(100).required(),
         email: Joi.string().lowercase().min(6).max(255).required().email(),
@@ -12,7 +12,7 @@ const register = (data) => {
     return schema.validate(data)
 }
 
-const registerByPhone = (data) => {
+const registerByPhoneValidator = (data) => {
     const schema = Joi.object({
         phone: Joi.string().min(6).max(18).required(),
         password: Joi.string().min(6).max(255).required(),
@@ -23,7 +23,7 @@ const registerByPhone = (data) => {
     return schema.validate(data)
 }
 
-const login = (data) => {
+const loginValidator = (data) => {
     const schema = Joi.object({
         email: Joi.string().min(6).max(255).required().email(),
         password: Joi.string().min(6).max(1024).required()
@@ -36,14 +36,14 @@ const loginBySocialValidator = (data) => {
     const schema = Joi.object({
         name: Joi.string().min(6).max(100).required(),
         email: Joi.string().lowercase().min(6).max(255).required().email(),
-        registerBy: Joi.string().min(3).max(25),
-        registerAt: Joi.string().min(3).max(25)
+        loginBy: Joi.string().min(3).max(25),
+        loginAt: Joi.string().min(3).max(25)
     })
 
     return schema.validate(data)
 }
 
-const byPhone = (data) => {
+const loginByPhoneValidator = (data) => {
     const schema = Joi.object({
         phone: Joi.string().min(6).max(18).required(),
         password: Joi.string().min(6).max(1024).required()
@@ -94,7 +94,7 @@ const sendEmailForgetPasswordValidator = (data) => {
     return schema.validate(data)
 }
 
-const verifyPhoneByUserOTP = (data) => {
+const verifyPhoneByUserOTPValidator = (data) => {
     const schema = Joi.object({
         user_id: Joi.string().required(),
         code: Joi.string().required()
@@ -150,14 +150,14 @@ const changePasswordValidator = (data) => {
 }
 
 module.exports = {
-    login,
-    byPhone,
-    register,
+    loginValidator,
+    loginByPhoneValidator,
+    registerValidator,
     emailVerify,
-    registerByPhone,
+    registerByPhoneValidator,
     resendPhoneVerify,
     resendEmailVerify,
-    verifyPhoneByUserOTP,
+    verifyPhoneByUserOTPValidator,
     refreshTokenValidator,
     loginBySocialValidator,
     changePasswordValidator,

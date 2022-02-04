@@ -6,15 +6,20 @@ const PromoSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    slug: {
+        type: String,
+        required: true
+    },
     tags: {
         type: Object,
         default: []
     },
     products: [{
             type: Schema.Types.ObjectID,
-            ref: "Products"
+        ref: "Products",
+        unique: true
     }],
-    banner: {
+    image_promo: {
         type: String
     },
     termsAndConditions: {

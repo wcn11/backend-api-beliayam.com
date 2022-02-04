@@ -8,7 +8,7 @@ const client = redis.createClient({
     port: process.env.REDIS_PORT
 })
 
-const PaymentChannel = require('@utility/payment.lists')
+const PaymentChannel = require('@utility/payment/payment.lists')
 
 
 const PaymentGateway = class PaymentGateway {

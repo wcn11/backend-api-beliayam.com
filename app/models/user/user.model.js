@@ -76,6 +76,7 @@ const UserSchema = mongoose.Schema({
     phone: {
         type: String,
         required: false,
+        unique: true,
         min: 6,
         max: 20,
         trim: true
@@ -108,6 +109,7 @@ const UserSchema = mongoose.Schema({
         _id: String,
         label: String,
         user_id: String,
+        receiver_name: String,
         address1: String,
         address2: String,
         city: String,
