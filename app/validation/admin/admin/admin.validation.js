@@ -30,8 +30,7 @@ const changeEmailUser = (data) => {
 const updateActiveUserValidation = (data) => {
     const schema = Joi.object({
         user_id: Joi.string().min(6).max(255).required(),
-        active: Joi.boolean().required(),
-        notify: Joi.boolean().required()
+        active: Joi.boolean().required()
     })
 
     return schema.validate(data)
@@ -55,24 +54,6 @@ const changePasswordValidator = (data) => {
             .messages({
                 "any.required": `{{#label}} dibutuhkan`
             }),
-    })
-
-    return schema.validate(data)
-}
-
-const setOrderStatusValidator = (data) => {
-    const schema = Joi.object({
-        user_id: Joi.string().required().label('User Id')
-            .messages({
-                "any.required": `{{#label}} dibutuhkan`
-            }),
-        order: Joi.object({
-            status_code: Joi.number().required().label('Status Code')
-                .messages({
-                    "status_code.required": `{{#label}} dibutuhkan`
-                }),
-            note: Joi.string().label('Catatan')
-        })
     })
 
     return schema.validate(data)
@@ -117,6 +98,5 @@ module.exports = {
     emailVerify,
     resendEmailVerify,
     changePasswordValidator,
-    updateActiveUserValidation,
-    setOrderStatusValidator
+    updateActiveUserValidation
 }

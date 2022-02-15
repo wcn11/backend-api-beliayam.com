@@ -28,7 +28,7 @@ moment.locale('id-ID');
 const {
     loginValidator,
     byPhone,
-    register,
+    registerValidator,
     emailVerify,
     registerByPhone,
     resendEmailVerify,
@@ -47,7 +47,7 @@ const AuthController = class AuthController {
 
     async register(req, res) {
 
-        const { error } = register(req.body)
+        const { error } = registerValidator(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
@@ -68,7 +68,7 @@ const AuthController = class AuthController {
         let registeredBy = req.body.registerBy
         let registerAt = req.body.registerAt
 
-        try {
+        // try {
 
             let setPassword = await bcrypt.hash(req.body.password, salt)
 
@@ -123,11 +123,11 @@ const AuthController = class AuthController {
                 .send(responser.success(
                     loggedUser,
                     "Akun Dibuat, Segera Verifikasi Email Anda",
-                    HttpStatus.OK));
+                    "OK"));
 
-        } catch (err) {
-            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
-        }
+        // } catch (err) {
+        //     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+        // }
     }
 
     async registerByPhone(req, res) {
@@ -248,7 +248,7 @@ const AuthController = class AuthController {
 
         loggedUser['token'] = tokenList
 
-        return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, HttpStatus.OK));
+        return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, "OK"));
 
     }
 

@@ -20,8 +20,13 @@ const CartSchema = mongoose.Schema({
         description: String,
         quantity: 'Number',
         note: {
-                type: String,
-                required: false
+            type: String,
+            required: false
+
+        },
+        productOnLive: {
+            type: Schema.Types.ObjectId,
+            ref: 'product'
 
         }
     }],

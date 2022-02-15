@@ -30,35 +30,40 @@ const CartController = class CartController {
 
         // try {
 
-            let page = req.query.page ?? 1
-            let show = req.query.show ?? 10
+        let page = req.query.page ?? 1
+        let show = req.query.show ?? 10
 
-            let sortBy;
+        let sortBy;
 
-            let orderBy;
+        let orderBy;
 
-            if (!req.query.sortBy) {
-                sortBy = req.query.sortBy === "ASC" ? 1 : -1
-            }
+        if (!req.query.sortBy) {
+            sortBy = req.query.sortBy === "ASC" ? 1 : -1
+        }
 
-            orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
+        orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
 
-            let cart = await CartModel.findOne({
-                "user": {
-                    "$in": [req.user.user._id]
-                },
-            }).populate('users')
-                .sort({
-                    orderBy: sortBy
-                }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+        let cart = await CartModel.findOne({
+            "user": {
+                "$in": [req.user.user._id]
+            },
+        }).populate([{ path: 'users' }, {
+            path: 'products',
+            populate: {
+                path: 'productOnLive'
+            },
+        }])
+            .sort({
+                orderBy: sortBy
+            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
-            // if (cart) {
-            //     cart.users.otpEmail = undefined
-            //     cart.users.otpSms = undefined
-            //     cart.users.password = undefined
-            // }
+        // if (cart) {
+        //     cart.users.otpEmail = undefined
+        //     cart.users.otpSms = undefined
+        //     cart.users.password = undefined
+        // }
 
-            return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
+        return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
 
         // } catch (err) {
 
@@ -164,7 +169,8 @@ const CartController = class CartController {
                             status: product.status,
                             additional: product.additional,
                             description: product.description,
-                            note: input.note ?? ""
+                            note: input.note ?? "",
+                            productOnLive: product._id
                         },
                     }
                 }, {
@@ -188,7 +194,8 @@ const CartController = class CartController {
                     image: product.image ?? "images/product/default.jpg",
                     status: product.status,
                     additional: product.additional,
-                    description: product.description
+                    description: product.description,
+                    productOnLive: product._id
                 },
                 user: user['_id'],
                 totalQuantity: input.quantity,

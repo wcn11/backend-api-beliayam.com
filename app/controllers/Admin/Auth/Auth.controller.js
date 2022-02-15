@@ -134,7 +134,7 @@ const AdminController = class AdminController {
             return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Token", HttpStatus.UNAUTHORIZED))
         }
 
-        const cache = await redis.get(`admin.${decode.aud}`)
+        const cache = await redis.get(`admin.${decode.data.admin._id}`)
 
         if (!cache) {
             return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Refresh Token", HttpStatus.UNAUTHORIZED))
@@ -152,7 +152,7 @@ const AdminController = class AdminController {
 
         try {
 
-            const admin = await AdminModel.findOne({ _id: decode.aud })
+            const admin = await AdminModel.findOne({ _id: decode.data.admin._id })
 
             if (!admin) {
                 return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Payload Refresh Token", HttpStatus.UNAUTHORIZED))
@@ -168,7 +168,7 @@ const AdminController = class AdminController {
 
             const refreshToken = uuidv4().toUpperCase()
 
-            jwt.setCache(admin._id, token, refreshToken)
+            jwt.setCache(`admin.${admin._id}`, token, refreshToken)
 
             const tokenList = {
 
@@ -214,11 +214,11 @@ const AdminController = class AdminController {
             admin
         }
 
-        const token = jwt.sign(loggedAdmin, admin._id)
+        const token = jwt.sign(loggedAdmin, `admin.${admin._id}`)
 
         const refreshToken = uuidv4().toUpperCase()
 
-        jwt.setCache(admin._id, token, refreshToken)
+        jwt.setCache(`admin.${admin._id}`, token, refreshToken)
 
         const tokenList = {
 
@@ -228,7 +228,7 @@ const AdminController = class AdminController {
 
         loggedAdmin['token'] = tokenList
 
-        return res.header("Authorization", token).status(HttpStatus.OK).send(responser.success(loggedAdmin, HttpStatus.OK));
+        return res.header("Authorization", token).status(HttpStatus.OK).send(responser.success(loggedAdmin, "OK"));
 
     }
 

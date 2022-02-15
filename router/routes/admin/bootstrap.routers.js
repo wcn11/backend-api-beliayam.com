@@ -12,13 +12,13 @@ const AuthRouter = require('@router/admin/auth/auth.routes')
 // const ProductRouter = require('@router/product/product.routes')
 // const PaymentRouter = require('@router/payment/payment.routes')
 // const PromoRouter = require('@router/promo/promo.routes')
-const UserRouter = require('@router/admin/user/user.routes')
-// const VoucherRouter = require('@router/voucher/voucher.routes')
-
-
+const AdminRouter = require('@router/admin/admin/admin.routes')
+const UsersRouter = require('@router/admin/users/users.routes')
 
 Router.use('/auth', AuthRouter)
 
-Router.use('/user', UserRouter)
+Router.use('/user', AdminRouter)
+
+Router.use('/users', UsersRouter)
 
 module.exports = Router

@@ -66,7 +66,7 @@ const CategoryController = class CategoryController {
                 slug: req.query.key
             })
 
-            if (category) {
+            if (!category) {
                 return res.status(HttpStatus.OK).send(responser.success([], "OK"));
             }
 

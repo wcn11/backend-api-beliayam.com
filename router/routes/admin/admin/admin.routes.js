@@ -5,19 +5,19 @@ const router = require('express').Router();
 const verifyToken = require('@middleware/authAdmin/verifyToken')
 
 // controller
-const AddressController = require('@controller/Address/Address.controller')
-const AuthController = require('@controller/Auth/Auth.controller')
-const AdminController = require('@controller/Admin/User/User.controller')
+// const AddressController = require('@controller/Address/Address.controller')
+// const AuthController = require('@controller/Auth/Auth.controller')
+const AdminController = require('@controller/Admin/Admin/Admin.controller')
 
-// router.get('/', verifyToken, (req, res) => UserController.getUsers(req, res))
+router.get('/', verifyToken, (req, res) => AdminController.getUsers(req, res))
 
 router.get('/me', verifyToken, (req, res) => AdminController.getCurrentUser(req, res))
 
-// router.put('/active', verifyToken, (req, res) => UserController.updateActiveUser(req, res))
+router.put('/active', verifyToken, (req, res) => AdminController.updateActiveUser(req, res))
 
-// router.put('/profile/name/change', verifyToken, (req, res) => UserController.changeName(req, res))
-// router.put('/profile/email/change', verifyToken, (req, res) => UserController.changeEmail(req, res))
-// router.put('/profile/password/change', verifyToken, (req, res) => UserController.changePassword(req, res))
+router.put('/profile/name/change', verifyToken, (req, res) => AdminController.changeName(req, res))
+router.put('/profile/email/change', verifyToken, (req, res) => AdminController.changeEmail(req, res))
+router.put('/profile/password/change', verifyToken, (req, res) => AdminController.changePassword(req, res))
 
 // router.post('/profile/email/verify', verifyToken, (req, res) => UserController.verifyEmailOtp(req, res))
 // router.post('/profile/email/resend', verifyToken, (req, res) => UserController.resendVerifyEmail(req, res))
