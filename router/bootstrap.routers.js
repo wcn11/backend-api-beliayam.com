@@ -12,6 +12,7 @@ const OrderRouter = require('@router/order/order.routes')
 const ProductRouter = require('@router/product/product.routes')
 const PaymentRouter = require('@router/payment/payment.routes')
 const PromoRouter = require('@router/promo/promo.routes')
+const RegionRouter = require('@router/region/region.routes')
 const UserRouter = require('@router/user/user.routes')
 const VoucherRouter = require('@router/voucher/voucher.routes')
 
@@ -39,6 +40,8 @@ Router.use('/api/v1/product', ProductRouter)
 Router.use('/api/v1/payment', PaymentRouter)
 
 Router.use('/api/v1/promo', PromoRouter)
+
+Router.use('/api/v1/region', RegionRouter)
 
 Router.use('/api/v1/users', UserRouter)
 

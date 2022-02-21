@@ -202,6 +202,10 @@ const UserController = class UserController {
 
     async getCurrentUser(req, res) {
 
+        // const region = await RegionModel.getDistrict('1401061');
+
+        // console.log(region)
+
         try {
             const user = req.user.user
 
@@ -212,7 +216,7 @@ const UserController = class UserController {
         catch (err) {
 
             res.status(HttpStatus.UNAUTHORIZED).send(responser.success([],
-                "Tidak Bisa Perbarui Email",
+                "Gagal Memuat Data",
                 HttpStatus.UNAUTHORIZED))
         }
     }

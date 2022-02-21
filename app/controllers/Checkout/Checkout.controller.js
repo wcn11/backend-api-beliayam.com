@@ -92,10 +92,10 @@ const CheckoutController = class CheckoutController {
                 responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Alamat Email", HttpStatus.BAD_REQUEST))
         }
 
-        if (!user.isPhoneVerified) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Nomor Telepon Anda", HttpStatus.BAD_REQUEST))
-        }
+        // if (!user.isPhoneVerified) {
+        //     return res.status(HttpStatus.BAD_REQUEST).send(
+        //         responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Nomor Telepon Anda", HttpStatus.BAD_REQUEST))
+        // }
 
         //check product on real inventory
         let products = await this.getProductByProductId(req.body.cart.products)

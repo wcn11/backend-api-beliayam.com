@@ -112,10 +112,22 @@ const UserSchema = mongoose.Schema({
         receiver_name: String,
         address1: String,
         address2: String,
-        city: String,
-        state: String,
-        district: String,
-        sub_district: String,
+        state: {
+            id: Number,
+            name: String,
+        },
+        city: {
+            id: Number,
+            name: String,
+        },
+        district: {
+            id: Number,
+            name: String,
+        },
+        sub_district: {
+            id: Number,
+            name: String,
+        },
         postcode: String,
         phone: String,
         default: Boolean,

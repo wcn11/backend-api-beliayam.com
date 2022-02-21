@@ -160,6 +160,7 @@ const CartController = class CartController {
                     $push: {
                         products: {
                             _id: product._id,
+                            slug: product.slug,
                             sku: product.sku,
                             name: product.name,
                             position: product.position,
@@ -186,6 +187,7 @@ const CartController = class CartController {
 
                 products: {
                     _id: product._id,
+                    slug: product.slug,
                     sku: product.sku,
                     name: product.name,
                     position: product.position,

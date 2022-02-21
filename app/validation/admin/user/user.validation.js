@@ -109,6 +109,28 @@ const getOrdersValidation = (data) => {
 }
 
 
+
+const resendPhoneVerify = (data) => {
+    const schema = Joi.object({
+        user_id: Joi.string().required(),
+        phone: Joi.string().required()
+    })
+
+    return schema.validate(data)
+}
+
+
+
+const getAddressById = (data) => {
+    const schema = Joi.object({
+        address_id: Joi.string().max(255).required(),
+        user_id: Joi.string().min(6).max(255).required(),
+    })
+
+    return schema.validate(data)
+}
+
+
 module.exports = {
     addPhone,
     getOrdersValidation,
@@ -118,5 +140,7 @@ module.exports = {
     resendEmailVerify,
     changePasswordValidator,
     updateActiveUserValidation,
-    setOrderStatusValidator
+    setOrderStatusValidator,
+    resendPhoneVerify,
+    getAddressById
 }

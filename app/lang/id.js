@@ -23,11 +23,15 @@ module.exports = {
         unverified_phone_exist: "Nomor Telah Terdaftar Namun Belum Diverifikasi, Harap Segera Verifikasi Untuk Melanjutkan",
         phone_exist: "Nomor Telah Terdaftar",
         invalid_id: "ID Pengguna Tidak Valid",
-        user_not_found: "Pengguna Tidak Ditemukan"
+        user_not_found: "Pengguna Tidak Ditemukan",
+        profile: {
+            name_changed: "Nama Pengguna Diubah"
+        }
     },
     error: {
         code_expired: "Kode Telah Kadaluarsa",
-        wrong_verification_code: "Kode Verifikasi Salah"
+        wrong_verification_code: "Kode Verifikasi Salah",
+        invalid_id: "Invalid ID"
     },
     payment: {
         unknow_payment: "Tidak Ditemukan Jenis Pembayaran"
@@ -54,8 +58,12 @@ module.exports = {
         },
         account: {
             created: "Akun Dibuat"
+        },
+        user: {
+            not_found: "Pengguna tidak ditemukan"
         }
-    }
+    },
+
 
 
 }

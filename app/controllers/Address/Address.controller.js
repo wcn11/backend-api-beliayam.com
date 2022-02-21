@@ -28,7 +28,7 @@ const AddressController = class AddressController {
             return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Pengguna Tidak Sesuai Dengan Sesi Login Saat Ini", HttpStatus.UNAUTHORIZED))
         }
 
-        const addressFull = await User.egate([
+        const addressFull = await User.aggregate([
             {
                 $unwind: "$addresses",
             }, {
@@ -57,8 +57,34 @@ const AddressController = class AddressController {
 
         }
 
-        if (addressFull[0] === undefined) {
-            setDefault = true
+        const old_address = await User.aggregate([
+            {
+                $match: {
+                    "addresses.user_id": req.body.user_id,
+                    "addresses.default": true
+                }
+            },
+            { $unwind: "$addresses" },
+            {
+                $group: {
+                    "_id": "$_id",
+                    address: {
+                        $first: "$addresses"
+                    }
+                }
+            }
+        ])
+
+
+        if (old_address.length > 0) {
+            await User.updateOne({
+                _id: req.body.user_id,
+                "addresses._id": old_address[0].address._id,
+            }, {
+                $set: {
+                    'addresses.0.default': false
+                }
+            })
         }
 
         try {
@@ -100,7 +126,7 @@ const AddressController = class AddressController {
                 }
             })
 
-            return res.status(HttpStatus.OK).send(responser.success(addresses, "Alamat Baru Dibuat", HttpStatus.OK))
+            return res.status(HttpStatus.OK).send(responser.success([], "Alamat Baru Dibuat", HttpStatus.OK))
 
         } catch (err) {
 
@@ -188,7 +214,7 @@ const AddressController = class AddressController {
             }
         ])
 
-        return res.status(HttpStatus.OK).send(responser.success(address, HttpStatus.OK))
+        return res.status(HttpStatus.OK).send(responser.success(address, 'Alamat berhasil dihapus'))
 
     }
 
@@ -265,14 +291,14 @@ const AddressController = class AddressController {
                 "addresses._id": req.params.addressId,
             }, {
                 $pull: {
-                    addresses :{
+                    addresses: {
                         _id: req.params.addressId
                     }
                 }
             });
 
             return res.status(HttpStatus.OK).send(responser.validation("Alamat Telah Dihapus", HttpStatus.OK))
-        }catch(err){
+        } catch (err) {
             return res.status(HttpStatus.NOT_MODIFIED).error(responser.error("Tidak Bisa Menghapus Alamat", HttpStatus.NOT_MODIFIED))
         }
 

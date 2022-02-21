@@ -31,7 +31,9 @@ const {
     resendEmailVerify,
     changePasswordValidator,
     updateActiveUserValidation,
-    setOrderStatusValidator
+    setOrderStatusValidator,
+    resendPhoneVerify,
+    getAddressById
 } = require('@validation/admin/user/user.validation')
 
 const UsersController = class UsersController {
@@ -69,6 +71,41 @@ const UsersController = class UsersController {
             return res.status(HttpStatus.OK).send(responser.success(user));
         } catch (err) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
+        }
+    }
+
+    async getUserById(req, res) {
+
+        try {
+            const userId = req.params.userId
+
+            let user = await UserModel.find({
+                _id: userId
+            })
+
+            if (!user) {
+                return res.status(HttpStatus.NOT_FOUND).send(
+                    responser.error(translate('admin.user.not_found'), HttpStatus.NOT_FOUND)
+                );
+            }
+
+            let isValid = this.isIdValid(userId)
+
+            if (!isValid) {
+                return res.status(HttpStatus.BAD_REQUEST).send(
+                    responser.error(translate('error.invalid_id'), HttpStatus.BAD_REQUEST)
+                );
+            }
+
+            res.status(HttpStatus.OK).send(responser.success(user,
+                "OK"))
+
+        }
+        catch (err) {
+
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.success([],
+                "Gagal Mengambil Data",
+                HttpStatus.INTERNAL_SERVER_ERROR))
         }
     }
 
@@ -156,7 +193,7 @@ const UsersController = class UsersController {
             );
         }
 
-        const userExist = await AdminModel.findOne({ _id: req.body.user_id })
+        const userExist = await UserModel.findOne({ _id: req.body.user_id })
 
         if (!userExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
@@ -164,7 +201,7 @@ const UsersController = class UsersController {
 
         try {
 
-            await AdminModel.updateOne({
+            const user = await UserModel.updateOne({
                 _id: req.body.user_id
             }, {
                 $set: {
@@ -178,7 +215,7 @@ const UsersController = class UsersController {
                 })
 
             res.status(HttpStatus.OK).send(responser.success({},
-                "Nama Diperbarui",
+                translate('user.profile.name_changed'),
             ))
         } catch (err) {
 
@@ -187,24 +224,6 @@ const UsersController = class UsersController {
                 HttpStatus.BAD_REQUEST))
         }
 
-    }
-
-    async getCurrentUser(req, res) {
-
-        try {
-
-            const admin = req.admin
-
-            res.status(HttpStatus.OK).send(responser.success(admin,
-                "OK",
-                HttpStatus.OK))
-        }
-        catch (err) {
-
-            res.status(HttpStatus.UNAUTHORIZED).send(responser.success([],
-                "Gagal Memuat Data",
-                HttpStatus.UNAUTHORIZED))
-        }
     }
 
     async changeEmail(req, res) {
@@ -223,7 +242,7 @@ const UsersController = class UsersController {
             );
         }
 
-        const userExist = await AdminModel.findOne({ _id: req.body.user_id })
+        const userExist = await UserModel.findOne({ _id: req.body.user_id })
 
         if (!userExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
@@ -233,14 +252,14 @@ const UsersController = class UsersController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Anda Memasukkan Alamat Email Yang Sama Dengan Alamat Email Saat Ini", HttpStatus.BAD_REQUEST));
         }
 
-        const emailExist = await AdminModel.findOne({ email: req.body.new_email })
+        const emailExist = await UserModel.findOne({ email: req.body.new_email })
 
         if (emailExist) {
             return res.status(HttpStatus.CONFLICT).send(responser.error("Alamat Email Yang Anda Masukkan Telah Terdaftar", HttpStatus.CONFLICT));
         }
 
         try {
-            const user = await AdminModel.findOneAndUpdate(
+            const user = await UserModel.findOneAndUpdate(
                 req.body.user_id, {
                 $set: {
                     email: req.body.new_email,
@@ -262,7 +281,7 @@ const UsersController = class UsersController {
             })
 
             res.status(HttpStatus.OK).send(responser.success(user,
-                "Email Diperbarui, Harap Login Kembali"
+                "Email Diperbarui"
             ))
         } catch (err) {
 
@@ -270,6 +289,201 @@ const UsersController = class UsersController {
                 "Tidak Bisa Perbarui Email",
                 HttpStatus.BAD_REQUEST))
         }
+
+    }
+
+    async resendVerifyEmail(req, res) {
+
+        const { error } = resendEmailVerify(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let isValid = this.isIdValid(req.body.user_id)
+
+        if (!isValid) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("ID Pengguna Tidak Valid", HttpStatus.BAD_REQUEST)
+            );
+        }
+
+        const userExist = await UserModel.findOne({ _id: req.body.user_id })
+
+        if (!userExist) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Terdaftar", HttpStatus.NOT_FOUND));
+        }
+        if (userExist.isEmailVerified) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Telah Diverifikasi", HttpStatus.NOT_FOUND));
+        }
+
+        if (!userExist.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
+        const otp = nanoid();
+
+        let expiredTime = 1200000 //20 minutes on milliseconds
+        let expired = date.time(expiredTime, 'milliseconds')
+
+        await UserModel.updateOne({
+            email: userExist.email
+        }, {
+            $set: {
+                "otpEmail.code": otp,
+                "otpEmail.attempts": 0,
+                "otpEmail.expired": false,
+                "otpEmail.expiredDate": expired,
+
+            }
+        }, { upsert: true })
+
+        SendVerifyEmail.send({
+            to: userExist.email,
+            subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
+            text: `Kode Verifikasi Email Anda Adalah ${otp}`,
+            name: userExist.name ?? ""
+        })
+
+        client.set(`emailOtp.${userExist._id}`, JSON.stringify(otp), 'EX', expiredTime);
+
+        res.status(HttpStatus.OK).send(responser.success({
+            email: userExist.email,
+            otpExpired: expired
+        },
+            `Email Verifikasi Telah Dikirim Ke Alamat Email ${userExist.email}`,
+            HttpStatus.OK))
+
+    }
+
+    async getAddressesByUserId(req, res) {
+
+        let address = await UserModel.aggregate([
+            {
+                $match: {
+                    "addresses.user_id": req.params.userId,
+                }
+            },
+            { $unwind: "$addresses" },
+            {
+                $group: {
+                    "_id": "$_id",
+                    address: {
+                        $push: "$addresses"
+                    }
+                }
+            }
+        ])
+
+        return res.status(HttpStatus.OK).send(responser.success(address))
+
+    }
+
+    async getAddressByUserIdAndAddressId(req, res) {
+
+        req.body.address_id = req.params.addressId
+        req.body.user_id = req.params.userId
+
+        const { error } = getAddressById(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let address = await UserModel.aggregate([
+            {
+                $match: {
+                    "addresses._id": req.body.address_id,
+                    "addresses.user_id": req.body.user_id,
+                }
+            },
+            { $unwind: "$addresses" },
+            {
+                $group: {
+                    "_id": "$_id",
+                    address: {
+                        $first: "$addresses"
+                    }
+                }
+            }
+        ])
+
+        if (!address.length) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Alamat Tidak Ditemukan", HttpStatus.NOT_FOUND))
+        }
+
+        return res.status(HttpStatus.OK).send(responser.success(address, HttpStatus.OK))
+
+    }
+
+    async resendOtpVerifyPhone(req, res) {
+
+        const { error } = resendPhoneVerify(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let isValid = this.isIdValid(req.body.user_id)
+
+        if (!isValid) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("User ID Tidak Valid", HttpStatus.BAD_REQUEST)
+            );
+        }
+
+        const user = await UserModel.findOne({ _id: req.body.user_id })
+
+        if (!user) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("User ID Tidak Terdaftar", HttpStatus.NOT_FOUND));
+        }
+
+        if (user.isPhoneVerified) {
+            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Tidak Bisa Mem-verifikasi Ulang Nomor Yang Telah Terverifikasi Sebelumnya", HttpStatus.NOT_ACCEPTABLE));
+        }
+
+        if (!user.isActive) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
+        const otp = nanoid();
+
+        SMSGateway.sendSms({
+            to: req.body.phone,
+            text: `Masukan Kode text: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+
+        });
+
+        //5 minutes on milliseconds
+        let expiredTime = 300000
+        let expired = date.time(expiredTime, 'milliseconds')
+
+        await UserModel.updateOne({
+            _id: req.body.user_id
+        }, {
+            phone: req.body.phone,
+            isPhoneVerified: false,
+            otpSms: {
+                code: otp,
+                attempts: 0,
+                expiredDate: expired,
+                expired: false
+            }
+        }, {
+            upsert: true
+        })
+
+        client.set(`smsOtp.${req.body.user_id}`, JSON.stringify(otp), 'EX', expiredTime);
+
+        return res.status(HttpStatus.OK).send(
+            responser.success(
+                {
+                    otpSms: {
+                        expiredDate: expired,
+                        expired: false
+                    }
+                }, "Kode OTP Telah Dikirm Ke Nomor Telepon Anda, Harap Cek Telepon Anda")
+        );
 
     }
 
