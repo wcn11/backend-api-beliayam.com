@@ -121,7 +121,7 @@ const UserController = class UserController {
 
         //5 minutes on milliseconds
         let expiredTime = 300000
-        let expired = moment().add(expiredTime, 'milliseconds')
+        let expired = date.time(expiredTime, 'milliseconds')
 
         await User.updateOne({
             _id: req.body.user_id
@@ -202,12 +202,9 @@ const UserController = class UserController {
 
     async getCurrentUser(req, res) {
 
-        // const region = await RegionModel.getDistrict('1401061');
-
-        // console.log(region)
-
         try {
-            const user = req.user.user
+
+            const user = await User.findOne({ _id: req.user.user._id })
 
             res.status(HttpStatus.OK).send(responser.success(user,
                 "OK",

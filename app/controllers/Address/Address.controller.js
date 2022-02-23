@@ -19,7 +19,7 @@ const AddressController = class AddressController {
         const { error } = addAddress(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
 
@@ -28,28 +28,18 @@ const AddressController = class AddressController {
             return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Pengguna Tidak Sesuai Dengan Sesi Login Saat Ini", HttpStatus.UNAUTHORIZED))
         }
 
-        const addressFull = await User.aggregate([
-            {
-                $unwind: "$addresses",
-            }, {
-                $match: {
-                    "addresses.user_id": req.body.user_id
-                }
-            },
-            {
-                $group: {
-                    _id: req.user._id, count: {
-                        $sum: 1
-                    }
-                }
+        const addressFull = await User.aggregate([{
+            $match: {
+                "addresses.user_id": req.body.user_id
             }
+        },
         ])
 
         let setDefault = req.body.default
 
         if (addressFull.length > 0) {
 
-            if (addressFull[0].count >= 5) {
+            if (addressFull[0].addresses.length >= 5) {
 
                 return res.status(HttpStatus.OK).send(responser.error("Maksimal 5 Alamat Yang Dapat Dibuat", HttpStatus.OK))
 
@@ -142,7 +132,7 @@ const AddressController = class AddressController {
         const { error } = updateAddress(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         const isAddressExist = await User.findOne({ "addresses._id": req.params.addressId })
@@ -179,14 +169,18 @@ const AddressController = class AddressController {
 
             const addressUpdate = await User.updateOne({
                 _id: req.user.user._id,
-                "addresses._id": req.params.addressId,
+                "addresses": {
+                    "$elemMatch": {
+                        _id: req.params.addressId
+                    }
+                }
             }, {
                 $set: {
-                    addresses
+                    "addresses.$": addresses
                 }
             }, { upsert: true })
 
-            return res.status(HttpStatus.OK).send(responser.success(addresses, "Alamat Perbarui", HttpStatus.OK))
+            return res.status(HttpStatus.OK).send(responser.success(addresses, "Alamat Perbarui"))
 
         } catch (err) {
 
@@ -297,7 +291,7 @@ const AddressController = class AddressController {
                 }
             });
 
-            return res.status(HttpStatus.OK).send(responser.validation("Alamat Telah Dihapus", HttpStatus.OK))
+            return res.status(HttpStatus.OK).send(responser.success("Alamat Telah Dihapus", HttpStatus.OK))
         } catch (err) {
             return res.status(HttpStatus.NOT_MODIFIED).error(responser.error("Tidak Bisa Menghapus Alamat", HttpStatus.NOT_MODIFIED))
         }

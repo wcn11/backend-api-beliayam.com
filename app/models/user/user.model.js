@@ -129,7 +129,10 @@ const UserSchema = mongoose.Schema({
             name: String,
         },
         postcode: String,
-        phone: String,
+        phone: {
+            type: String,
+            default: null
+        },
         default: Boolean,
         details: String,
         createdAt: Date,
