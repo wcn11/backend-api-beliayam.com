@@ -532,7 +532,7 @@ const UserController = class UserController {
         const otp = nanoid();
 
         let expiredTime = 1200000 //20 minutes on milliseconds
-        let expired = moment().add(expiredTime, 'milliseconds')
+        let expired = date.time(expiredTime, 'milliseconds')
 
         await User.updateOne({
             email: userExist.email

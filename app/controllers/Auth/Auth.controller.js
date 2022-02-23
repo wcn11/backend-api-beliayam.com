@@ -665,7 +665,7 @@ const AuthController = class AuthController {
             }
         })
 
-        return res.status(HttpStatus.OK).send(responser.error("Nomor Telepon Berhasil Diverifikasi", HttpStatus.OK));
+        return res.status(HttpStatus.OK).send(responser.success({}, "Nomor Telepon Berhasil Diverifikasi"));
 
     }
 

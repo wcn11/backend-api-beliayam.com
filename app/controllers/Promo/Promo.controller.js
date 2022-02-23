@@ -139,8 +139,6 @@ const PromoController = class PromoController {
             })
 
         } else {
-
-
             promoObject = await PromoModel.findOne({
                 slug: req.params.slug,
             })

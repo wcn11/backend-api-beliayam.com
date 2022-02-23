@@ -16,6 +16,7 @@
     "@babel/preset-env": "^7.15.8",
     "@vonage/server-sdk": "^2.10.10",
     "axios": "^0.24.0",
+    "babel": "^6.23.0",
     "bcryptjs": "^2.4.3",
     "bee-queue": "^1.4.0",
     "body-parser": "^1.19.0",
@@ -83,6 +84,7 @@
     "@mailTemplate": "./app/views/template/email"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "pretty-error": "^4.0.0"
   }
 }

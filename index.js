@@ -39,7 +39,7 @@ app.use(cors({
 
 app.options('*', cors()) 
 
-const PORT = 4000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.urlencoded({
     extended: true
