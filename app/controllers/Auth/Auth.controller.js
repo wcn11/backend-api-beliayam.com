@@ -27,10 +27,10 @@ moment.locale('id-ID');
 
 const {
     loginValidator,
-    byPhone,
+    loginByPhoneValidator,
     registerValidator,
     emailVerify,
-    registerByPhone,
+    registerByPhoneValidator,
     resendEmailVerify,
     resendPhoneVerify,
     verifyPhoneByUserOTPValidator,
@@ -55,7 +55,7 @@ const AuthController = class AuthController {
 
         const emailExist = await User.findOne({ email: req.body.email })
 
-        if (emailExist) return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Email Telah Terdaftar", HttpStatus.BAD_REQUEST))
+        if (emailExist) return res.status(HttpStatus.OK).send(responser.error("Email Telah Terdaftar", HttpStatus.OK))
 
         const salt = await bcrypt.genSalt(10);
 
@@ -68,7 +68,7 @@ const AuthController = class AuthController {
         let registeredBy = req.body.registerBy
         let registerAt = req.body.registerAt
 
-        // try {
+        try {
 
             let setPassword = await bcrypt.hash(req.body.password, salt)
 
@@ -125,14 +125,14 @@ const AuthController = class AuthController {
                     "Akun Dibuat, Segera Verifikasi Email Anda",
                     "OK"));
 
-        // } catch (err) {
-        //     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
-        // }
+        } catch (err) {
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+        }
     }
 
     async registerByPhone(req, res) {
 
-        const { error } = registerByPhone(req.body)
+        const { error } = registerByPhoneValidator(req.body)
 
         if (error) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
@@ -140,13 +140,13 @@ const AuthController = class AuthController {
 
         const isPhoneExist = await User.findOne({ phone: req.body.phone })
 
-        if (isPhoneExist && isPhoneExist.isPhoneVerified !== true) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Nomor Telah Terdaftar Namun Belum Diverifikasi, Harap Segera Verifikasi Untuk Melanjutkan", HttpStatus.BAD_REQUEST)
+        if (isPhoneExist && !isPhoneExist.isPhoneVerified) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Nomor Telah Terdaftar Namun Belum Diverifikasi, Harap Verifikasi Untuk Melanjutkan", HttpStatus.OK)
             );
-        } else if (isPhoneExist) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
+        } else if (isPhoneExist && isPhoneExist.isPhoneVerified) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Nomor Telah Terdaftar", HttpStatus.OK)
             );
         }
 
@@ -260,70 +260,70 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        const emailExist = await User.findOne({ email: req.body.email })
+        const user = await User.findOne({ email: req.body.email })
 
-        if (emailExist.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        if (user) {
+
+            if (!user.isActive) {
+                res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
+            }
+            if (user.registeredBy !== req.body.loginBy) {
+                res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan ${user.registerBy}, harap login dengan metode ${user.registerBy}`, HttpStatus.OK));
+            }
         }
 
-        try {
+        if (!user) {
 
-            // if(emailExist){
-            //     if (emailExist.registeredBy === "email")
-            // }
+            const userObject = new User({
+                name: req.body.name,
+                email: req.body.email,
+                registeredBy: req.body.loginBy,
+                registeredAt: req.body.loginAt,
+                isEmailVerified: true
+            })
 
-            if (!emailExist) {
-
-                const userObject = new User({
-                    name: req.body.name,
-                    email: req.body.email,
-                    registeredBy: req.body.loginBy,
-                    registeredAt: req.body.loginAt,
-                    isEmailVerified: true
-                })
-
-                await userObject.save()
-            }
-
-            let user = await User.findOne({ email: req.body.email })
-
-            user.password = undefined
-            user.otpEmail = undefined
-            user.otpSms = undefined
-            user.addresses = undefined
-
-            const loggedUser = {
-                user
-            }
-
-            const token = jwt.sign(loggedUser, user._id)
-
-            const refreshToken = uuidv4().toUpperCase()
-
-            jwt.setCache(user._id, token, refreshToken)
-
-            const tokenList = {
-
-                "accessToken": token,
-                "refreshToken": refreshToken
-            }
-
-            loggedUser['token'] = tokenList
-
-            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK)
-                .send(responser.success(
-                    loggedUser,
-                    "OK"));
-
-        } catch (err) {
-            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Tidak Bisa Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
-
+            await userObject.save()
         }
+
+        console.log(123)
+
+        user.password = undefined
+        user.otpEmail = undefined
+        user.otpSms = undefined
+        user.addresses = undefined
+
+        const loggedUser = {
+            user
+        }
+
+        const token = jwt.sign(loggedUser, user._id)
+
+        const refreshToken = uuidv4().toUpperCase()
+
+        jwt.setCache(user._id, token, refreshToken)
+
+        const tokenList = {
+
+            "accessToken": token,
+            "refreshToken": refreshToken
+        }
+
+        loggedUser['token'] = tokenList
+
+        return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK)
+            .send(responser.success(
+                loggedUser,
+                "OK"));
+
+        // } catch (err) {
+        //     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Tidak Bisa Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+
+        // }
     }
 
     async loginByPhone(req, res) {
 
-        const { error } = byPhone(req.body)
+        const { error } = loginByPhoneValidator(req.body)
 
         if (error) {
             return res.status(400).send(error.details[0].message)
@@ -389,13 +389,11 @@ const AuthController = class AuthController {
         const isPhoneExist = await User.findOne({ phone: req.body.phone })
 
         if (isPhoneExist && isPhoneExist.isPhoneVerified) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Nomor Telah Terdaftar", HttpStatus.OK)
             );
-        }
-
-        if (!isPhoneExist.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        } else if (isPhoneExist && !isPhoneExist.isActive) {
+            res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
         client.get(`smsOtp.${req.body.phone}`, async (err, request) => {
@@ -414,7 +412,7 @@ const AuthController = class AuthController {
                     }
                 }, { upsert: true })
 
-                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Telah Kadaluarsa", HttpStatus.NOT_ACCEPTABLE));
+                return res.status(HttpStatus.OK).send(responser.error("Kode Telah Kadaluarsa", HttpStatus.OK));
             }
 
             const user = await User.findOne({ phone: req.body.phone })
@@ -433,13 +431,13 @@ const AuthController = class AuthController {
                     }
                 })
 
-                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Terlalu Banyak Percobaan, Harap Kirim Ulang SMS Verifikasi", HttpStatus.NOT_ACCEPTABLE));
+                return res.status(HttpStatus.OK).send(responser.error("Terlalu Banyak Percobaan, Harap Kirim Ulang SMS Verifikasi", HttpStatus.OK));
 
             }
 
             if (parseInt(req.body.code) !== parseInt(user.otpSms.code) && user.otpSms.expired) {
 
-                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Verifikasi Gagal, Harap Kirim Ulang SMS Verifikasi", HttpStatus.NOT_ACCEPTABLE));
+                return res.status(HttpStatus.OK).send(responser.error("Verifikasi Gagal, Harap Kirim Ulang SMS Verifikasi", HttpStatus.OK));
 
             } else if (parseInt(req.body.code) !== parseInt(user.otpSms.code)) {
 
@@ -451,7 +449,7 @@ const AuthController = class AuthController {
                     }
                 })
 
-                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Verifikasi Salah", HttpStatus.NOT_ACCEPTABLE));
+                return res.status(HttpStatus.OK).send(responser.error("Kode Verifikasi Salah", HttpStatus.OK));
 
             }
 
@@ -495,7 +493,7 @@ const AuthController = class AuthController {
 
             loggedUser['token'] = tokenList
 
-            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser), "OK", HttpStatus.OK)
+            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, "Berhasil Diverifikasi", HttpStatus.OK))
         })
 
     }

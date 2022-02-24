@@ -90,16 +90,16 @@ const UserController = class UserController {
         const user = await User.findOne({ _id: req.body.user_id })
 
         if (!user) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Pengguna Tidak Ditemukan", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Pengguna Tidak Ditemukan", HttpStatus.OK)
             );
         }
 
         const isPhoneAlreadyExist = await User.findOne({ phone: req.body.phone })
 
         if (isPhoneAlreadyExist) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Nomor Yang Anda Masukkan Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Nomor Yang Anda Masukkan Telah Terdaftar", HttpStatus.OK)
             );
         }
 
@@ -247,7 +247,7 @@ const UserController = class UserController {
         const emailExist = await User.findOne({ email: req.body.new_email })
 
         if (emailExist) {
-            return res.status(HttpStatus.CONFLICT).send(responser.error("Alamat Email Yang Anda Masukkan Telah Terdaftar", HttpStatus.CONFLICT));
+            return res.status(HttpStatus.OK).send(responser.error("Alamat Email Yang Anda Masukkan Telah Terdaftar", HttpStatus.OK));
         }
 
         try {
@@ -345,15 +345,15 @@ const UserController = class UserController {
         const validPass = await bcrypt.compare(req.body.old_password, getUserById.password)
 
         if (!validPass) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Kata Sandi Lama Tidak Sesuai", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation("Kata Sandi Lama Tidak Sesuai", HttpStatus.OK))
         }
 
         if (req.body.password !== req.body.password_confirmation) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Password Tidak Sesuai", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation("Password Tidak Sesuai", HttpStatus.OK))
         }
 
         if (req.body.password === req.body.old_password) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Anda Memasukkan Kata Sandi Yang Sama", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation("Anda Memasukkan Kata Sandi Yang Sama", HttpStatus.OK))
         }
 
         try {
