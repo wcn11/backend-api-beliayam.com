@@ -333,8 +333,8 @@ const AuthController = class AuthController {
 
         if (!user) {
 
-            return res.status(HttpStatus.NOT_FOUND).send(
-                responser.error("Telepon Atau Password Salah", HttpStatus.NOT_FOUND)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Telepon Atau Password Salah", HttpStatus.OK)
             );
         }
 
@@ -342,8 +342,8 @@ const AuthController = class AuthController {
 
         if (!validPass) {
 
-            return res.status(HttpStatus.NOT_FOUND).send(
-                responser.error("Telepon Atau Password Salah", HttpStatus.NOT_FOUND)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Telepon Atau Password Salah", HttpStatus.OK)
             );
         }
 
