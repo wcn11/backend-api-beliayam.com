@@ -201,8 +201,10 @@ const UserController = class UserController {
     }
 
     async getCurrentUser(req, res) {
+        console.log(req.user)
 
         try {
+
 
             const user = await User.findOne({ _id: req.user.user._id })
 
@@ -240,8 +242,11 @@ const UserController = class UserController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
         }
 
-        if (req.body.new_email.toLowerCase() === userExist.email.toLowerCase()) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Anda Memasukkan Alamat Email Yang Sama Dengan Alamat Email Saat Ini", HttpStatus.BAD_REQUEST));
+        if (userExist.email) {
+
+            if (req.body.new_email.toLowerCase() === userExist.email.toLowerCase()) {
+                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Anda Memasukkan Alamat Email Yang Sama Dengan Alamat Email Saat Ini", HttpStatus.BAD_REQUEST));
+            }
         }
 
         const emailExist = await User.findOne({ email: req.body.new_email })
@@ -251,17 +256,18 @@ const UserController = class UserController {
         }
 
         try {
-            const user = await User.findOneAndUpdate(
-                req.body.user_id, {
+            const user = await User.updateOne({
+                _id: req.body.user_id
+            }, {
                 $set: {
                     email: req.body.new_email,
-                        "otpEmail": {
-                            "code": 0,
-                            "attempts": 0,
-                            "expired": false,
-                            "expiredDate": Date.now()
-                        },
-                        "isEmailVerified": false
+                    "otpEmail": {
+                        "code": 0,
+                        "attempts": 0,
+                        "expired": false,
+                        "expiredDate": Date.now()
+                    },
+                    "isEmailVerified": false
                 }
             }, {
                 new: true

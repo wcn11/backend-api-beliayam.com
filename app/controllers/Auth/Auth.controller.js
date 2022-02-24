@@ -412,7 +412,7 @@ const AuthController = class AuthController {
                     }
                 }, { upsert: true })
 
-                return res.status(HttpStatus.OK).send(responser.error("Kode Telah Kadaluarsa", HttpStatus.OK));
+                return res.status(HttpStatus.OK).send(responser.error("Kode Telah Kadaluarsa, Kirim Ulang OTP", HttpStatus.OK));
             }
 
             const user = await User.findOne({ phone: req.body.phone })
@@ -476,7 +476,7 @@ const AuthController = class AuthController {
             UserData.addresses = undefined
 
             const loggedUser = {
-                UserData
+                user: UserData
             }
 
             const token = jwt.sign(loggedUser, user._id)
@@ -493,7 +493,7 @@ const AuthController = class AuthController {
 
             loggedUser['token'] = tokenList
 
-            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, "Berhasil Diverifikasi", HttpStatus.OK))
+            return res.header("Authorization", token).cookie('token', token).cookie('refreshToken', refreshToken).status(HttpStatus.OK).send(responser.success(loggedUser, "Berhasil Diverifikasi"));
         })
 
     }
@@ -503,27 +503,25 @@ const AuthController = class AuthController {
         const { error } = resendSmsOtpRegisterValidator(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         const isPhoneExist = await User.findOne({ phone: req.body.phone })
 
-        console.log(parseInt(req.body.phone))
-
         if (!isPhoneExist) {
-            return res.status(HttpStatus.NOT_FOUND).send(
-                responser.error("Nomor Tidak Terdaftar", HttpStatus.NOT_FOUND)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Nomor Tidak Terdaftar, Harap Mendaftar Terlebih Dahulu", HttpStatus.OK)
             );
         }
 
         if (isPhoneExist && isPhoneExist.isPhoneVerified) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Nomor Telah Terdaftar", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Nomor Telah Terdaftar", HttpStatus.OK)
             );
         }
 
         if (!isPhoneExist.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+            res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
         const otp = nanoid();
@@ -571,14 +569,14 @@ const AuthController = class AuthController {
         const { error } = verifyPhoneByUserOTPValidator(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         let isValid = await this.isIdValid(req.body.user_id)
 
         if (!isValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("User ID Tidak Valid", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("User ID Tidak Valid", HttpStatus.OK)
             );
         }
 
@@ -608,7 +606,7 @@ const AuthController = class AuthController {
                     }
                 }, { upsert: true })
 
-                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Telah Kadaluarsa", HttpStatus.NOT_ACCEPTABLE));
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Telah Kadaluarsa, Kirim Ulang OTP", HttpStatus.NOT_ACCEPTABLE));
             }
 
             if (user['otpSms']['attempts'] >= 5) {
@@ -672,7 +670,7 @@ const AuthController = class AuthController {
         const { error } = resendPhoneVerify(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         let isValid = await this.isIdValid(req.body.user_id)
@@ -690,11 +688,11 @@ const AuthController = class AuthController {
         }
 
         if (user.isPhoneVerified) {
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Tidak Bisa Mem-verifikasi Ulang Nomor Yang Telah Terverifikasi Sebelumnya", HttpStatus.NOT_ACCEPTABLE));
+            return res.status(HttpStatus.OK).send(responser.error("Tidak Bisa Mem-verifikasi Ulang Nomor Yang Telah Terverifikasi Sebelumnya", HttpStatus.OK));
         }
 
         if (!user.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+            res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
         const otp = nanoid();
@@ -743,17 +741,17 @@ const AuthController = class AuthController {
         const { error } = emailVerify(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         const userExist = await User.findOne({ email: req.body.email })
 
         if (!userExist) {
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Email Atau Kode Verifikasi Salah", HttpStatus.NOT_ACCEPTABLE));
+            return res.status(HttpStatus.OK).send(responser.error("Email Atau Kode Verifikasi Salah", HttpStatus.OK));
         }
 
         if (!userExist.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+            res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
         client.get(`emailOtp.${userExist.id}`, async (err, request) => {
@@ -774,7 +772,7 @@ const AuthController = class AuthController {
                     }
                 }, { upsert: true })
 
-                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Telah Kadaluarsa", HttpStatus.NOT_ACCEPTABLE));
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kode Telah Kadaluarsa, Kirim Ulang OTP", HttpStatus.NOT_ACCEPTABLE));
             }
 
             if (user['otpEmail']['attempts'] >= 5) {
