@@ -12,8 +12,8 @@ const addCategory = (data) => {
         position: Joi.number().min(1).max(10),
         image_category: Joi.any(),
         status: Joi.string().min(3).max(50),
-        additional: Joi.string().min(3).max(50),
-        description: Joi.string(),
+        additional: Joi.string().allow("").max(50),
+        description: Joi.string().allow(""),
     })
 
     return schema.validate(data)

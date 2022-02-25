@@ -10,10 +10,10 @@ const addProductValidation = (data) => {
                 "any.regex": "Slug tidak valid"
             }),
         name: Joi.string().min(6).max(100).required(),
-        position: Joi.number().min(1).max(10),
+        position: Joi.number().allow("").min(1).max(10),
         image_product: Joi.any(),
         price: Joi.number().min(3),
-        weight: Joi.number().min(1).required(),
+        weight: Joi.number().min(0.1).required(),
         stock: Joi.number().min(3),
         isDiscount: Joi.boolean(),
         discount: Joi.number().min(1).max(100),
@@ -28,7 +28,7 @@ const addProductValidation = (data) => {
         promotionEnd: Joi.date(),
         priceAfterPromotion: Joi.number(),
         status: Joi.string().min(3).max(50),
-        additional: Joi.string().min(3).max(50),
+        additional: Joi.string().allow("").max(50),
         description: Joi.string(),
     })
 

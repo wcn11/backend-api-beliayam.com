@@ -130,11 +130,7 @@ const ProductController = class ProductController {
             slug: req.params.slug
         }).populate(['category', 'hasPromo'])
 
-        // if (!product) {
-        //     return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Tidak Ditemukan", HttpStatus.NOT_FOUND))
-        // }
-
-        return res.status(HttpStatus.OK).send(responser.success(product ?? {}, HttpStatus.OK));
+        return res.status(HttpStatus.OK).send(responser.success(product ?? {}));
     }
 
     async createProduct(req, res) {

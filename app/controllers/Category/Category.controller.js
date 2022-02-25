@@ -97,7 +97,12 @@ const CategoryController = class CategoryController {
                 orderBy: sortBy
             }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
-            return res.status(HttpStatus.OK).send(responser.success(products, "OK"));
+            const dataCategory = {
+                category,
+                products
+            }
+
+            return res.status(HttpStatus.OK).send(responser.success(dataCategory, "OK"));
 
         } catch (err) {
 
@@ -170,15 +175,6 @@ const CategoryController = class CategoryController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error(`SKU: ${req.body.sku} sudah ada, harap menggunakan SKU yang lain`, HttpStatus.BAD_REQUEST))
         }
 
-        // if (isExist.slug) {
-        //     if (isExist.slug === req.body.slug) {
-        //         return res.status(HttpStatus.BAD_REQUEST).send(responser.error(`SLUG: ${req.body.slug} sudah ada, harap menggunakan SLUG yang lain`, HttpStatus.BAD_REQUEST))
-
-        //     }
-        // }
-
-        // buat jika ada sku duplikat
-
         // try {
 
         let input = req.body
@@ -193,7 +189,7 @@ const CategoryController = class CategoryController {
 
             "image": req.file ? `images/category/${req.file.filename}` : "images/category/default.jpg",
             "status": input.status,
-            "additional": input.additional,
+            "additional": input.additional ?? "",
             "description": input.description
         })
 

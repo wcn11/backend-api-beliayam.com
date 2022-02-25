@@ -5,7 +5,7 @@ const registerValidator = (data) => {
         name: Joi.string().min(6).max(100).required(),
         username: Joi.string().min(3).max(16).required(),
         email: Joi.string().min(6).max(255).required().email(),
-        roleId: Joi.number(),
+        roleId: Joi.number().valid(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
         password: Joi.string().min(6).max(255).required()
     })
 

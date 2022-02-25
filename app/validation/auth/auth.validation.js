@@ -94,6 +94,14 @@ const sendEmailForgetPasswordValidator = (data) => {
     return schema.validate(data)
 }
 
+const sendOtpForgetPasswordValidator = (data) => {
+    const schema = Joi.object({
+        phone: Joi.number().required()
+    })
+
+    return schema.validate(data)
+}
+
 const verifyPhoneByUserOTPValidator = (data) => {
     const schema = Joi.object({
         user_id: Joi.string().required(),
@@ -132,7 +140,7 @@ const refreshTokenValidator = (data) => {
 
 const changePasswordValidator = (data) => {
     const schema = Joi.object({
-        id: Joi.string().required().label('User Id')
+        _id: Joi.string().required().label('User Id')
             .messages({
                 "any.required": `{{#label}} dibutuhkan`
             }),
@@ -163,6 +171,7 @@ module.exports = {
     changePasswordValidator,
     resendSmsOtpRegisterValidator,
     verifySmsOtpRegisterValidator,
+    sendOtpForgetPasswordValidator,
     sendEmailForgetPasswordValidator,
     verifyLinkForgetPasswordValidator
 }

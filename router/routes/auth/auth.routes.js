@@ -20,6 +20,10 @@ router.post('/password/forget', AuthController.sendEmailForgetPassword)
 router.post('/password/verify', AuthController.verifyLinkForgetPassword)
 router.post('/password/change', AuthController.changePassword)
 
+router.post('/password/forget/phone', AuthController.sendOtpForgetPassword)
+router.post('/password/forget/phone/resend', AuthController.resendSmsOtpForgetPassword)
+router.post('/password/forget/phone/verify', AuthController.verifySmsOtpForgetPassword)
+
 router.post('/social/login', AuthController.loginBySocial)
 
 router.post('/refresh-token', AuthController.refreshToken)

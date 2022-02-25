@@ -49,7 +49,7 @@ const AdminController = class AdminController {
 
         const usernameExist = await AdminModel.findOne({ username: req.body.username })
 
-        if (usernameExist) return res.status(HttpStatus.OK).send(responser.error(translate('admin.username_exist'), HttpStatus.OK))
+        if (usernameExist) return res.status(HttpStatus.OK).send(responser.error(translate('admin.register.username_exist'), HttpStatus.OK))
 
         const salt = await bcrypt.genSalt(10);
 
@@ -63,7 +63,7 @@ const AdminController = class AdminController {
 
             if (req.body.roleId !== NaN) {
                 adminObject.role = {
-                    roleId: req.body.roleId
+                    roleId: req.body.roleId ?? 1
                 }
             }
 

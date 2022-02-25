@@ -50,6 +50,7 @@ const CategorySchema = mongoose.Schema({
     },
     additional: {
         type: String,
+        default: "",
         required: false,
     },
     description: {

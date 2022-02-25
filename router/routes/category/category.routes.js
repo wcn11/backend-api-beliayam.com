@@ -16,14 +16,14 @@ router.get('/', (req, res) => CategoryController.getCategories(req, res))
 
 router.get('/_s', (req, res) => CategoryController.getProductsBySlug(req, res))
 
-router.post('/:slug/product', imageCategory.single('image_category'), (req, res) => PromoController.getProductByCategoryIdOrSlug(req, res))
+router.post('/:slug/product', verifyToken, imageCategory.single('image_category'), (req, res) => PromoController.getProductByCategoryIdOrSlug(req, res))
 
 router.get('/:categoryId', (req, res) => CategoryController.getCategoryById(req, res))
 
-router.post('/', imageCategory.single('image_category'), (req, res) => CategoryController.createCategory(req, res))
+router.post('/', verifyToken, imageCategory.single('image_category'), (req, res) => CategoryController.createCategory(req, res))
 
-router.put('/:categoryId', imageCategory.single('image_category'), (req, res) => CategoryController.updateCategory(req, res))
+router.put('/:categoryId', verifyToken, imageCategory.single('image_category'), (req, res) => CategoryController.updateCategory(req, res))
 
-router.delete('/:categoryId', (req, res) => CategoryController.deleteCategoryById(req, res))
+router.delete('/:categoryId', verifyToken, (req, res) => CategoryController.deleteCategoryById(req, res))
 
 module.exports = router;
