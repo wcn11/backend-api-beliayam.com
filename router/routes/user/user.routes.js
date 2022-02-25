@@ -30,6 +30,7 @@ router.post('/phone/resend', verifyToken, (req, res) => AuthController.resendOtp
 router.get('/address', verifyToken, (req, res) => { AddressController.getAddressesByUserId(req, res) })
 router.get('/address/:addressId', verifyToken, (req, res) => { AddressController.getAddressByUserId(req, res) })
 router.put('/address/:addressId', verifyToken, (req, res) => { AddressController.updateAdressByAddressId(req, res) })
+router.put('/address/:addressId/default', verifyToken, (req, res) => { AddressController.updateDefaultAdress(req, res) })
 router.post('/address', verifyToken, (req, res) => { AddressController.storeAdressByUserId(req, res) })
 router.delete('/address/:addressId', verifyToken, (req, res) => { AddressController.deleteAddressByAddressId(req, res) })
 

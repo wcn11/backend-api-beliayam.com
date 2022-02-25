@@ -15,15 +15,15 @@ const addAddress = (data) => {
         receiver_name: Joi.string().max(50).required(),
         label: Joi.string().min(3).max(20),
         address1: Joi.string().min(6).max(255).required(),
-        address2: Joi.string().max(255),
+        address2: Joi.string().allow("").max(255),
         city: Joi.object().required(),
         state: Joi.object().required(),
         district: Joi.object().required(),
         sub_district: Joi.object().required(),
-        postcode: Joi.string().min(3).max(50).required(),
+        postcode: Joi.string().allow("").max(50).required(),
         phone: Joi.string().min(6).max(15).required(),
         default: Joi.boolean().default(false),
-        details: Joi.string().max(100),
+        details: Joi.string().allow("").max(100),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         maps: maps
@@ -39,15 +39,15 @@ const updateAddress = (data) => {
         receiver_name: Joi.string().max(50).required(),
         label: Joi.string().min(3).max(20),
         address1: Joi.string().min(6).max(255).required(),
-        address2: Joi.string().max(255),
+        address2: Joi.string().allow("").max(255),
         city: Joi.object().required(),
         state: Joi.object().required(),
         district: Joi.object().required(),
         sub_district: Joi.object().required(),
-        postcode: Joi.string().min(3).max(50).required(),
+        postcode: Joi.string().allow("").max(50).required(),
         phone: Joi.string().min(6).max(15).required(),
         default: Joi.boolean().default(false),
-        details: Joi.string().max(100),
+        details: Joi.string().allow("").max(100),
         maps: maps,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -73,10 +73,20 @@ const deleteAddressByAddressId = (data) => {
     return schema.validate(data)
 }
 
+const updateDefaultAddressValidator = (data) => {
+    const schema = Joi.object({
+        address_id: Joi.string().max(255).required(),
+        user_id: Joi.string().min(6).max(255).required(),
+    })
+
+    return schema.validate(data)
+}
+
+
 module.exports = {
     addAddress,
     getAddressById,
     updateAddress,
-    deleteAddressByAddressId
-    // login
+    deleteAddressByAddressId,
+    updateDefaultAddressValidator
 }

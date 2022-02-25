@@ -9,6 +9,7 @@ const {
     addAddress,
     getAddressById,
     updateAddress,
+    updateDefaultAddressValidator,
     deleteAddressByAddressId
 } = require('@validation/address/address.validation')
 
@@ -189,6 +190,92 @@ const AddressController = class AddressController {
         }
     }
 
+    async updateDefaultAdress(req, res) {
+
+        const { error } = updateDefaultAddressValidator(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
+        }
+
+        let isAddressExist = await User.aggregate([
+            {
+                $match: {
+                    "addresses._id": req.body.address_id,
+                    "addresses.user_id": req.body.user_id,
+                }
+            },
+            { $unwind: "$addresses" },
+            {
+                $group: {
+                    "_id": "$_id",
+                    address: {
+                        $first: "$addresses"
+                    }
+                }
+            }
+        ])
+
+        if (isAddressExist.length <= 0) {
+            return res.status(HttpStatus.OK).send(responser.error("Alamat Tidak Ditemukan", HttpStatus.OK));
+        }
+
+        // try {
+
+        let isAddressDefaultExist = await User.findOne(
+            {
+                "addresses.user_id": {
+                    $eq: req.body.user_id
+                }
+            })
+
+
+
+        // if (isAddressDefaultExist && isAddressDefaultExist.addresses.length > 0) {
+
+
+        //     console.log(isAddressDefaultExist.addresses[0]._id)
+        //     if (isAddressDefaultExist.addresses[0]._id === req.body.address_id) {
+
+        //         return res.status(HttpStatus.OK).send(responser.success({}, "Alamat diperbarui 1"))
+        //     }
+
+
+        //     await User.updateOne({
+        //         _id: req.body.user_id,
+        //         "addresses._id": isAddressDefaultExist.addresses[0]._id
+        //     }, {
+        //         $set: {
+        //             "addresses.$.default": false
+        //         }
+        //     }, { upsert: true })
+        // }
+
+        if (req.body.maps) {
+            addresses.maps = {
+                "latitude": req.body.maps.latitude,
+                "longitude": req.body.maps.longitude
+            }
+        }
+        await User.updateOne({
+            _id: req.body.user_id,
+            "addresses._id": req.body.address_id
+        }, {
+            $set: {
+                "addresses.$.default": true
+            }
+        }, { upsert: true })
+
+
+        return res.status(HttpStatus.OK).send(responser.success({}, "Alamat diperbarui"))
+
+        // } catch (err) {
+
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Perbarui Alamat", HttpStatus.BAD_REQUEST))
+
+        // }
+    }
+
     async getAddressesByUserId(req, res) {
 
         let address = await User.aggregate([
@@ -291,7 +378,7 @@ const AddressController = class AddressController {
                 }
             });
 
-            return res.status(HttpStatus.OK).send(responser.success("Alamat Telah Dihapus", HttpStatus.OK))
+            return res.status(HttpStatus.OK).send(responser.success({}, "Alamat Telah Dihapus"))
         } catch (err) {
             return res.status(HttpStatus.NOT_MODIFIED).error(responser.error("Tidak Bisa Menghapus Alamat", HttpStatus.NOT_MODIFIED))
         }
