@@ -287,12 +287,10 @@ const AuthController = class AuthController {
             await userObject.save()
         }
 
-        console.log(123)
-
-        user.password = undefined
+        user.password = undefined || null
         user.otpEmail = undefined
         user.otpSms = undefined
-        user.addresses = undefined
+        user.addresses = undefined || null
 
         const loggedUser = {
             user
@@ -1159,8 +1157,6 @@ const AuthController = class AuthController {
             upsert: true
         })
 
-        console.log(123)
-
         client.setex(`smsOtp.${user._id}`, expiredTime, JSON.stringify(otp));
 
         return res.status(HttpStatus.OK).send(
@@ -1208,8 +1204,6 @@ const AuthController = class AuthController {
             if (!getUserById) {
                 return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Tidak Ditemukan", HttpStatus.FORBIDDEN));
             }
-
-            console.log(getUserById)
 
             if (!getUserById.isActive) {
                 return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
@@ -1345,7 +1339,7 @@ const AuthController = class AuthController {
 
     //     const salt = await bcrypt.genSalt(10);
     //     const newPassword = await bcrypt.hash(req.body.new_password, salt)
-    //     console.log(newPassword)
+
 
     //     try {
     //         const user = await User.updateOne({

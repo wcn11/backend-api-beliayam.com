@@ -663,7 +663,6 @@ const AdminController = class AdminController {
 
         const salt = await bcrypt.genSalt(10);
         const newPassword = await bcrypt.hash(req.body.new_password, salt)
-        console.log(newPassword)
 
         try {
             const user = await User.updateOne({

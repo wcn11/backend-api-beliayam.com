@@ -379,8 +379,6 @@ const CartController = class CartController {
 
         let isProductExist = await this.isProductExist(req.body.product_id)
 
-        console.log(isProductExist)
-
         if (!isProductExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Ini Sudah Tidak Tersedia", HttpStatus.NOT_FOUND))
         }

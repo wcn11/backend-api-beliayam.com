@@ -201,7 +201,6 @@ const UserController = class UserController {
     }
 
     async getCurrentUser(req, res) {
-        console.log(req.user)
 
         try {
 
