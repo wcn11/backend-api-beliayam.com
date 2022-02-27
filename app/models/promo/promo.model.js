@@ -15,9 +15,8 @@ const PromoSchema = mongoose.Schema({
         default: []
     },
     products: [{
-            type: Schema.Types.ObjectID,
-        ref: "Products",
-        unique: true
+        type: Schema.Types.ObjectId,
+        ref: "product"
     }],
     image_promo: {
         type: String

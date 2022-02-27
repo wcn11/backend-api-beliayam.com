@@ -101,7 +101,7 @@ const PromoController = class PromoController {
 
             let category = await PromoModel.findOne({
                 slug: req.query.key
-            })
+            }).populate(["products"])
 
             return res.status(HttpStatus.OK).send(responser.success(category, "OK"));
         } catch (err) {
@@ -130,6 +130,8 @@ const PromoController = class PromoController {
         } else {
             isActive = true
         }
+
+        let promoObject
 
         if (this.validateId(req.params.slug)) {
 
@@ -213,7 +215,7 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
         }
 
-        try {
+        // try {
 
             let promoObject = {
                 name: input.name,
@@ -233,7 +235,7 @@ const PromoController = class PromoController {
 
             if (input.products) {
 
-            if (input.products.length < 0) {
+                if (input.products.length <= 0) {
                 return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST))
             }
 
@@ -253,11 +255,10 @@ const PromoController = class PromoController {
                 }
             }
 
-            let promo = new PromoModel(promoObject)
-
-            const savedPromo = await promo.save()
+        let promo = new PromoModel(promoObject)
 
 
+        const savedPromo = await promo.save()
             // let productObject = {
             //     isPromo: true,
             //     promoId: savedPromo.id,
@@ -285,9 +286,9 @@ const PromoController = class PromoController {
 
             return res.status(HttpStatus.OK).send(responser.success(savedPromo, "Promo Ditetapkan"))
 
-        } catch (e) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
-        }
+        // } catch (e) {
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
+        // }
 
     }
 

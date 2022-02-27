@@ -23,11 +23,8 @@ const nanoid = customAlphabet('1234567890', 4) // NO LETTER
 const SendVerifyEmail = require('@mailService/SendVerifyEmail.mail')
 
 const {
-    addPhone,
     changeNameUser,
     changeEmailUser,
-    emailVerify,
-    getOrdersValidation,
     resendEmailVerify,
     changePasswordValidator,
     updateActiveUserValidation,
@@ -443,7 +440,7 @@ const UsersController = class UsersController {
         }
 
         if (!user.isActive) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Aktifkan Terlebih Dahulu", HttpStatus.BAD_REQUEST));
         }
 
         const otp = nanoid();
@@ -482,7 +479,7 @@ const UsersController = class UsersController {
                         expiredDate: expired,
                         expired: false
                     }
-                }, "Kode OTP Telah Dikirm Ke Nomor Telepon Anda, Harap Cek Telepon Anda")
+                }, `Kode OTP Telah Dikirm Ke Nomor Telepon ${req.body.phone}`)
         );
 
     }

@@ -11,13 +11,13 @@ const createNewPromoValidation = (data) => {
         tags: Joi.string().min(2).max(10),
         products: Joi.array(),
         image_promo: Joi.any(),
-        termsAndConditions: Joi.string().max(1024),
+        termsAndConditions: Joi.string().max(5000),
         promoValue: Joi.number().min(1).required(),
         promoBy: Joi.string().valid('percent', 'price'),
         promoStart: Joi.date().required(),
         promoEnd: Joi.date().required(),
         isActive: Joi.bool(),
-        description: Joi.string().max(500),
+        description: Joi.string().max(5000),
         platform: Joi.array()
             .items(Joi.string().valid('all', 'website', 'mobile'))  // only allow(valid) 'Hindi' or 'English' items in array
 
@@ -65,14 +65,21 @@ const getPromoByPromoIdValidation = (data) => {
 const updatePromoByPromoIdValidation = (data) => {
     const schema = Joi.object({
         name: Joi.string().min(3),
+        slug: Joi.string().required().regex(/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/).label('Slug')
+            .messages({
+                "any.required": `{{#label}} dibutuhkan`,
+                "any.regex": "Slug tidak valid"
+            }),
         tags: Joi.string().min(2).max(10),
         products: Joi.array(),
         banner: Joi.any(),
-        termsAndConditions: Joi.string().max(1024),
+        termsAndConditions: Joi.string().max(5000),
+        promoValue: Joi.number().min(1).required(),
+        promoBy: Joi.string().valid('percent', 'price'),
         promoStart: Joi.date(),
         promoEnd: Joi.date(),
         isActive: Joi.bool(),
-        description: Joi.string().max(500),
+        description: Joi.string().max(5000),
         platform: Joi.array()
             .items(Joi.string().valid('all', 'website', 'mobile'))  // only allow(valid) 'Hindi' or 'English' items in array
 

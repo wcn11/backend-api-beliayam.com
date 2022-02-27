@@ -12,9 +12,9 @@ const ProductController = require('@controller/Product/Product.controller')
 
 var imageProduct = multer({ storage: storage })
 
-router.get('/', verifyToken, (req, res) => ProductController.getProducts(req, res))
+router.get('/', (req, res) => ProductController.getProducts(req, res))
 
-router.get('/category/:categoryId', verifyToken, (req, res) => ProductController.getProductsByCategoryId(req, res))
+router.get('/category/:categoryId', (req, res) => ProductController.getProductsByCategoryId(req, res))
 
 router.get('/:slug', (req, res) => ProductController.getProductBySlug(req, res))
 
