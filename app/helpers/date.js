@@ -1,7 +1,11 @@
 const moment = require('moment')
 moment.locale('id-ID');
 
-exports.time = (value = 7, time = 'hour') => {
+exports.time = (value = 0, time = 'hour') => {
+    return moment().add(value, time)
+};
+
+exports.currentTime = (value = 7, time = 'hour') => {
     return moment().add(value, time)
 };
 

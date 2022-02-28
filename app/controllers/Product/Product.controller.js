@@ -5,7 +5,7 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
-
+const date = require('@helper/date')
 
 const {
     addProductValidation,
@@ -131,6 +131,56 @@ const ProductController = class ProductController {
         }).populate(['category', 'hasPromo'])
 
         return res.status(HttpStatus.OK).send(responser.success(product ?? {}));
+    }
+
+    async getAllProductsOnDiscount(req, res) {
+
+
+        let page = parseInt(req.query.page) ?? 1
+        let show = parseInt(req.query.show) ?? 10
+
+        let sortBy = 1;
+        let orderBy = 1;
+
+        if (req.query.sortBy) {
+            sortBy = req.query.sortBy === "ASC" ? 1 : 0
+        }
+
+        if (!req.query.orderBy) {
+            orderBy = req.query.orderBy ? req.query.orderBy : "name"
+        }
+
+        let sort = {
+            $sort: {}
+        }
+        sort.$sort[orderBy] = sortBy
+
+        try {
+
+            let products = await ProductModel.aggregate([
+                {
+                    $match: {
+                        "hasDiscount.isDiscount": {
+                            $eq: true,
+                        },
+                        "hasDiscount.discountStart": {
+                            $lte: date.time(0).toDate(),
+                        },
+                        "hasDiscount.discountEnd": {
+                            $gte: date.time(0).toDate(),
+                        }
+
+                    }
+                },
+                { $project: { hasPromo: 0 } },
+                sort,
+                { $skip: 0 },
+            ])
+
+            return res.status(HttpStatus.OK).send(responser.success(products, "OK"));
+        } catch (err) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
+        }
     }
 
     async createProduct(req, res) {

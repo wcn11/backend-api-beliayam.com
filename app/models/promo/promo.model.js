@@ -52,6 +52,10 @@ const PromoSchema = mongoose.Schema({
         type: Object,
         enum: ['all', 'website', "mobile"],
         default: ['all']
+    },
+    default: {
+        type: Boolean,
+        default: false
     }
 
 }, {
