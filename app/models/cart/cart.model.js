@@ -12,6 +12,7 @@ const CartSchema = mongoose.Schema({
         hasDiscount: Object,
         hasPromotion: Object,
         image: String,
+        weight: Number,
         status: {
             type: String,
             default: 'active'
@@ -23,6 +24,10 @@ const CartSchema = mongoose.Schema({
             type: String,
             required: false
 
+        },
+        hasPromo: {
+            type: Schema.Types.ObjectId,
+            ref: 'promo'
         },
         productOnLive: {
             type: Schema.Types.ObjectId,

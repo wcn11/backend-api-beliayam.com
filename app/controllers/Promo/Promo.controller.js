@@ -215,7 +215,7 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
         }
 
-        // try {
+        try {
 
             let promoObject = {
                 name: input.name,
@@ -236,17 +236,17 @@ const PromoController = class PromoController {
             if (input.products) {
 
                 if (input.products.length <= 0) {
-                return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST))
-            }
-
-            for (let i = 0; i < input.products.length; i++) {
-
-                if (!this.isIdValid(input.products[i])) {
-                    return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST))
+                    return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST))
                 }
-                promoObject['products'].push(input.products[i])
+
+                for (let i = 0; i < input.products.length; i++) {
+
+                    if (!this.isIdValid(input.products[i])) {
+                        return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST))
+                    }
+                    promoObject['products'].push(input.products[i])
+                }
             }
-        }
 
             if (input.platform.length > 0) {
 
@@ -255,40 +255,31 @@ const PromoController = class PromoController {
                 }
             }
 
-        let promo = new PromoModel(promoObject)
+            let promo = new PromoModel(promoObject)
 
 
-        const savedPromo = await promo.save()
-            // let productObject = {
-            //     isPromo: true,
-            //     promoId: savedPromo.id,
-            //     name: input.name,
-            //     tags: input.tags,
-            //     image_promo: req.file ? `images/promo/${req.file.originalname}` : "",
-            //     promoValue: input.promoValue,
-            //     promoBy: input.promoBy,
-            //     promoStart: input.promoStart,
-            //     promoEnd: input.promoEnd
-            // }
+            const savedPromo = await promo.save()
 
-            // input.products.map(async product => {
+            input.products.map(async product => {
 
-            //     let productUpdate = await ProductModel.findOneAndUpdate(
-            //         product, {
-            //         $set: {
-            //                 hasPromo: [savedPromo._id]
-            //         }
-            //     }, {
-            //         new: true
-            //     })
+                await ProductModel.findOneAndUpdate(
+                    {
+                        _id: product
+                    }, {
+                    $set: {
+                        hasPromo: [savedPromo._id]
+                    }
+                }, {
+                    new: true
+                })
 
-            // })
+            })
 
             return res.status(HttpStatus.OK).send(responser.success(savedPromo, "Promo Ditetapkan"))
 
-        // } catch (e) {
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
-        // }
+        } catch (e) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
+        }
 
     }
 

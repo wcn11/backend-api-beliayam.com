@@ -5,7 +5,7 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
-
+const date = require('@helper/date')
 
 const {
     getCartsValidation,
@@ -28,47 +28,47 @@ const CartController = class CartController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        // try {
+        try {
 
-        let page = req.query.page ?? 1
-        let show = req.query.show ?? 10
+            let page = req.query.page ?? 1
+            let show = req.query.show ?? 10
 
-        let sortBy;
+            let sortBy;
 
-        let orderBy;
+            let orderBy;
 
-        if (!req.query.sortBy) {
-            sortBy = req.query.sortBy === "ASC" ? 1 : -1
+            if (!req.query.sortBy) {
+                sortBy = req.query.sortBy === "ASC" ? 1 : -1
+            }
+
+            orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
+
+            let cart = await CartModel.findOne({
+                "user": {
+                    "$in": [req.user.user._id]
+                },
+            }).populate([{ path: 'users' }, {
+                path: 'products',
+                populate: {
+                    path: 'productOnLive'
+                },
+            }])
+                .sort({
+                    orderBy: sortBy
+                }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+
+            // if (cart) {
+            //     cart.users.otpEmail = undefined
+            //     cart.users.otpSms = undefined
+            //     cart.users.password = undefined
+            // }
+
+            return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
+
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
         }
-
-        orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
-
-        let cart = await CartModel.findOne({
-            "user": {
-                "$in": [req.user.user._id]
-            },
-        }).populate([{ path: 'users' }, {
-            path: 'products',
-            populate: {
-                path: 'productOnLive'
-            },
-        }])
-            .sort({
-                orderBy: sortBy
-            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
-
-        // if (cart) {
-        //     cart.users.otpEmail = undefined
-        //     cart.users.otpSms = undefined
-        //     cart.users.password = undefined
-        // }
-
-        return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
-
-        // } catch (err) {
-
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
-        // }
     }
 
     async addToCart(req, res) {
@@ -117,6 +117,36 @@ const CartController = class CartController {
                 "user._id": req.body.user_id
             })
 
+            let price = product.price;
+
+            if (product.hasPromo &&
+                product.hasPromo.isActive &&
+                product.hasPromo.promoStart < date.time() &&
+                product.hasPromo.promoEnd > date.time()) {
+
+                if (product.hasPromo.promoBy === "percent") {
+                    let discountPrice =
+                        (product.hasPromo.promoValue / 100) * product.price;
+                    price = product.price - discountPrice;
+                } else if (product.hasPromo.promoBy === "price") {
+                    price = product.price - product.hasPromo.promoValue;
+                } else {
+                    price = product.price;
+                }
+            } else if (product.hasDiscount && product.hasDiscount.isDiscount &&
+                product.hasDiscount.discountStart < date.time() &&
+                product.hasDiscount.discountEnd > date.time()) {
+                if (product.hasDiscount.discountBy === "percent") {
+                    let discountPrice =
+                        (product.hasDiscount.discount / 100) * product.price;
+                    price = product.price - discountPrice;
+                } else if (product.hasDiscount.discountBy === "price") {
+                    price = product.price - product.hasDiscount.discount;
+                } else {
+                    price = product.price;
+                }
+            }
+
             if (carts) {
 
                 let isProductExist = carts.products.filter(product => product.id === req.body.product_id)
@@ -124,10 +154,10 @@ const CartController = class CartController {
                 if (isProductExist.length > 0) {
 
                     if ((isProductExist[0].quantity + input.quantity) > isProductExist[0].stock) {
-                        return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Stok barang ini sisa ${product.stock} dan kamu sudah punya ${isProductExist[0].quantity} di keranjangmu.`, HttpStatus.NOT_ACCEPTABLE))
+                        return res.status(HttpStatus.OK).send(responser.validation(`Stok barang ini sisa ${product.stock} dan kamu sudah punya ${isProductExist[0].quantity} di keranjangmu.`, HttpStatus.OK))
                     }
 
-                    let cartUpdate = await CartModel.updateOne(
+                    await CartModel.updateOne(
                         {
                             "user._id": req.body.user_id,
                             "products._id": isProductExist[0]._id
@@ -144,7 +174,7 @@ const CartController = class CartController {
                 }
 
                 if (product.stock < input.quantity) {
-                    return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation("Melebihi Stok Tersedia Saat Ini", HttpStatus.NOT_ACCEPTABLE))
+                    return res.status(HttpStatus.OK).send(responser.validation("Melebihi Stok Tersedia Saat Ini", HttpStatus.OK))
                 }
 
                 await CartModel.updateOne(
@@ -154,8 +184,8 @@ const CartController = class CartController {
                     $set: {
 
                         totalQuantity: carts.totalQuantity + input.quantity,
-                        subTotal: carts.subTotal + (product.price * input.quantity),
-                        baseTotal: carts.baseTotal + (product.price * input.quantity)
+                            subTotal: carts.subTotal + (price * input.quantity),
+                            baseTotal: carts.baseTotal + (price * input.quantity)
                     },
                     $push: {
                         products: {
@@ -165,12 +195,15 @@ const CartController = class CartController {
                             name: product.name,
                             position: product.position,
                             quantity: input.quantity,
-                            price: product.price,
+                            price: price,
+                            weight: product.weight,
                             image: product.image,
                             status: product.status,
                             additional: product.additional,
                             description: product.description,
                             note: input.note ?? "",
+                            hasPromo: product.hasPromo ?? null,
+                            hasDiscount: product.hasDiscount,
                             productOnLive: product._id
                         },
                     }
@@ -192,17 +225,20 @@ const CartController = class CartController {
                     name: product.name,
                     position: product.position,
                     quantity: input.quantity,
-                    price: product.price,
+                    price: price,
                     image: product.image ?? "images/product/default.jpg",
                     status: product.status,
                     additional: product.additional,
                     description: product.description,
+                    weight: product.weight,
+                    hasPromo: product.hasPromo ?? null,
+                    hasDiscount: product.hasDiscount,
                     productOnLive: product._id
                 },
                 user: user['_id'],
                 totalQuantity: input.quantity,
-                subTotal: product.price * input.quantity,
-                baseTotal: product.price * input.quantity
+                subTotal: price * input.quantity,
+                baseTotal: price * input.quantity
             }
 
             let cart = new CartModel(cartObject)
@@ -408,7 +444,7 @@ const CartController = class CartController {
 
         let product = await ProductModel.findOne({
             _id: productId
-        })
+        }).populate("hasPromo")
 
         return product
     }
