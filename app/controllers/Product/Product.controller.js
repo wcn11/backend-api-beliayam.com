@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const CategoryModel = require('@model/category/category.model')
 const ProductModel = require('@model/product/product.model')
+const PromoModel = require('@model/promo/promo.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
@@ -168,19 +169,115 @@ const ProductController = class ProductController {
                         },
                         "hasDiscount.discountEnd": {
                             $gte: date.time(0).toDate(),
-                        }
+                        },
+                        "status": "active",
 
                     }
                 },
                 { $project: { hasPromo: 0 } },
                 sort,
-                { $skip: 0 },
+                { $skip: (page - 1) * show },
+                { $limit: show }
             ])
 
             return res.status(HttpStatus.OK).send(responser.success(products, "OK"));
         } catch (err) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
         }
+    }
+
+    async getAllProductsByQuery(req, res) {
+
+
+        let page = parseInt(req.query.page) ?? 1
+        let show = parseInt(req.query.show) ?? 10
+
+        let sortBy = 1;
+        let orderBy = 1;
+        let min_stock = parseInt(req.query.min_stock)
+        let max_stock = parseInt(req.query.max_stock)
+
+        if (!req.query.min_stock || req.query.min_stock === NaN) {
+            min_stock = 0
+        }
+
+        if (!req.query.max_stock || req.query.max_stock === NaN) {
+            max_stock = 99999
+        }
+
+        if (!req.query.min_stock > req.query.max_stock) {
+            min_stock = 0
+            max_stock = 99999
+        }
+
+        if (!req.query.orderBy) {
+            orderBy = req.query.orderBy ? req.query.orderBy : "name"
+        }
+
+        let sort = {
+            $sort: {}
+        }
+        sort.$sort[orderBy] = sortBy
+
+        // try {
+
+        let productsAtPromo = await PromoModel.find(
+            {
+                "products": {
+                    $exists: true,
+                    $ne: null,
+                }
+            }
+        )
+
+        let productsArray = []
+
+        if (productsAtPromo.length > 0) {
+            for (let i = 0; i < productsAtPromo.length; i++) {
+
+                if (productsAtPromo[i].products) {
+
+                    for (let j = 0; j < productsAtPromo[i].products.length; j++) {
+                        productsArray.push(productsAtPromo[i].products[j])
+                    }
+                }
+            }
+        }
+
+        let products = await ProductModel.aggregate([
+            {
+                $match: {
+                    quantity: {
+                        $nin: productsArray
+                    },
+                    "hasDiscount.isDiscount": {
+                        $eq: false,
+                    },
+                    "hasPromo": {
+                        $ne: true,
+                    },
+                    "stock": {
+                        $gte: min_stock,
+                        $lte: max_stock
+                    },
+                    "status": 'active',
+
+                }
+            },
+            {
+                $sort: {
+                    stock: 1
+                }
+            },
+            { $project: { hasDiscount: 0 } },
+            { $skip: (page - 1) * show },
+            { $limit: show }
+        ])
+
+        return res.status(HttpStatus.OK).send(responser.success(products, "OK"));
+        // } catch (err) {
+        //     return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
+        // }
     }
 
     async createProduct(req, res) {

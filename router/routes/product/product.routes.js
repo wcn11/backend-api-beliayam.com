@@ -14,6 +14,8 @@ var imageProduct = multer({ storage: storage })
 
 router.get('/', (req, res) => ProductController.getProducts(req, res))
 
+router.get('/_s', (req, res) => ProductController.getAllProductsByQuery(req, res))
+
 router.get('/discounts', (req, res) => ProductController.getAllProductsOnDiscount(req, res))
 
 router.get('/category/:categoryId', (req, res) => ProductController.getProductsByCategoryId(req, res))
