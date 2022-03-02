@@ -231,6 +231,7 @@ const CartController = class CartController {
                     additional: product.additional,
                     description: product.description,
                     weight: product.weight,
+                    note: input.note ?? "",
                     hasPromo: product.hasPromo ?? null,
                     hasDiscount: product.hasDiscount,
                     productOnLive: product._id
@@ -255,6 +256,8 @@ const CartController = class CartController {
     }
 
     async deleteProductAtCartByProductId(req, res) {
+
+        req.body = req.params
 
         const { error } = deleteProductAtCartByProductIdValidation(req.body)
 

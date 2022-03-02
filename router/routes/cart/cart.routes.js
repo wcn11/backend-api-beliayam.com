@@ -16,6 +16,6 @@ router.put('/update/quantity', verifyToken, (req, res) => CartController.updateP
 
 router.put('/update/note', verifyToken, (req, res) => CartController.updateProductNoteByProductId(req, res))
 
-router.delete('/', verifyToken, (req, res) => CartController.deleteProductAtCartByProductId(req, res))
+router.delete('/:user_id/product/:product_id', verifyToken, (req, res) => CartController.deleteProductAtCartByProductId(req, res))
 
 module.exports = router;
