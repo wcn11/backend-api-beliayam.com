@@ -216,7 +216,7 @@ const VoucherController = class VoucherController {
         //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST))
         // }
 
-        try {
+        // try {
 
             let voucherObject = {
                 voucherName: input.voucherName,
@@ -246,9 +246,9 @@ const VoucherController = class VoucherController {
 
             return res.status(HttpStatus.OK).send(responser.success(savedVoucher, "Voucher Ditambahkan"))
 
-        } catch (e) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Membuat Voucher", HttpStatus.BAD_REQUEST))
-        }
+        // } catch (e) {
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Membuat Voucher", HttpStatus.BAD_REQUEST))
+        // }
 
     }
 

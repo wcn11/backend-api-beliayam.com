@@ -20,7 +20,9 @@ router.get('/discounts', (req, res) => ProductController.getAllProductsOnDiscoun
 
 router.get('/category/:categoryId', (req, res) => ProductController.getProductsByCategoryId(req, res))
 
-router.get('/:slug', (req, res) => ProductController.getProductBySlug(req, res))
+router.get('/:productId', (req, res) => ProductController.getProductById(req, res))
+
+router.get('/slug/:slug', (req, res) => ProductController.getProductBySlug(req, res))
 
 router.post('/', verifyToken, imageProduct.single('image_product'), (req, res) => ProductController.createProduct(req, res))
 

@@ -3,7 +3,6 @@ const Schema = mongoose.Schema;
 
 const CartSchema = mongoose.Schema({
     products: [{
-
         _id: String,
         sku: String,
         slug: String,
@@ -26,17 +25,17 @@ const CartSchema = mongoose.Schema({
 
         },
         hasPromo: {
-            type: Schema.Types.ObjectId,
+            type: mongoose.Types.ObjectId,
             ref: 'promo'
         },
         productOnLive: {
-            type: Schema.Types.ObjectId,
+            type: mongoose.Types.ObjectId,
             ref: 'product'
 
         }
     }],
-    users: {
-        type: Schema.Types.ObjectId,
+    user: {
+        type: mongoose.Types.ObjectId,
         ref: 'users'
     },
     totalQuantity: Number,

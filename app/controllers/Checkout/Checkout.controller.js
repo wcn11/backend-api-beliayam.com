@@ -36,6 +36,51 @@ const CheckoutController = class CheckoutController {
                 responser.error("Anda Belum Memilih Barang Untuk Dibayarkan", HttpStatus.NOT_FOUND))
         }
 
+        let addresses = await UserModel.aggregate([
+            {
+                $match: {
+                    "addresses.user_id": user._id
+                }
+            },
+            { $unwind: "$addresses" },
+            {
+                $group: {
+                    "_id": "$_id",
+                    address: {
+                        $push: "$addresses"
+                    }
+                }
+            }
+        ])
+
+        let address = {}
+
+        let defaultAddress = {}
+
+        let firstAddress = {}
+
+        if (addresses[0] && addresses[0].address.length > 0) {
+            for (let i = 0; i < addresses[0].address.length; i++) {
+                if (firstAddress && Object.keys(firstAddress).length === 0) {
+                    firstAddress = addresses[0].address[i]
+                }
+
+                if (addresses[0].address[i].default) {
+                    defaultAddress = addresses[0].address[i]
+                    break
+                }
+            }
+        }
+
+        defaultAddress = address
+
+        let message = "Berhasil checkout"
+
+        if (Object.keys(defaultAddress).length === 0) {
+            address = firstAddress
+            message = "Berhasil Checkout menggunakan alamat tersedia. Alamat utama belum ditentukan!"
+        }
+
         checkIfCheckoutIsExist.user.otpEmail = undefined
 
         checkIfCheckoutIsExist.user.otpSms = undefined
@@ -44,7 +89,9 @@ const CheckoutController = class CheckoutController {
 
         checkIfCheckoutIsExist.vouchers = []
 
-        return res.status(HttpStatus.OK).send(responser.success(checkIfCheckoutIsExist, HttpStatus.OK));
+        checkIfCheckoutIsExist['address'] = address
+
+        return res.status(HttpStatus.OK).send(responser.success(checkIfCheckoutIsExist, message));
 
     }
 
@@ -118,19 +165,19 @@ const CheckoutController = class CheckoutController {
 
             let productAtCart = await this.getProductAtCart(products[i]._id)
 
-            if (!productAtCart) {
-                return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia. Mohon Cek Ketersediaan Barang", HttpStatus.BAD_REQUEST))
+            if (!productAtCart || productAtCart.length <= 0) {
+                return res.status(HttpStatus.OK).send(
+                    responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia. Mohon Cek Ketersediaan Barang", HttpStatus.OK))
             }
 
             if (products[i].status.toLowerCase() !== "active") {
-                return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error(`Produk ${products[i].name} Sedang Tidak Tidak Tersedia`, HttpStatus.BAD_REQUEST))
+                return res.status(HttpStatus.OK).send(
+                    responser.error(`Produk ${products[i].name} Sedang Tidak Tidak Tersedia`, HttpStatus.OK))
             }
 
             if (products[i].stock < 0) {
-                return res.status(HttpStatus.BAD_REQUEST).send(
-                    responser.error(`Produk ${products[i].name} Kehabisan Persediaan`, HttpStatus.BAD_REQUEST))
+                return res.status(HttpStatus.OK).send(
+                    responser.error(`Produk ${products[i].name} Kehabisan Persediaan`, HttpStatus.OK))
             }
 
             let promo = products[i].hasPromo

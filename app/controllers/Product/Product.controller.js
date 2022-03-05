@@ -12,6 +12,7 @@ const {
     addProductValidation,
     getProductsValidation,
     getProductBySlugValidation,
+    getProductByIdValidation,
     updateProductByIdValidation,
     deleteProductByIdValidation,
     getProductsByCategoryIdValidation
@@ -129,6 +130,21 @@ const ProductController = class ProductController {
 
         let product = await ProductModel.findOne({
             slug: req.params.slug
+        }).populate(['category', 'hasPromo'])
+
+        return res.status(HttpStatus.OK).send(responser.success(product ?? {}));
+    }
+
+    async getProductById(req, res) {
+
+        const { error } = getProductByIdValidation(req.params)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        let product = await ProductModel.findOne({
+            _id: req.params.productId,
         }).populate(['category', 'hasPromo'])
 
         return res.status(HttpStatus.OK).send(responser.success(product ?? {}));

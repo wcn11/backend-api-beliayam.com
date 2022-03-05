@@ -66,6 +66,14 @@ const getProductBySlugValidation = (data) => {
     return schema.validate(data)
 }
 
+const getProductByIdValidation = (data) => {
+    const schema = Joi.object({
+        productId: Joi.string().max(255).required()
+    })
+
+    return schema.validate(data)
+}
+
 const deleteProductByIdValidation = (data) => {
     const schema = Joi.object({
         productId: Joi.string().max(255).required()
@@ -108,6 +116,7 @@ module.exports = {
     addProductValidation,
     getProductsValidation,
     getProductBySlugValidation,
+    getProductByIdValidation,
     updateProductByIdValidation,
     deleteProductByIdValidation,
     getProductsByCategoryIdValidation

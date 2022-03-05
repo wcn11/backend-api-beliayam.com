@@ -47,7 +47,7 @@ const CartController = class CartController {
                 "user": {
                     "$in": [req.user.user._id]
                 },
-            }).populate([{ path: 'users' }, {
+            }).populate([{ path: 'user' }, {
                 path: 'products',
                 populate: {
                     path: 'productOnLive'
@@ -57,11 +57,11 @@ const CartController = class CartController {
                     orderBy: sortBy
                 }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
-            // if (cart) {
-            //     cart.users.otpEmail = undefined
-            //     cart.users.otpSms = undefined
-            //     cart.users.password = undefined
-            // }
+            if (cart) {
+                cart.user.otpEmail = undefined
+                cart.user.otpSms = undefined
+                cart.user.password = undefined
+            }
 
             return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
 
@@ -114,7 +114,7 @@ const CartController = class CartController {
             }
 
             let carts = await CartModel.findOne({
-                "user._id": req.body.user_id
+                "user": req.body.user_id
             })
 
             let price = product.price;
@@ -159,7 +159,7 @@ const CartController = class CartController {
 
                     await CartModel.updateOne(
                         {
-                            "user._id": req.body.user_id,
+                            "user": req.body.user_id,
                             "products._id": isProductExist[0]._id
                         }, {
                         $set: {
@@ -179,7 +179,7 @@ const CartController = class CartController {
 
                 await CartModel.updateOne(
                     {
-                        "user._id": req.body.user_id
+                        "user": req.body.user_id
                     }, {
                     $set: {
 
@@ -236,7 +236,7 @@ const CartController = class CartController {
                     hasDiscount: product.hasDiscount,
                     productOnLive: product._id
                 },
-                user: user['_id'],
+                user: req.body.user_id,
                 totalQuantity: input.quantity,
                 subTotal: price * input.quantity,
                 baseTotal: price * input.quantity
@@ -266,8 +266,8 @@ const CartController = class CartController {
         }
 
         let carts = await CartModel.findOne({
-            "user._id": req.body.user_id,
-            "product_id": req.body.product_id
+            "user": req.body.user_id,
+            "products.product_id": req.body.product_id
         })
 
         let user = await this.getUserById(req.body.user_id)
@@ -275,8 +275,10 @@ const CartController = class CartController {
         if (!user) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("User Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
+        console.log(carts.products)
 
         let product = carts.products.filter(product => product.id === req.body.product_id)
+
 
         if (product.length <= 0) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Produk Tidak Ada Dalam Keranjang", HttpStatus.NOT_FOUND))
@@ -285,7 +287,7 @@ const CartController = class CartController {
         try {
 
             await CartModel.updateOne({
-                "user._id": req.body.user_id,
+                "user": req.body.user_id,
                 "products._id": req.body.product_id
             }, {
                 $pull: {
@@ -330,7 +332,7 @@ const CartController = class CartController {
         }
 
         let carts = await CartModel.findOne({
-            "user._id": req.body.user_id,
+            "user": req.body.user_id,
             "product_id": req.body.product_id
         })
 
@@ -382,7 +384,7 @@ const CartController = class CartController {
 
             let cartUpdate = await CartModel.updateOne(
                 {
-                    "user._id": req.body.user_id,
+                    "user": req.body.user_id,
                     "products._id": product[0]._id
                 }, {
                 $set: {
@@ -426,7 +428,7 @@ const CartController = class CartController {
 
             let cartUpdate = await CartModel.updateOne(
                 {
-                    "user._id": req.body.user_id,
+                    "user": req.body.user_id,
                     "products._id": req.body.product_id
                 }, {
                 $set: {

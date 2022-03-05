@@ -648,6 +648,9 @@ const OrderController = class OrderController {
 
             orderObject.signature = signature_temp
 
+            await CheckoutModel.deleteOne({
+                user: user._id
+            })
             return res.status(HttpStatus.OK).send(responser.success(orderObject, "OK"));
         } catch (err) {
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(

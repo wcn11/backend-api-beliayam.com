@@ -54,7 +54,7 @@ const updateProductNoteByProductIdValidation = (data) => {
     const schema = Joi.object({
         user_id: Joi.string().max(255).required(),
         product_id: Joi.string().max(255).required(),
-        note: Joi.string().max(150),
+        note: Joi.string().allow("").max(150),
     })
 
     return schema.validate(data)
