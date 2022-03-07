@@ -365,7 +365,7 @@ const OrderController = class OrderController {
                 }
             }
 
-            let sub_total = 0
+            let sub_total = checkout.baseTotal
 
             let sub_total_voucher = 0
 
@@ -554,12 +554,14 @@ const OrderController = class OrderController {
 
                     postDataObject.bill_total = grand_total_concat
 
+                    console.log(postDataObject)
+
                     const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
                     if (!paymentGateway.trx_id) {
 
                         return res.status(HttpStatus.REQUEST_TIMEOUT).send(
-                            responser.error(`Server Sedang Sibuk, Harap Coba Kembali`, HttpStatus.REQUEST_TIMEOUT))
+                            responser.error(`Server Pembayaran Sedang Sibuk, Harap Coba Kembali`, HttpStatus.REQUEST_TIMEOUT))
                     }
 
                     objectResponse.response = {
@@ -633,7 +635,7 @@ const OrderController = class OrderController {
                 },
                 shipping_address: address[0].address,
                 order_status: {
-                    status: "IN PROCESS",
+                    status: "IN_PROCESS",
                     payment_date: date.time(),
                     description: "Waiting for payment"
                 },

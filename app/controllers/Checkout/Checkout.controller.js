@@ -7,7 +7,7 @@ const UserModel = require('@model/user/user.model')
 const ProductModel = require('@model/product/product.model')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
-const { currentTime } = require('@helper/date')
+const date = require('@helper/date')
 
 const redis = require("redis");
 
@@ -29,7 +29,22 @@ const CheckoutController = class CheckoutController {
 
         let checkIfCheckoutIsExist = await CheckoutModel.findOne({
             user: user._id
-        }).lean().populate(['charges', 'items.product', 'user'])
+        }).lean().populate([
+            { path: 'charges' },
+            {
+                path: 'items.product',
+                populate: {
+                    path: 'category'
+                },
+                populate: {
+                    path: 'productOnLive'
+                },
+                populate: {
+                    path: 'hasPromo'
+                },
+            },
+            { path: 'user' },
+        ])  //.lean().populate(['charges', 'items.product', 'items.product.category', 'user'])
 
         if (!checkIfCheckoutIsExist) {
             return res.status(HttpStatus.NOT_FOUND).send(
@@ -104,7 +119,7 @@ const CheckoutController = class CheckoutController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = await this.isIdValid(req.body.cart.cart_id)
+        let isValid = this.isIdValid(req.body.cart.cart_id)
 
         if (!isValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -119,7 +134,7 @@ const CheckoutController = class CheckoutController {
                 responser.error("Keranjang Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
 
-        let isUserValid = await this.isIdValid(req.body.user_id)
+        let isUserValid = this.isIdValid(req.body.user_id)
 
         if (!isUserValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -159,7 +174,7 @@ const CheckoutController = class CheckoutController {
         //check if product at cart exist in inventory products
         for (let i = 0; i < products.length; i++) {
 
-            let currentDate = currentTime
+            let currentDate = date.time()
 
             let discount = products[i].hasDiscount
 
@@ -184,21 +199,18 @@ const CheckoutController = class CheckoutController {
 
             if (promo) {
 
-                for (let j = 0; j < promo.length; j++) {
+                if (promo.promoStart < currentDate && promo.promoEnd > currentDate) {
 
-                    if (promo[j].promoStart < currentDate && promo[j].promoEnd > currentDate) {
+                    if (promo.promoBy === "percent") {
 
-                        if (promo[j].promoBy === "percent") {
+                        let promoPrice = (promo.promoValue / 100) * products[i].price
+                        let priceAfterPromo = products[i].price - promoPrice
+                        calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
 
-                            let promoPrice = (promo[j].promoValue / 100) * products[i].price
-                            let priceAfterPromo = products[i].price - promoPrice
-                            calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
+                    } else if (promo.promoBy === "price") {
 
-                        } else if (promo[j].promoBy === "price") {
+                        calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
 
-                            calculateItem += (productAtCart[0]['products'][0].quantity + promo[j].promoValue) * products[i].price
-
-                        }
                     }
                 }
             }
@@ -231,6 +243,7 @@ const CheckoutController = class CheckoutController {
 
             products[i].quantity = productAtCart[0]['products'][0].quantity
             products[i].note = productAtCart[0]['products'][0].note
+            products[i].productOnLive = productAtCart[0]['products'][0]._id
 
             allProducts.push(products[i])
 
@@ -244,143 +257,172 @@ const CheckoutController = class CheckoutController {
             })
         }
 
-        // try {
+        try {
 
-        let type = req.body.type || ""
-        let platform = req.body.platform || ""
-        let isActive = req.body.isActive || true
+            let type = req.body.type || ""
+            let platform = req.body.platform || ""
+            let isActive = req.body.isActive || true
 
-        let charges = await this.getAllCharge(type, platform, isActive)
+            let charges = await this.getAllCharge(type, platform, isActive)
 
-        let chargesObjectIds = []
+            let chargesObjectIds = []
 
-        const calculateCharge = charges.reduce((accumulator, charge) => {
+            const calculateCharge = charges.reduce((accumulator, charge) => {
 
-            if (charge.chargeBy === "price") {
-                chargesObjectIds.push(charge._id)
-                return accumulator + parseInt(charge.chargeValue)
-            }
-            // else if (charge.chargeBy === "percent") {
-            //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
-            // }
-            else {
-                chargesObjectIds.push(charge._id)
-                return accumulator
-            }
-        }, 0)
-
-        let voucherNotValid = []
-
-        let vouchers = []
-
-        let allVouchers = req.body.vouchers || []
-
-        if (allVouchers && allVouchers > 0) {
-
-            for (let i = 0; i < allVouchers.length; i++) {
-
-                let isVoucherExist = await this.isVoucherExist(allVouchers[i], "id")
-
-                if (!isVoucherExist && isVoucherExist === null) {
-
-                    voucherNotValid.push(`Salah satu voucher tidak dapat digunakan, mungkin telah kadaluarsa`)
-
-                    continue
+                if (charge.chargeBy === "price") {
+                    chargesObjectIds.push(charge._id)
+                    return accumulator + parseInt(charge.chargeValue)
                 }
-
-                var currentDate = currentTime
-
-                if (isVoucherExist.discountStart > currentDate) {
-
-                    let voucherName = isVoucherExist.voucherName ?? 'Anda'
-
-                    voucherNotValid.push(`Voucher ${voucherName} Belum Aktif`)
-
-                    continue
+                // else if (charge.chargeBy === "percent") {
+                //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
+                // }
+                else {
+                    chargesObjectIds.push(charge._id)
+                    return accumulator
                 }
+            }, 0)
 
-                if (isVoucherExist.discountEnd < currentDate) {
+            let voucherNotValid = []
 
-                    let voucherName = isVoucherExist.voucherName ?? "Anda"
+            let vouchers = []
 
-                    voucherNotValid.push(`Voucher ${voucherName} Telah Kadaluarsa`)
+            let allVouchers = req.body.vouchers || []
 
-                    continue
-                }
+            if (allVouchers && allVouchers > 0) {
 
-                if (isVoucherExist.isPrivate.private) {
+                for (let i = 0; i < allVouchers.length; i++) {
 
-                    let isUserExist = isVoucherExist.isPrivate.users.indexOf(req.body.user_id) != -1
+                    let isVoucherExist = await this.isVoucherExist(allVouchers[i], "id")
 
-                    let voucherName = isVoucherExist.voucherName ?? "ini Khusus"
+                    if (!isVoucherExist && isVoucherExist === null) {
 
-                    if (!isUserExist) {
-
-                        voucherNotValid.push(`Voucher ${voucherName}, Bersifat Private. Tidak Dapat Digunakan Oleh Anda`)
+                        voucherNotValid.push(`Salah satu voucher tidak dapat digunakan, mungkin telah kadaluarsa`)
 
                         continue
                     }
+
+                    var currentDate = currentTime
+
+                    if (isVoucherExist.discountStart > currentDate) {
+
+                        let voucherName = isVoucherExist.voucherName ?? 'Anda'
+
+                        voucherNotValid.push(`Voucher ${voucherName} Belum Aktif`)
+
+                        continue
+                    }
+
+                    if (isVoucherExist.discountEnd < currentDate) {
+
+                        let voucherName = isVoucherExist.voucherName ?? "Anda"
+
+                        voucherNotValid.push(`Voucher ${voucherName} Telah Kadaluarsa`)
+
+                        continue
+                    }
+
+                    if (isVoucherExist.isPrivate.private) {
+
+                        let isUserExist = isVoucherExist.isPrivate.users.indexOf(req.body.user_id) != -1
+
+                        let voucherName = isVoucherExist.voucherName ?? "ini Khusus"
+
+                        if (!isUserExist) {
+
+                            voucherNotValid.push(`Voucher ${voucherName}, Bersifat Private. Tidak Dapat Digunakan Oleh Anda`)
+
+                            continue
+                        }
+                    }
+
+                    vouchers.push(isVoucherExist)
+
                 }
-
-                vouchers.push(isVoucherExist)
-
             }
-        }
 
-        let checkIfCheckoutIsExist = await CheckoutModel.findOne({
-            user: req.body.user_id
-        })
-
-        if (checkIfCheckoutIsExist) {
-            await CheckoutModel.deleteOne({
+            let checkIfCheckoutIsExist = await CheckoutModel.findOne({
                 user: req.body.user_id
             })
+
+            if (checkIfCheckoutIsExist) {
+                await CheckoutModel.deleteOne({
+                    user: req.body.user_id
+                })
+            }
+
+            let saveCheckout = new CheckoutModel({
+                cart_id: req.body.cart.cart_id,
+                items: objectProduct,
+                baseTotal: calculateItem + calculateCharge,
+                subTotalProduct: calculateItem,
+                subTotalCharges: calculateCharge,
+                charges: chargesObjectIds,
+                platform: [req.body.platform],
+                user: req.body.user_id,
+            })
+
+            await saveCheckout.save()
+
+            let newCheckout = await CheckoutModel.findOne({
+                user: req.body.user_id
+            }).lean().populate([
+                { path: 'charges' },
+                {
+                    path: 'items.product',
+                    populate: {
+                        path: 'category'
+                    },
+                    populate: {
+                        path: 'hasPromo'
+                    },
+                },
+                { path: 'user' },
+            ])
+
+            let productAtCart = isCartExist.products.filter(product => {
+
+                for (let i = 0; i < req.body.cart.products.length; i++) {
+                    if (product._id === req.body.cart.products[i]) {
+                        return product
+                    }
+                }
+
+            })
+
+            let total = {
+                subTotal: isCartExist.subTotal,
+                baseTotal: isCartExist.baseTotal,
+                totalQuantity: isCartExist.totalQuantity
+            }
+
+            if (productAtCart.length > 0) {
+
+                productAtCart.map(product => {
+
+                    total.subTotal -= product.price * product.quantity
+                    total.baseTotal -= product.price * product.quantity
+                    total.totalQuantity -= product.quantity
+
+                })
+            }
+
+            // await this.deleteProductFromCart(req, total)
+
+            newCheckout.user.otpEmail = undefined
+
+            newCheckout.user.otpSms = undefined
+
+            newCheckout.user.password = undefined
+
+            newCheckout.vouchers = vouchers
+
+            newCheckout.voucherNotValid = voucherNotValid
+
+            return res.status(HttpStatus.OK).send(responser.success(newCheckout, HttpStatus.OK));
+
+        } catch (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error, HttpStatus.BAD_REQUEST))
         }
-
-        let saveCheckout = new CheckoutModel({
-            cart_id: req.body.cart.cart_id,
-            items: objectProduct,
-            baseTotal: calculateItem + calculateCharge,
-            subTotalProduct: calculateItem,
-            subTotalCharges: calculateCharge,
-            charges: chargesObjectIds,
-            platform: [req.body.platform],
-            user: req.body.user_id,
-        })
-
-        await saveCheckout.save()
-
-        let newCheckout = await CheckoutModel.findOne({
-            user: req.body.user_id
-        }).lean().populate([
-            { path: 'charges' },
-            {
-                path: 'items.product',
-                populate: {
-                    path: 'category'
-                },
-                populate: {
-                    path: 'hasPromo'
-                },
-            },
-            { path: 'user' },
-        ])
-
-        newCheckout.user.otpEmail = undefined
-
-        newCheckout.user.otpSms = undefined
-
-        newCheckout.user.password = undefined
-
-        newCheckout.vouchers = vouchers
-
-        newCheckout.voucherNotValid = voucherNotValid
-
-        return res.status(HttpStatus.OK).send(responser.success(newCheckout, HttpStatus.OK));
-
-        // } catch (error) {
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Tidak Dapat Checkout", HttpStatus.BAD_REQUEST))
-        // }
 
     }
 
@@ -393,7 +435,7 @@ const CheckoutController = class CheckoutController {
                 responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isUserIdValid = await this.isIdValid(req.body.user_id)
+        let isUserIdValid = this.isIdValid(req.body.user_id)
 
         if (!isUserIdValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -582,6 +624,33 @@ const CheckoutController = class CheckoutController {
 
     //     return res.status(HttpStatus.OK).send(responser.success(checkout, "Voucher Dilepas"));
     // }
+
+    async deleteProductFromCart(req, total) {
+
+
+        await CartModel.updateOne({
+            _id: req.body.cart.cart_id,
+            "products.$._id": {
+                $in: [req.body.cart.products]
+            }
+        }, {
+            $unset: {
+                "products.$": {
+                    $in: [req.body.cart.products]
+                }
+            }
+        })
+
+        await CartModel.updateOne({
+            _id: req.body.cart.cart_id
+        }, {
+            $set: total,
+            $pull: {
+                "products": null
+
+            }
+        })
+    }
 
     async getProductAtCart(productId) {
 

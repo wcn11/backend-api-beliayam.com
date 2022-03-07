@@ -9,7 +9,7 @@ module.exports = {
         code: 1,
         name: "IN_PROCESS",
         type: "CHECKOUT",
-        description: "Pembayaran Dalam Proses"
+        description: "Menunggu Pembayaran"
     },
     PAYMENT_SUCCESS: {
         code: 2,

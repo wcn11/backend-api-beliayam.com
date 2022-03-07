@@ -387,7 +387,7 @@ const ProductController = class ProductController {
                 _id: req.params.productId
             });
 
-            return res.status(HttpStatus.OK).send(responser.validation("Produk Telah Dihapus", HttpStatus.OK))
+            return res.status(HttpStatus.OK).send(responser.success({}, "Produk Telah Dihapus"))
 
         } catch (err) {
 
