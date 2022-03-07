@@ -74,7 +74,7 @@ const ProductController = class ProductController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = await this.isIdValid(req.params.categoryId)
+        let isValid = this.isIdValid(req.params.categoryId)
 
         if (!isValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -404,7 +404,7 @@ const ProductController = class ProductController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = await this.isIdValid(req.params.productId)
+        let isValid = this.isIdValid(req.params.productId)
 
         if (!isValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -426,7 +426,7 @@ const ProductController = class ProductController {
 
         // buat jika ada sku duplikat
 
-        try {
+        // try {
 
             let input = req.body
 
@@ -483,11 +483,11 @@ const ProductController = class ProductController {
 
             return res.status(HttpStatus.OK).send(responser.success(product, "Produk Diperbarui"))
 
-        } catch (err) {
+        // } catch (err) {
 
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Mengubah Produk, Harap Cek Input", HttpStatus.BAD_REQUEST))
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Mengubah Produk, Harap Cek Input", HttpStatus.BAD_REQUEST))
 
-        }
+        // }
     }
 
     async isCategoryExists(categoryId) {

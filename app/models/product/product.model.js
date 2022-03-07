@@ -80,8 +80,7 @@ const ProductSchema = mongoose.Schema({
     },
     hasPromo: {
         type: Schema.Types.ObjectId,
-        ref: 'promo',
-        default: Schema.Types.ObjectId
+        ref: 'promo'
     },
     status: {
         type: String,
