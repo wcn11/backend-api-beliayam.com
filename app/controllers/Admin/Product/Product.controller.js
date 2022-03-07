@@ -318,10 +318,15 @@ const ProductController = class ProductController {
             }
         }
 
+
+        console.log(productObject)
         const product = await ProductModel.updateOne(
-            req.params.productId, {
-            $set: productObject
-        }, {
+            {
+                _id: req.params.productId,
+            },
+            {
+                $set: productObject
+            }, {
             new: true
         }).select({
             category: 1,

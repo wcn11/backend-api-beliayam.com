@@ -428,60 +428,60 @@ const ProductController = class ProductController {
 
         // try {
 
-            let input = req.body
+        let input = req.body
 
-            let productObject = {
+        let productObject = {
 
-                category: [
-                    category._id,
-                ],
-                sku: input.sku,
-                slug: input.slug,
-                name: input.name,
-                position: input.position,
-                price: input.price,
-                stock: input.stock,
-                weight: input.weight,
-                status: input.status,
-                additional: input.additional,
-                description: input.description
+            category: [
+                category._id,
+            ],
+            sku: input.sku,
+            slug: input.slug,
+            name: input.name,
+            position: input.position,
+            price: input.price,
+            stock: input.stock,
+            weight: input.weight,
+            status: input.status,
+            additional: input.additional,
+            description: input.description
+        }
+
+        if (req.file) {
+            productObject.image = req.file ? `images/product/${req.file.filename}` : "images/product/default.jpg"
+        }
+
+        if (input.isDiscount) {
+            productObject.hasDiscount = {
+                isDiscount: input.isDiscount,
+                discount: input.discount,
+                discountBy: input.discountBy,
+                discountStart: input.discountStart,
+                discountEnd: input.discountEnd
             }
+        }
 
-            if (req.file) {
-                productObject.image = req.file ? `images/product/${req.file.filename}` : "images/product/default.jpg"
-            }
+        const product = await ProductModel.findOneAndUpdate(
+            { _id: req.params.productId }, {
+            $set: productObject
+        }, {
+            new: true
+        }).select({
+            category: 1,
+            sku: 1,
+            name: 1,
+            position: 1,
+            image: 1,
+            status: 1,
+            additional: 1,
+            description: 1,
+            price: 1,
+            stock: 1,
+            hasDiscount: 1,
+            hasPromotion: 1,
+        })
 
-            if (input.isDiscount) {
-                productObject.hasDiscount = {
-                    isDiscount: input.isDiscount,
-                    discount: input.discount,
-                    discountBy: input.discountBy,
-                    discountStart: input.discountStart,
-                    discountEnd: input.discountEnd
-                }
-            }
-
-            const product = await ProductModel.findOneAndUpdate(
-                req.params.productId, {
-                $set: productObject
-            }, {
-                new: true
-            }).select({
-                category: 1,
-                sku: 1,
-                name: 1,
-                position: 1,
-                image: 1,
-                status: 1,
-                additional: 1,
-                description: 1,
-                price: 1,
-                stock: 1,
-                hasDiscount: 1,
-                hasPromotion: 1,
-            })
-
-            return res.status(HttpStatus.OK).send(responser.success(product, "Produk Diperbarui"))
+        return res.status(HttpStatus.OK).send(responser.success(product, "Produk Diperbarui"))
 
         // } catch (err) {
 
