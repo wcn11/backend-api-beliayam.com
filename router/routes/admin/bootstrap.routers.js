@@ -11,7 +11,7 @@ const CategoryRouter = require('@router/admin/category/category.routes')
 // const OrderRouter = require('@router/order/order.routes')
 const ProductRouter = require('@router/admin/product/product.routes')
 // const PaymentRouter = require('@router/payment/payment.routes')
-// const PromoRouter = require('@router/promo/promo.routes')
+const PromoRouter = require('@router/admin/promo/promo.routes')
 const AdminRouter = require('@router/admin/admin/admin.routes')
 const UsersRouter = require('@router/admin/users/users.routes')
 
@@ -20,6 +20,8 @@ Router.use('/auth', AuthRouter)
 Router.use('/category', CategoryRouter)
 
 Router.use('/product', ProductRouter)
+
+Router.use('/promo', PromoRouter)
 
 Router.use('/user', AdminRouter)
 

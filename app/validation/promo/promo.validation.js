@@ -8,7 +8,7 @@ const createNewPromoValidation = (data) => {
                 "any.required": `{{#label}} dibutuhkan`,
                 "any.regex": "Slug tidak valid"
             }),
-        tags: Joi.string().min(2).max(10),
+        tags: Joi.string().min(2).max(15),
         products: Joi.array(),
         image_promo: Joi.any(),
         termsAndConditions: Joi.string().max(5000),
@@ -70,7 +70,7 @@ const updatePromoByPromoIdValidation = (data) => {
                 "any.required": `{{#label}} dibutuhkan`,
                 "any.regex": "Slug tidak valid"
             }),
-        tags: Joi.string().min(2).max(10),
+        tags: Joi.string().min(2).max(15),
         products: Joi.array(),
         banner: Joi.any(),
         termsAndConditions: Joi.string().max(5000),
