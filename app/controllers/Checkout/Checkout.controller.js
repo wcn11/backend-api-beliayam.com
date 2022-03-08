@@ -174,7 +174,7 @@ const CheckoutController = class CheckoutController {
         //check if product at cart exist in inventory products
         for (let i = 0; i < products.length; i++) {
 
-            let currentDate = date.time()
+            let currentDate = date.time(7).toDate()
 
             let discount = products[i].hasDiscount
 
@@ -195,6 +195,8 @@ const CheckoutController = class CheckoutController {
                     responser.error(`Produk ${products[i].name} Kehabisan Persediaan`, HttpStatus.OK))
             }
 
+            // calculateItem += productAtCart[0]['products'][0].quantity * products[i].price
+
             let promo = products[i].hasPromo
 
             if (promo) {
@@ -209,14 +211,14 @@ const CheckoutController = class CheckoutController {
 
                     } else if (promo.promoBy === "price") {
 
-                        calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
+                        calculateItem += (products[i].price - promo.promoValue) * productAtCart[0]['products'][0].quantity
 
                     }
                 }
             }
             else if (discount.isDiscount && !promo) {
 
-                if (discount.discountStart > currentDate && discount.discountEnd < currentDate) {
+                if (discount.discountStart < currentDate && discount.discountEnd > currentDate) {
 
                     if (discount.discountBy === "percent") {
 
@@ -226,7 +228,8 @@ const CheckoutController = class CheckoutController {
 
                     } else if (discount.discountBy === "price") {
 
-                        calculateItem += (productAtCart[0]['products'][0].quantity + discount.discount) * products[i].price
+                        calculateItem += (products[i].price - discount.discount) * productAtCart[0]['products'][0].quantity
+
 
                     }
                 } else {
@@ -406,7 +409,7 @@ const CheckoutController = class CheckoutController {
                 })
             }
 
-            await this.deleteProductFromCart(req, total)
+            // await this.deleteProductFromCart(req, total)
 
             newCheckout.user.otpEmail = undefined
 
