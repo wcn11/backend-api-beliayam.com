@@ -230,13 +230,7 @@ const CheckoutController = class CheckoutController {
 
                     } else if (discount.discountBy === "price") {
 
-<<<<<<< HEAD
-                        calculateItem += (products[i].price - discount.discount) * productAtCart[0]['products'][0].quantity
-                        products[i].price = (products[i].price - discount.discount)
-
-=======
                         calculateItem += (productAtCart[0]['products'][0].quantity + discount.discount) * products[i].price
->>>>>>> parent of ba08429... fix charge by id
 
                     }
                 } else {
