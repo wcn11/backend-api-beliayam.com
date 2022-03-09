@@ -19,7 +19,7 @@ var storage = multer.diskStorage({
                 case "image_voucher":
 
                     if (error) {
-                        const message = responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST)
+                        const message = responser.validation(error.details[0].message, HttpStatus.OK)
 
                         cb(message, null)
                     }

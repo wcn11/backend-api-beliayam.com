@@ -236,7 +236,7 @@ const VoucherController = class VoucherController {
         let voucherObject = {
             voucherName: input.voucherName,
             voucherCode: input.voucherCode,
-            banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
+            // banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
             discountBy: input.discountBy,
             discountValue: input.discountValue,
             minimumOrderValue: input.minimumOrderValue,
@@ -297,7 +297,7 @@ const VoucherController = class VoucherController {
             let voucherObject = {
                 voucherName: input.voucherName,
                 voucherCode: input.voucherCode,
-                banner: req.file ? req.file.path : "images/voucher/default.jpg",
+                // banner: req.file ? req.file.path : "images/voucher/default.jpg",
                 discountBy: input.discountBy,
                 discountValue: input.discountValue,
                 minimumOrderValue: input.minimumOrderValue,
@@ -308,15 +308,15 @@ const VoucherController = class VoucherController {
                 isActive: input.isActive ?? false
             }
 
-            if (req.file) {
-                voucherObject.banner = req.file.path
-            }
+            // if (req.file) {
+            //     voucherObject.banner = req.file.path
+            // }
 
             const te = {
 
                 voucherName: req.body.voucherName,
                 voucherCode: req.body.voucherCode,
-                banner: req.body.banner,
+                // banner: req.body.banner,
                 discountBy: req.body.discountBy,
                 discountValue: req.body.discountValue,
                 minimumOrderValue: req.body.minimumOrderValue,
@@ -341,7 +341,7 @@ const VoucherController = class VoucherController {
                 $set: {
                     voucherName: req.body.voucherName,
                     voucherCode: req.body.voucherCode,
-                    banner: req.body.banner,
+                    // banner: req.body.banner,
                     discountBy: req.body.discountBy,
                     discountValue: req.body.discountValue,
                     minimumOrderValue: req.body.minimumOrderValue,
@@ -364,7 +364,7 @@ const VoucherController = class VoucherController {
             }).select({
                 voucherName: 1,
                 voucherCode: 1,
-                banner: 1,
+                // banner: 1,
                 discountBy: 1,
                 discountValue: 1,
                 minimumOrderValue: 1,

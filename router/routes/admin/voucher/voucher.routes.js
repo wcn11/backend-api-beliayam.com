@@ -20,9 +20,9 @@ router.get('/code/:voucherCode', verifyToken, (req, res) => VoucherController.ge
 
 router.get('/:voucherId', verifyToken, (req, res) => VoucherController.getVoucherByVoucherId(req, res))
 
-router.post('/', verifyToken, imageVoucher.single('image_voucher'), (req, res) => VoucherController.createNewVoucher(req, res))
+router.post('/', verifyToken, (req, res) => VoucherController.createNewVoucher(req, res))
 
-router.put('/:voucherId', verifyToken, imageVoucher.single('image_voucher'), (req, res) => VoucherController.updateVoucherByVoucherId(req, res))
+router.put('/:voucherId', verifyToken, (req, res) => VoucherController.updateVoucherByVoucherId(req, res))
 
 router.delete('/:voucherId', verifyToken, (req, res) => VoucherController.deleteVoucherByVoucherId(req, res))
 
