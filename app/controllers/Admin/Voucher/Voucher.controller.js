@@ -6,7 +6,7 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
-const { currentTime } = require('@helper/date')
+const date = require('@helper/date')
 
 const moment = require('moment')
 moment.locale('id-ID');
@@ -21,7 +21,7 @@ const {
     deleteVoucherByVoucherIdValidation,
     getAllVouchersByUserValidation
 
-} = require('@validation/voucher/voucher.validation')
+} = require('@validation/admin/voucher/voucher.validation')
 
 const VoucherController = class VoucherController {
 
@@ -74,66 +74,81 @@ const VoucherController = class VoucherController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        try {
+        // try {
 
-            let page = req.query.page ?? 1
-            let show = req.query.show ?? 10
+        let page = req.query.page ?? 1
+        let show = req.query.show ?? 10
 
-            let sortBy;
+        let sortBy;
 
-            let orderBy;
+        let orderBy;
 
-            if (!req.query.sortBy) {
-                sortBy = req.query.sortBy === "ASC" ? 1 : -1
-            }
-            sortBy = req.query.sortBy ?? 1
-
-            if (!req.query.orderBy) {
-                orderBy = req.query.orderBy ?? "voucherCode"
-            }
-            orderBy = req.query.orderBy ?? 1
-
-            var currentDate = moment().add(7, 'hour').toDate()
-
-            const userId = req.user.user._id
-
-            const platform = req.query.platform
-
-            const isActive = req.query.isActive ?? false
-
-            const voucher = await VoucherModel.find({
-                $or: [
-                    {
-                        "isPrivate.private": true,
-                        "isPrivate.users": {
-                            $in: [`${userId}`]
-                        },
-                    },
-                    {
-                        "isPrivate.private": false
-                    },
-                ],
-                platform: {
-                    $in: [platform, 'all']
-                },
-                isActive: isActive,
-                discountStart: {
-                    $lte: currentDate
-                },
-                discountEnd: {
-                    $gte: currentDate
-                }
-            }).sort({
-                orderBy: sortBy
-            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
-
-            return res.status(HttpStatus.OK).send(responser.success(voucher, "OK"));
-
-        } catch (err) {
-
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        if (!req.query.sortBy) {
+            sortBy = req.query.sortBy === "ASC" ? 1 : -1
+        } else {
+            sortBy = 1
         }
+
+        if (!req.query.orderBy) {
+            orderBy = req.query.orderBy ?? "voucherCode"
+        }
+        orderBy = req.query.orderBy ?? 1
+
+        var currentDate = date.time(7)
+
+        if (req.query.sortBy) {
+            sortBy = req.query.sortBy === "ASC" ? 1 : -1
+        }
+
+        let sort = {
+            $sort: {
+                "voucherCode": sortBy,
+            }
+        }
+
+        const userId = req.params.userId
+
+        if (!userId) {
+            return res.status(HttpStatus.OK).send(responser.validation("ID Pengguna Dibutuhkan", HttpStatus.OK));
+        }
+
+        // const platform = req.query.platform
+
+        const isActive = req.query.isActive ?? false
+        const voucher = await VoucherModel.find({
+            $or: [
+                {
+                    "isPrivate.private": true,
+                    "isPrivate.users": {
+                        $in: [`${userId}`]
+                    },
+                },
+                {
+                    "isPrivate.private": false,
+                },
+            ],
+            // platform: {
+            //     $in: [platform]
+            // },
+            isActive: isActive,
+            // discountStart: {
+            //     $lte: currentDate
+            // },
+            // discountEnd: {
+            //     $gte: currentDate
+            // }
+        }).sort({
+            orderBy: sortBy
+        }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+
+        return res.status(HttpStatus.OK).send(responser.success(voucher, "OK"));
+
+        // } catch (err) {
+
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        // }
     }
+
     async getVoucherByVoucherCode(req, res) {
 
         const { error } = getVoucherByVoucherCodeValidation(req.params)
@@ -166,14 +181,14 @@ const VoucherController = class VoucherController {
         const { error } = getVoucherByVoucherIdValidation(req.params)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         let isValid = await this.isIdValid(req.params.productId)
 
         if (!isValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Voucher ID Tidak Valid", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Voucher ID Tidak Valid", HttpStatus.OK)
             );
         }
 
@@ -181,10 +196,10 @@ const VoucherController = class VoucherController {
 
         try {
 
-            let isVoucherExist = await this.isVoucherExist(input.voucherCode, "id")
+            let isVoucherExist = await this.isVoucherExist(input.voucherId, "id")
 
             if (!isVoucherExist) {
-                return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Voucher Tidak Ditemukan", HttpStatus.NOT_FOUND))
+                return res.status(HttpStatus.OK).send(responser.validation("Voucher Tidak Ditemukan", HttpStatus.OK))
             }
 
             return res.status(HttpStatus.OK).send(responser.success(isVoucherExist, HttpStatus.OK));
@@ -218,33 +233,34 @@ const VoucherController = class VoucherController {
 
         // try {
 
-            let voucherObject = {
-                voucherName: input.voucherName,
-                voucherCode: input.voucherCode,
-                banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
-                discountBy: input.discountBy,
-                discountValue: input.discountValue,
-                minimumOrderValue: input.minimumOrderValue,
-                max: input.max,
-                termsAndConditions: input.termsAndConditions,
-                discountStart: input.discountStart,
-                discountEnd: input.discountEnd,
-                isActive: input.isActive ?? false
+        let voucherObject = {
+            voucherName: input.voucherName,
+            voucherCode: input.voucherCode,
+            banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
+            discountBy: input.discountBy,
+            discountValue: input.discountValue,
+            minimumOrderValue: input.minimumOrderValue,
+            max: input.max,
+            termsAndConditions: input.termsAndConditions,
+            discountStart: input.discountStart,
+            discountEnd: input.discountEnd,
+            isActive: input.isActive ?? false,
+            platform: ["all"],
+        }
+
+        if (input.private) {
+            voucherObject.isPrivate = {
+                private: input.private,
+                maxUser: input.maxUser,
+                users: input.user_id
             }
+        }
 
-            if (input.private) {
-                voucherObject.isPrivate = {
-                    private: input.private,
-                    maxUser: input.maxUser,
-                    users: input.user_id
-                }
-            }
+        let voucher = new VoucherModel(voucherObject)
 
-            let voucher = new VoucherModel(voucherObject)
+        const savedVoucher = await voucher.save()
 
-            const savedVoucher = await voucher.save()
-
-            return res.status(HttpStatus.OK).send(responser.success(savedVoucher, "Voucher Ditambahkan"))
+        return res.status(HttpStatus.OK).send(responser.success(savedVoucher, "Voucher Ditambahkan"))
 
         // } catch (e) {
         //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Membuat Voucher", HttpStatus.BAD_REQUEST))
@@ -270,7 +286,7 @@ const VoucherController = class VoucherController {
 
         let input = req.body
 
-        let isVoucherExist = await this.isVoucherExist(input.voucherCode, "ID")
+        let isVoucherExist = await this.isVoucherExist(req.params.voucherId, "ID")
 
         if (!isVoucherExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Voucher Tidak Ditemukan", HttpStatus.NOT_FOUND))
@@ -295,6 +311,30 @@ const VoucherController = class VoucherController {
             if (req.file) {
                 voucherObject.banner = req.file.path
             }
+
+            const te = {
+
+                voucherName: req.body.voucherName,
+                voucherCode: req.body.voucherCode,
+                banner: req.body.banner,
+                discountBy: req.body.discountBy,
+                discountValue: req.body.discountValue,
+                minimumOrderValue: req.body.minimumOrderValue,
+                isPrivate: {
+                    private: input.private ?? false,
+                    maxUser: input.maxUser,
+                    users: input.user_id
+                },
+                voucherMaxUse: {
+                    max: req.body.max
+                },
+                termsAndConditions: req.body.termsAndConditions,
+                discountStart: req.body.discountStart,
+                discountEnd: req.body.discountEnd,
+                isActive: req.body.isActive,
+                description: req.body.description
+            }
+
 
             const voucher = await VoucherModel.findOneAndUpdate(
                 req.params.voucherId, {

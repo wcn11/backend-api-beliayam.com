@@ -62,7 +62,7 @@ const VoucherSchema = mongoose.Schema({
         type: String
     },
     platform: [{
-        type: Object,
+        type: Array,
         enum: ['all', 'website', "mobile"],
         default: ['all']
     }]

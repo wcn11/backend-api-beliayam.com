@@ -140,7 +140,7 @@ const OrderController = class OrderController {
         }).lean().populate([
             { path: 'charges' },
             {
-                path: 'items.product',
+                path: 'items',
                 populate: {
                     path: 'category'
                 },

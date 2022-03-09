@@ -35,6 +35,7 @@ const getAllVouchersValidation = (data) => {
 
 const getAllVouchersByUserValidation = (data) => {
     const schema = Joi.object({
+        // user_id: Joi.string().required(),
         page: Joi.number().min(1).max(20).required(),
         show: Joi.number().min(1).max(100).required(),
         sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC').required(),
@@ -86,7 +87,7 @@ const updateVoucherByVoucherIdValidation = (data) => {
         discountEnd: Joi.date().required(),
         isActive: Joi.bool(),
         description: Joi.string().max(500),
-        platform: Joi.string().valid('all', 'website', 'mobile'),
+        // platform: Joi.string().valid('all', 'website', 'mobile'),
     })
 
     return schema.validate(data)

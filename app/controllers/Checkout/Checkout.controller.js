@@ -32,7 +32,7 @@ const CheckoutController = class CheckoutController {
         }).lean().populate([
             { path: 'charges' },
             {
-                path: 'items.product',
+                path: 'items',
                 populate: {
                     path: 'category'
                 },
@@ -208,10 +208,12 @@ const CheckoutController = class CheckoutController {
                         let promoPrice = (promo.promoValue / 100) * products[i].price
                         let priceAfterPromo = products[i].price - promoPrice
                         calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
+                        products[i].price = products[i].price - promoPrice
 
                     } else if (promo.promoBy === "price") {
 
                         calculateItem += (products[i].price - promo.promoValue) * productAtCart[0]['products'][0].quantity
+                        products[i].price = (products[i].price - promo.promoValue)
 
                     }
                 }
@@ -225,22 +227,26 @@ const CheckoutController = class CheckoutController {
                         let discountPrice = (discount.discount / 100) * products[i].price
                         let priceAfterDiscount = products[i].price - discountPrice
                         calculateItem += priceAfterDiscount * productAtCart[0]['products'][0].quantity
+                        products[i].price = products[i].price - discountPrice
 
                     } else if (discount.discountBy === "price") {
 
                         calculateItem += (products[i].price - discount.discount) * productAtCart[0]['products'][0].quantity
+                        products[i].price = (products[i].price - discount.discount)
 
 
                     }
                 } else {
 
                     calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
+                    products[i].price = calculateItem
                 }
 
             }
             else {
 
                 calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
+                products[i].price = calculateItem
 
             }
 
@@ -251,7 +257,7 @@ const CheckoutController = class CheckoutController {
             allProducts.push(products[i])
 
             objectProduct.push({
-                product: products[i]._id,
+                product: products[i],
                 details: {
                     grand_price: calculateItem[i],
                     quantity: productAtCart[0]['products'][0].quantity,
@@ -260,7 +266,7 @@ const CheckoutController = class CheckoutController {
             })
         }
 
-        try {
+        // try {
 
             let type = req.body.type || ""
             let platform = req.body.platform || ""
@@ -364,20 +370,22 @@ const CheckoutController = class CheckoutController {
                 user: req.body.user_id,
             })
 
-            await saveCheckout.save()
-
+        await saveCheckout.save()
             let newCheckout = await CheckoutModel.findOne({
                 user: req.body.user_id
             }).lean().populate([
                 { path: 'charges' },
                 {
-                    path: 'items.product',
+                    path: 'items',
                     populate: {
                         path: 'category'
                     },
                     populate: {
                         path: 'hasPromo'
                     },
+                    populate: {
+                        path: 'productOnLive'
+                    }
                 },
                 { path: 'user' },
             ])
@@ -423,9 +431,9 @@ const CheckoutController = class CheckoutController {
 
             return res.status(HttpStatus.OK).send(responser.success(newCheckout, HttpStatus.OK));
 
-        } catch (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error, HttpStatus.BAD_REQUEST))
-        }
+        // } catch (error) {
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error, HttpStatus.BAD_REQUEST))
+        // }
 
     }
 

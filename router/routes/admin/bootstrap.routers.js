@@ -14,6 +14,7 @@ const ProductRouter = require('@router/admin/product/product.routes')
 const PromoRouter = require('@router/admin/promo/promo.routes')
 const AdminRouter = require('@router/admin/admin/admin.routes')
 const UsersRouter = require('@router/admin/users/users.routes')
+const VoucherRouter = require('@router/admin/voucher/voucher.routes')
 
 Router.use('/auth', AuthRouter)
 
@@ -28,5 +29,7 @@ Router.use('/promo', PromoRouter)
 Router.use('/user', AdminRouter)
 
 Router.use('/users', UsersRouter)
+
+Router.use('/voucher', VoucherRouter)
 
 module.exports = Router

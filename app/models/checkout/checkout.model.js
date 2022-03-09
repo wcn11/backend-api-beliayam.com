@@ -8,9 +8,41 @@ const CheckoutSchema = mongoose.Schema({
     },
     items: [{
         product: {
-            type: Schema.Types.ObjectId,
-            ref: 'product'
+            _id: String,
+            sku: String,
+            slug: String,
+            name: String,
+            price: Number,
+            hasDiscount: Object,
+            hasPromotion: Object,
+            image: String,
+            weight: Number,
+            status: {
+                type: String,
+                default: 'active'
+            },
+            additional: String,
+            description: String,
+            quantity: 'Number',
+            note: {
+                type: String,
+                required: false
+
+            },
+            hasPromo: {
+                type: mongoose.Types.ObjectId,
+                ref: 'promo'
+            },
+            productOnLive: {
+                type: mongoose.Types.ObjectId,
+                ref: 'product'
+
+            }
         },
+        // product: {
+        //     type: Schema.Types.ObjectId,
+        //     ref: 'product'
+        // },
         details: {
             grand_price: {
                 type: Number,
