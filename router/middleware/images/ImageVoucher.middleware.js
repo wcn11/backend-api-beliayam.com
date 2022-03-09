@@ -23,8 +23,8 @@ var storage = multer.diskStorage({
 
                         cb(message, null)
                     }
-
-                    cb(null, path.join(__dirname, '../../../public/images/voucher'))
+                    cb(null, path.join('public/images/voucher'))
+                    // cb(null, path.join(__dirname, '../../../public/images/voucher'))
                 break;
             }
         }
