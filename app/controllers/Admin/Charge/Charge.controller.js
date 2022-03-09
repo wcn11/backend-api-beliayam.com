@@ -73,20 +73,17 @@ const ChargeController = class ChargeController {
         let isValid = await this.isIdValid(req.params.chargeId)
 
         if (!isValid) {
-            return res.status(HttpStatus.OK).send(
-                responser.error("ID Biaya Tidak Valid", HttpStatus.OK)
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error("ID Biaya Tidak Valid", HttpStatus.BAD_REQUEST)
             );
         }
 
         try {
 
-            let isChargeExist = await ChargeModel.findOne({
-                _id: req.params.chargeId
-            })
-
+            let isChargeExist = await this.getChargeByChargeBy(req.params.chargeId)
 
             if (!isChargeExist) {
-                return res.status(HttpStatus.OK).send(responser.validation("Biaya Tidak Ditemukan", HttpStatus.OK))
+                return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Biaya Tidak Ditemukan", HttpStatus.NOT_FOUND))
             }
 
             return res.status(HttpStatus.OK).send(responser.success(isChargeExist))
@@ -116,9 +113,7 @@ const ChargeController = class ChargeController {
             );
         }
 
-        let isChargeExist = await ChargeModel.findOne({
-            _id: req.params.chargeId
-        })
+        let isChargeExist = await this.getChargeByChargeBy(req.params.chargeId)
 
         if (!isChargeExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Biaya Tidak Ditemukan", HttpStatus.NOT_FOUND))
@@ -150,9 +145,7 @@ const ChargeController = class ChargeController {
 
         let input = req.body
 
-        let isChargeNameDuplicate = await ChargeModel.findOne({
-            chargeName: input.chargeName
-        }) 
+        let isChargeNameDuplicate = await this.getChargeByChargeBy(input.chargeName)
 
         if (isChargeNameDuplicate && isChargeNameDuplicate.chargeName.toUpperCase() === input.chargeName.toUpperCase()) {
             return res.status(HttpStatus.OK).send(responser.validation(`Sudah Ada Biaya Dengan Nama: ${input.chargeName}`, HttpStatus.OK))
@@ -202,9 +195,7 @@ const ChargeController = class ChargeController {
             );
         }
 
-        let isChargeExist = await ChargeModel.findOne({
-            _id: req.params.chargeId
-        })
+        let isChargeExist = await this.getChargeByChargeBy(req.params.chargeId, 'id')
 
         if (!isChargeExist) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Biaya Tidak Ditemukan", HttpStatus.BAD_REQUEST))
@@ -256,7 +247,7 @@ const ChargeController = class ChargeController {
         }
     }
 
-    async getChargeByChargeType(chargeField, type = "chargeName") {
+    async getChargeByChargeBy(chargeField, type = "chargeName") {
 
         let search
 
@@ -273,8 +264,6 @@ const ChargeController = class ChargeController {
         let charge = await ChargeModel.findOne({
             search
         })
-
-        console.log(charge)
 
         return charge
     }

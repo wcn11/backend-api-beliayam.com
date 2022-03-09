@@ -454,36 +454,39 @@ const OrderController = class OrderController {
 
             let charges = await this.getAllCharge()
 
-            let sub_total_charge = checkout.subTotalCharges
+            let sub_total_charge = 0
 
-            // await charges.reduce(async (accumulator, charge) => {
+            await charges.reduce(async (accumulator, charge) => {
 
-            //     let platform = await charge.platform.map(value => {
-            //         if (value === "all") {
-            //             return true
-            //         } else if (value.toLowerCase() === req.body.platform.toLowerCase()) {
-            //             return true
-            //         } else {
-            //             return false
-            //         }
-            //     })[0]
+                let platform = await charge.platform.map(value => {
+                    if (value === "all") {
+                        return true
+                    } else if (value.toLowerCase() === req.body.platform.toLowerCase()) {
+                        return true
+                    } else {
+                        return false
+                    }
+                })[0]
 
-            //     if (platform) {
+                if (platform) {
 
-            //         if (charge.chargeBy.toLowerCase() === "price") {
-            //             sub_total_charge += (accumulator + parseInt(charge.chargeValue))
-            //             return accumulator
+                    if (charge.chargeBy.toLowerCase() === "price") {
+                        sub_total_charge += (accumulator + parseInt(charge.chargeValue))
+                        return accumulator
 
-            //         }
-            //         else {
-            //             sub_total_charge += (accumulator + parseInt(charge.chargeValue))
-            //             return accumulator
-            //         }
+                    }
+                    // else if (charge.chargeBy === "percent") {
+                    //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
+                    // }
+                    else {
+                        sub_total_charge += (accumulator + parseInt(charge.chargeValue))
+                        return accumulator
+                    }
 
-            //     }
-            // }, 0)
+                }
+            }, 0)
 
-            const grand_total = sub_total
+            const grand_total = sub_total_charge + sub_total
 
             const grand_total_concat = grand_total + '00'
 
@@ -550,10 +553,10 @@ const OrderController = class OrderController {
                     postDataObject.signature = signature
 
                     postDataObject.bill_total = grand_total_concat
+
                     console.log(postDataObject)
 
                     const paymentGateway = await PaymentGateway.send(url, postDataObject)
-
 
                     if (!paymentGateway.trx_id) {
 
@@ -643,13 +646,13 @@ const OrderController = class OrderController {
 
             await saveOrder.save()
 
+            await this.setStockProducts(items)
+
             orderObject.signature = signature_temp
 
-
-            // await this.setStockProducts(items)
-            // await CheckoutModel.deleteOne({
-            //     user: user._id
-            // })
+            await CheckoutModel.deleteOne({
+                user: user._id
+            })
             return res.status(HttpStatus.OK).send(responser.success(orderObject, "OK"));
         } catch (err) {
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(

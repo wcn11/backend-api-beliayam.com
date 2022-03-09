@@ -119,33 +119,33 @@ const CartController = class CartController {
 
             let price = product.price;
 
-            // if (product.hasPromo &&
-            //     product.hasPromo.isActive &&
-            //     product.hasPromo.promoStart < date.time() &&
-            //     product.hasPromo.promoEnd > date.time()) {
+            if (product.hasPromo &&
+                product.hasPromo.isActive &&
+                product.hasPromo.promoStart < date.time() &&
+                product.hasPromo.promoEnd > date.time()) {
 
-            //     if (product.hasPromo.promoBy === "percent") {
-            //         let discountPrice =
-            //             (product.hasPromo.promoValue / 100) * product.price;
-            //         price = product.price - discountPrice;
-            //     } else if (product.hasPromo.promoBy === "price") {
-            //         price = product.price - product.hasPromo.promoValue;
-            //     } else {
-            //         price = product.price;
-            //     }
-            // } else if (product.hasDiscount && product.hasDiscount.isDiscount &&
-            //     product.hasDiscount.discountStart < date.time() &&
-            //     product.hasDiscount.discountEnd > date.time()) {
-            //     if (product.hasDiscount.discountBy === "percent") {
-            //         let discountPrice =
-            //             (product.hasDiscount.discount / 100) * product.price;
-            //         price = product.price - discountPrice;
-            //     } else if (product.hasDiscount.discountBy === "price") {
-            //         price = product.price - product.hasDiscount.discount;
-            //     } else {
-            //         price = product.price;
-            //     }
-            // }
+                if (product.hasPromo.promoBy === "percent") {
+                    let discountPrice =
+                        (product.hasPromo.promoValue / 100) * product.price;
+                    price = product.price - discountPrice;
+                } else if (product.hasPromo.promoBy === "price") {
+                    price = product.price - product.hasPromo.promoValue;
+                } else {
+                    price = product.price;
+                }
+            } else if (product.hasDiscount && product.hasDiscount.isDiscount &&
+                product.hasDiscount.discountStart < date.time() &&
+                product.hasDiscount.discountEnd > date.time()) {
+                if (product.hasDiscount.discountBy === "percent") {
+                    let discountPrice =
+                        (product.hasDiscount.discount / 100) * product.price;
+                    price = product.price - discountPrice;
+                } else if (product.hasDiscount.discountBy === "price") {
+                    price = product.price - product.hasDiscount.discount;
+                } else {
+                    price = product.price;
+                }
+            }
 
             if (carts) {
 
@@ -275,6 +275,7 @@ const CartController = class CartController {
         if (!user) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("User Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
+        console.log(carts.products)
 
         let product = carts.products.filter(product => product.id === req.body.product_id)
 
