@@ -216,7 +216,7 @@ const VoucherController = class VoucherController {
         const { error } = createNewVoucherValidation(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         let input = req.body
@@ -224,14 +224,14 @@ const VoucherController = class VoucherController {
         let isVoucherExist = await this.isVoucherExist(input.voucherCode)
 
         if (isVoucherExist) {
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation("Kode Voucher Telah Digunakan", HttpStatus.NOT_ACCEPTABLE))
+            return res.status(HttpStatus.OK).send(responser.validation("Kode Voucher Telah Digunakan", HttpStatus.OK))
         }
 
         // if (!isIdValid) {
         //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST))
         // }
 
-        // try {
+        try {
 
         let voucherObject = {
             voucherName: input.voucherName,
@@ -262,9 +262,9 @@ const VoucherController = class VoucherController {
 
         return res.status(HttpStatus.OK).send(responser.success(savedVoucher, "Voucher Ditambahkan"))
 
-        // } catch (e) {
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Membuat Voucher", HttpStatus.BAD_REQUEST))
-        // }
+        } catch (e) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Membuat Voucher", HttpStatus.BAD_REQUEST))
+        }
 
     }
 
