@@ -5,7 +5,7 @@ const path = require('path')
 
 const {
     createNewVoucherValidation
-} = require('@validation/voucher/voucher.validation')
+} = require('@validation/admin/voucher/voucher.validation')
 
 
 var storage = multer.diskStorage({
