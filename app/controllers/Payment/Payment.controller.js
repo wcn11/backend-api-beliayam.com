@@ -89,7 +89,7 @@ const PaymentController = class PaymentController {
 
                     orderObject.order_status = {
                         status: paymentStatus.UNPROCESSED.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.UNPROCESSED.description
                     }
 
@@ -102,7 +102,7 @@ const PaymentController = class PaymentController {
 
                     orderObject.order_status = {
                         status: paymentStatus.IN_PROCESS.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.IN_PROCESS.description
                     }
 
@@ -124,7 +124,7 @@ const PaymentController = class PaymentController {
 
                 orderObject.order_status = {
                     status: paymentStatus.PAYMENT_SUCCESS.name,
-                    payment_date: date.time(),
+                    payment_date: date.time(6),
                     description: paymentStatus.PAYMENT_SUCCESS.description
                 }
 
@@ -146,7 +146,7 @@ const PaymentController = class PaymentController {
                 if (paymentStatus.PAYMENT_FAILED.code === payment_status_code_response) {
                     orderObject.order_status = {
                         status: paymentStatus.PAYMENT_FAILED.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.PAYMENT_FAILED.description
                     }
                 }
@@ -161,7 +161,7 @@ const PaymentController = class PaymentController {
                 if (paymentStatus.NO_BILLS_FOUND.code === payment_status_code_response) {
                     orderObject.order_status = {
                         status: paymentStatus.NO_BILLS_FOUND.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.NO_BILLS_FOUND.description
                     }
                 }
@@ -176,7 +176,7 @@ const PaymentController = class PaymentController {
                 if (paymentStatus.PAYMENT_EXPIRED.code === payment_status_code_response) {
                     orderObject.order_status = {
                         status: paymentStatus.PAYMENT_EXPIRED.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.PAYMENT_EXPIRED.description
                     }
                 }
@@ -191,7 +191,7 @@ const PaymentController = class PaymentController {
                 if (paymentStatus.PAYMENT_CANCELLED.code === payment_status_code_response) {
                     orderObject.order_status = {
                         status: paymentStatus.PAYMENT_CANCELLED.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.PAYMENT_EXPIRED.description
                     }
                 }
@@ -206,7 +206,7 @@ const PaymentController = class PaymentController {
                 if (paymentStatus.UNKNOWN.code === payment_status_code_response) {
                     orderObject.order_status = {
                         status: paymentStatus.UNKNOWN.name,
-                        payment_date: date.time(),
+                        payment_date: date.time(6),
                         description: paymentStatus.UNKNOWN.description
                     }
 
@@ -230,7 +230,7 @@ const PaymentController = class PaymentController {
 
                 orderObject.order_status = {
                     status: paymentStatus.UNKNOWN.name,
-                    payment_date: date.time(),
+                    payment_date: date.time(6),
                     description: paymentStatus.UNKNOWN.description
                 }
 

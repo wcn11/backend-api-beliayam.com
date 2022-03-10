@@ -179,8 +179,6 @@ const CategoryController = class CategoryController {
 
         let input = req.body
 
-        console.log(req.file)
-
         let category = new CategoryModel({
             "sku": input.sku,
             "slug": input.slug,

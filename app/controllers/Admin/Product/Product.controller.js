@@ -318,8 +318,6 @@ const ProductController = class ProductController {
             }
         }
 
-
-        console.log(productObject)
         const product = await ProductModel.updateOne(
             {
                 _id: req.params.productId,

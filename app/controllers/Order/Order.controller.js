@@ -554,8 +554,6 @@ const OrderController = class OrderController {
 
                     postDataObject.bill_total = grand_total_concat
 
-                    console.log(postDataObject)
-
                     const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
                     if (!paymentGateway.trx_id) {
