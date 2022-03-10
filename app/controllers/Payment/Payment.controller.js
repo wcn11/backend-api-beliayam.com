@@ -258,11 +258,11 @@ const PaymentController = class PaymentController {
             "bill_no": request.bill_no,
             "response_code": payment_response_code.code,
             "response_desc": payment_response_code.description,
-            "response_date": currentTime.currentTime
+            "response_date": date.time()
 
         }
 
-        return res.status(HttpStatus.OK).send(responser.success(responseToPaymentGateway, "OK"));
+        return res.status(200).send(responseToPaymentGateway);
 
     }
 

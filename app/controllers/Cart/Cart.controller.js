@@ -275,6 +275,7 @@ const CartController = class CartController {
         if (!user) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("User Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
+        console.log(carts.products)
 
         let product = carts.products.filter(product => product.id === req.body.product_id)
 
