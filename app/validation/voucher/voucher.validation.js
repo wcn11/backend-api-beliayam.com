@@ -72,6 +72,7 @@ const deleteVoucherByVoucherIdValidation = (data) => {
 
 const updateVoucherByVoucherIdValidation = (data) => {
     const schema = Joi.object({
+        voucherName: Joi.string().min(3).required(),
         voucherCode: Joi.string().min(3).required(),
         banner: Joi.any(),
         discountBy: Joi.string().valid('percent', 'price').required(),

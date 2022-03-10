@@ -273,7 +273,7 @@ const VoucherController = class VoucherController {
         const { error } = updateVoucherByVoucherIdValidation(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         let isValid = await this.isIdValid(req.params.voucherId)
@@ -294,54 +294,29 @@ const VoucherController = class VoucherController {
 
         try {
 
-            let voucherObject = {
-                voucherName: input.voucherName,
-                voucherCode: input.voucherCode,
-                // banner: req.file ? req.file.path : "images/voucher/default.jpg",
-                discountBy: input.discountBy,
-                discountValue: input.discountValue,
-                minimumOrderValue: input.minimumOrderValue,
-                max: input.max,
-                termsAndConditions: input.termsAndConditions,
-                discountStart: input.discountStart,
-                discountEnd: input.discountEnd,
-                isActive: input.isActive ?? false
-            }
+            // let voucherObject = {
+            //     voucherName: input.voucherName,
+            //     voucherCode: input.voucherCode,
+            //     // banner: req.file ? req.file.path : "images/voucher/default.jpg",
+            //     discountBy: input.discountBy,
+            //     discountValue: input.discountValue,
+            //     minimumOrderValue: input.minimumOrderValue,
+            //     max: input.max,
+            //     termsAndConditions: input.termsAndConditions,
+            //     discountStart: input.discountStart,
+            //     discountEnd: input.discountEnd,
+            //     isActive: input.isActive ?? false
+            // }
 
             // if (req.file) {
             //     voucherObject.banner = req.file.path
             // }
 
-            const te = {
-
-                voucherName: req.body.voucherName,
-                voucherCode: req.body.voucherCode,
-                // banner: req.body.banner,
-                discountBy: req.body.discountBy,
-                discountValue: req.body.discountValue,
-                minimumOrderValue: req.body.minimumOrderValue,
-                isPrivate: {
-                    private: input.private ?? false,
-                    maxUser: input.maxUser,
-                    users: input.user_id
-                },
-                voucherMaxUse: {
-                    max: req.body.max
-                },
-                termsAndConditions: req.body.termsAndConditions,
-                discountStart: req.body.discountStart,
-                discountEnd: req.body.discountEnd,
-                isActive: req.body.isActive,
-                description: req.body.description
-            }
-
-
             const voucher = await VoucherModel.findOneAndUpdate(
                 req.params.voucherId, {
                 $set: {
                     voucherName: req.body.voucherName,
-                    voucherCode: req.body.voucherCode,
-                    // banner: req.body.banner,
+                        voucherCode: req.body.voucherCode,
                     discountBy: req.body.discountBy,
                     discountValue: req.body.discountValue,
                     minimumOrderValue: req.body.minimumOrderValue,
