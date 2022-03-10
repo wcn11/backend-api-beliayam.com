@@ -18,7 +18,7 @@ router.get('/', verifyToken, (req, res) => PaymentController.getAllPaymentChanne
 
 // router.post('/pay', verifyToken, (req, res) => PaymentController.createPayment(req, res))
 
-router.post('/checkout/bill/notification', verifyToken, (req, res) => PaymentController.setBillPaymentStatus(req, res))
+router.post('/checkout/bill/notification', (req, res) => PaymentController.setBillPaymentStatus(req, res))
 
 // router.post('/checkout/bill/callback', verifyToken, (req, res) => PaymentController.createPayment(req, res))
 
