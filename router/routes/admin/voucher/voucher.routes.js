@@ -18,7 +18,7 @@ router.get('/user/:userId', verifyToken, (req, res) => VoucherController.getVouc
 
 router.get('/code/:voucherCode', verifyToken, (req, res) => VoucherController.getVoucherByVoucherCode(req, res))
 
-router.get('/detail/:voucherId', verifyToken, (req, res) => VoucherController.getVoucherByVoucherId(req, res))
+router.get('/:voucherId', verifyToken, (req, res) => VoucherController.getVoucherByVoucherId(req, res))
 
 router.post('/', verifyToken, (req, res) => VoucherController.createNewVoucher(req, res))
 

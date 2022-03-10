@@ -184,7 +184,9 @@ const VoucherController = class VoucherController {
             return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
-        let isValid = await this.isIdValid(req.params.productId)
+        let input = req.params
+
+        let isValid = await this.isIdValid(input.voucherId)
 
         if (!isValid) {
             return res.status(HttpStatus.OK).send(
@@ -194,17 +196,13 @@ const VoucherController = class VoucherController {
 
         try {
 
-            let isVoucherExist = await VoucherModel.findOne({
-                _id: req.params.voucherId
-            }) //await this.isVoucherExist(input.voucherId, "id")
-
-            console.log(req.params.voucherId)
+            let isVoucherExist = await this.isVoucherExist(input.voucherId, "id")
 
             if (!isVoucherExist) {
                 return res.status(HttpStatus.OK).send(responser.validation("Voucher Tidak Ditemukan", HttpStatus.OK))
             }
 
-            return res.status(HttpStatus.OK).send(responser.success(isVoucherExist));
+            return res.status(HttpStatus.OK).send(responser.success(isVoucherExist, HttpStatus.OK));
 
         }
         catch (err) {
@@ -281,8 +279,8 @@ const VoucherController = class VoucherController {
         let isValid = await this.isIdValid(req.params.voucherId)
 
         if (!isValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Voucher ID Tidak Valid", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("Voucher ID Tidak Valid", HttpStatus.OK)
             );
         }
 
@@ -296,29 +294,13 @@ const VoucherController = class VoucherController {
 
         try {
 
-            // let voucherObject = {
-            //     voucherName: input.voucherName,
-            //     voucherCode: input.voucherCode,
-            //     // banner: req.file ? req.file.path : "images/voucher/default.jpg",
-            //     discountBy: input.discountBy,
-            //     discountValue: input.discountValue,
-            //     minimumOrderValue: input.minimumOrderValue,
-            //     max: input.max,
-            //     termsAndConditions: input.termsAndConditions,
-            //     discountStart: input.discountStart,
-            //     discountEnd: input.discountEnd,
-            //     isActive: input.isActive ?? false
-            // }
-
-            // if (req.file) {
-            //     voucherObject.banner = req.file.path
-            // }
 
             const voucher = await VoucherModel.findOneAndUpdate(
                 req.params.voucherId, {
                 $set: {
                     voucherName: req.body.voucherName,
                         voucherCode: req.body.voucherCode,
+                    // banner: req.body.banner,
                     discountBy: req.body.discountBy,
                     discountValue: req.body.discountValue,
                     minimumOrderValue: req.body.minimumOrderValue,
