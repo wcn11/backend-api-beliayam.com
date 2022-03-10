@@ -198,7 +198,7 @@ const VoucherController = class VoucherController {
                 _id: req.params.voucherId
             }) //await this.isVoucherExist(input.voucherId, "id")
 
-            console.log(isVoucherExist)
+            console.log(req.params.voucherId)
 
             if (!isVoucherExist) {
                 return res.status(HttpStatus.OK).send(responser.validation("Voucher Tidak Ditemukan", HttpStatus.OK))
