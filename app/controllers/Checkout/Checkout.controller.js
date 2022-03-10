@@ -279,6 +279,7 @@ const CheckoutController = class CheckoutController {
                     chargesObjectIds.push(charge._id)
                     return accumulator + parseInt(charge.chargeValue)
                 }
+
                 // else if (charge.chargeBy === "percent") {
                 //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
                 // }
