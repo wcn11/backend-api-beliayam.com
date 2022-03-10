@@ -192,17 +192,17 @@ const VoucherController = class VoucherController {
             );
         }
 
-        let input = req.params
-
         try {
 
-            let isVoucherExist = await this.isVoucherExist(input.voucherId, "id")
+            let isVoucherExist = await VoucherModel.findOne({
+                _id: req.params.voucherId
+            }) //await this.isVoucherExist(input.voucherId, "id")
 
             if (!isVoucherExist) {
                 return res.status(HttpStatus.OK).send(responser.validation("Voucher Tidak Ditemukan", HttpStatus.OK))
             }
 
-            return res.status(HttpStatus.OK).send(responser.success(isVoucherExist, HttpStatus.OK));
+            return res.status(HttpStatus.OK).send(responser.success(isVoucherExist));
 
         }
         catch (err) {
