@@ -42,7 +42,7 @@ const SendVerifyEmail = class SendVerifyEmail {
             context: {         
                 host: process.env.BASE_URL, // for production, use CLIENT_URL instead,
                 name: data.name,
-                text: data.text
+                otp: data.otp
             }
         };
 

@@ -100,7 +100,6 @@ const AuthController = class AuthController {
             SendGreeting.send({
                 to: savedUsers.email,
                 subject: `Selamat Datang, ${req.body.name} | Beliayam.com`,
-                text: `Kode Verifikasi Email Anda Adalah ${otp}`,
                 name: req.body.name
             })
 
@@ -1063,8 +1062,8 @@ const AuthController = class AuthController {
 
         SendVerifyEmail.send({
             to: userExist.email,
-            subject: "Verifikasi Email Anda | Beliayam.com",
-            text: `Kode Verifikasi Email Anda Adalah ${otp}`,
+            subject: "Verifikasi Email | Beliayam.com",
+            otp: otp,
             name: userExist.name ?? ""
         })
 

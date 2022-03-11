@@ -42,8 +42,7 @@ const SendGreeting = class SendGreeting {
             context: {
                 host: process.env.BASE_URL,
                 client: process.env.CLIENT_URL,
-                name: data.name,
-                text: data.text
+                name: data.name
             }
         };
 
