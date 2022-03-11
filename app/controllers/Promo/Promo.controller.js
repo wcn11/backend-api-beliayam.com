@@ -255,6 +255,8 @@ const PromoController = class PromoController {
                 }
             }
 
+        console.log(promoObject)
+
             let promo = new PromoModel(promoObject)
 
 
