@@ -1107,7 +1107,7 @@ const AuthController = class AuthController {
             signature: signature
         }), 'EX', process.env.SIGNATURE_TTL);
 
-        const link = `${process.env.BASE_URL}/recover/reset-password?token=${token}&id=${userExist._id}&signature=${signature}`
+        const link = `${process.env.CLIENT_URL}/recover/reset-password?token=${token}&id=${userExist._id}&signature=${signature}`
 
         SendForgetPassword.send({
             to: userExist.email,
