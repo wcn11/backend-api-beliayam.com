@@ -5,6 +5,7 @@ const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const SMSGateway = require('@service/SMS.gateway')
 const SendVerifyEmail = require('@mailService/SendVerifyEmail.mail')
+const SendGreeting = require('@mailService/SendGreeting.mail')
 const SendForgetPassword = require('@mailService/SendForgetPassword.mail')
 const date = require('@helper/date')
 const jwt = require('@helper/jwt')
@@ -89,15 +90,21 @@ const AuthController = class AuthController {
 
             const savedUsers = await userObject.save()
 
-            SendVerifyEmail.send({
+            // SendVerifyEmail.send({
+            //     to: savedUsers.email,
+            //     subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
+            //     text: `Kode Verifikasi Email Anda Adalah ${otp}`,
+            //     name: req.body.name,
+            //     code: otp
+            // })
+            SendGreeting.send({
                 to: savedUsers.email,
-                subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
+                subject: `Selamat Datang, ${req.body.name} | PT. BELI AYAM COM`,
                 text: `Kode Verifikasi Email Anda Adalah ${otp}`,
-                name: req.body.name,
-                code: otp
+                name: req.body.name
             })
 
-            client.set(`emailOtp.${savedUsers._id}`, JSON.stringify(otp), 'EX', expiredTime);
+            // client.set(`emailOtp.${savedUsers._id}`, JSON.stringify(otp), 'EX', expiredTime);
 
             let user = await User.findOne({ email: req.body.email })
 
