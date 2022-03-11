@@ -92,14 +92,14 @@ const AuthController = class AuthController {
 
             // SendVerifyEmail.send({
             //     to: savedUsers.email,
-            //     subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
+            //     subject: "Verifikasi Email Anda | Beliayam.com",
             //     text: `Kode Verifikasi Email Anda Adalah ${otp}`,
             //     name: req.body.name,
             //     code: otp
             // })
             SendGreeting.send({
                 to: savedUsers.email,
-                subject: `Selamat Datang, ${req.body.name} | PT. BELI AYAM COM`,
+                subject: `Selamat Datang, ${req.body.name} | Beliayam.com`,
                 text: `Kode Verifikasi Email Anda Adalah ${otp}`,
                 name: req.body.name
             })
@@ -1063,7 +1063,7 @@ const AuthController = class AuthController {
 
         SendVerifyEmail.send({
             to: userExist.email,
-            subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
+            subject: "Verifikasi Email Anda | Beliayam.com",
             text: `Kode Verifikasi Email Anda Adalah ${otp}`,
             name: userExist.name ?? ""
         })
@@ -1111,7 +1111,7 @@ const AuthController = class AuthController {
 
         SendForgetPassword.send({
             to: userExist.email,
-            subject: "Reset Password | PT. BELI AYAM COM",
+            subject: "Reset Password | Beliayam.com",
             text: `Reset Kata Sandi Anda Dengan Klik Tombol Dibawah`,
             link,
         })
