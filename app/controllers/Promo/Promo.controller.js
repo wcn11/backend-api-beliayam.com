@@ -215,7 +215,7 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
         }
 
-        try {
+        // try {
 
             let promoObject = {
                 name: input.name,
@@ -277,9 +277,10 @@ const PromoController = class PromoController {
 
             return res.status(HttpStatus.OK).send(responser.success(savedPromo, "Promo Ditetapkan"))
 
-        } catch (e) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
-        }
+        // } catch (e) {
+        //     console.log(e)
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
+        // }
 
     }
 

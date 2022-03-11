@@ -40,7 +40,8 @@ const SendGreeting = class SendGreeting {
             subject: data.subject,
             template: "greetingAfterRegister",
             context: {
-                host: process.env.BASE_URL, // for production, use CLIENT_URL instead,
+                host: process.env.BASE_URL,
+                client: process.env.CLIENT_URL,
                 name: data.name,
                 text: data.text
             }
