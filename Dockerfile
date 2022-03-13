@@ -12,18 +12,14 @@ RUN apk add --update redis=6.2.6-r0
 
 RUN apk update
 
-RUN apk add mongodb
-
-RUN apk add mongodb-tools
-
-RUN mkdir -p /data/db
+RUN apk add vim nano
 
 WORKDIR /app
 
 COPY . .
 
-COPY ./redis-start.sh /root/redis-start.sh
+# COPY ./redis-start.sh /root/redis-start.sh
 
 RUN npm install
 
-ENTRYPOINT ["sh","/root/server-start.sh"]
+ENTRYPOINT ["sh","./server-start.sh", "npm", "run", "prod"]

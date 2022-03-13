@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  database:
+    container_name: "database"
+    environment:
+      - MONGO_URI=mongodb://database:27017/beliayamcom_main
+    build:
+      context: database
+      dockerfile: Dockerfile
+    ports:
+      - 27017:27017
+    networks:
+      - backend-network
+  backend: 
+    container_name: "backend-api"
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    links:
+      - database
+    ports:
+      - 4000:4000
+    networks:
+      - backend-network
+networks:
+  backend-network:
+    driver: bridge
+  

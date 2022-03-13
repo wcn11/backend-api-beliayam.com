@@ -2,6 +2,6 @@
 nohup redis-server &
 uwsgi --http 0.0.0.0:8000 --module mymodule.wsgi
 
-nohup /etc/init.d/mongodb start
+# npm install pm2 -g
 
-npm run dev
+# pm2 start index.js --name backend-api

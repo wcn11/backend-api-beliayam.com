@@ -63,7 +63,8 @@ const OrderSchema = mongoose.Schema({
         payment_date: Date,
         description: String
     },
-    response: {}
+    response: {},
+    signature: String
 
 }, {
     timestamps: { currentTime: () => now }

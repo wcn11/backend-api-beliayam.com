@@ -615,8 +615,7 @@ const OrderController = class OrderController {
                     payment_status_code: PaymentStatus.IN_PROCESS.code,
                     payment_status_desc: "",
                     payment_channel_uid: parseInt(isPaymentGatewayExist.data.pg_code),
-                    payment_channel: isPaymentGatewayExist.data.pg_name,
-                    signature: ""
+                    payment_channel: isPaymentGatewayExist.data.pg_name
                 },
                 user: {
                     _id: user._id,
@@ -637,7 +636,8 @@ const OrderController = class OrderController {
                     payment_date: date.time(),
                     description: "Waiting for payment"
                 },
-                response: objectResponse.response
+                response: objectResponse.response,
+                signature: signature_temp
             }
 
             let saveOrder = new OrderModel(orderObject)
@@ -645,8 +645,6 @@ const OrderController = class OrderController {
             await saveOrder.save()
 
             await this.setStockProducts(items)
-
-            orderObject.signature = signature_temp
 
             await CheckoutModel.deleteOne({
                 user: user._id

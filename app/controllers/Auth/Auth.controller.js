@@ -291,6 +291,13 @@ const AuthController = class AuthController {
             })
 
             await userObject.save()
+
+
+            SendGreeting.send({
+                to: req.body.email,
+                subject: `Selamat Datang, ${req.body.name} | Beliayam.com`,
+                name: req.body.name
+            })
         }
 
         user.password = undefined || null
