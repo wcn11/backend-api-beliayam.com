@@ -116,13 +116,15 @@ const OrderController = class OrderController {
             return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
         }
 
+        // if (!isOrderExist) {
+        //     return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
+        // }
+
         const currentTime = date.time()
 
-        try {
+        // try {
 
             if (isOrderExist.payment.pg_code !== 101) {
-
-                console.log(isOrderExist)
 
                 const url = "/cvr/100005/10"
 
@@ -133,20 +135,17 @@ const OrderController = class OrderController {
                     "merchant": process.env.FASPAY_MERCHANT_NAME,
                     "bill_no": isOrderExist.bill.bill_no,
                     "payment_cancel": "Pesanan dibatalkan",
-                    "signature": ""
+                    "signature": isOrderExist.signature
                 }
-
-                let signature = await this.getSHA1(process.env.SIGNATURE_SECRET, process.env.FASPAY_USER_ID, process.env.FASPAY_PASSWORD, req.params.bill_no)
-
-                postDataObject.signature = signature
 
                 const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
-                if (!paymentGateway.trx_id) {
+                if (paymentGateway.payment_status_code !== '8') {
 
                     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                        responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+                        responser.error(`Tidak Dapat Membatalkan Pesanan Pengguna`, HttpStatus.INTERNAL_SERVER_ERROR))
                 }
+
                 let responseObject = {
                     order_id: isOrderExist.order_id,
                     bill: isOrderExist.bill,
@@ -172,7 +171,7 @@ const OrderController = class OrderController {
                         responseObject.payment.date = currentTime
                         responseObject.payment.payment_status_code = response[1].code.toString()
                         responseObject.payment.payment_status_desc = paymentGateway.response_desc
-                        responseObject.payment.signature = signature
+                        responseObject.payment.signature = isOrderExist.signature
 
                         responseObject.response.response_code = response[1].code.toString()
                         responseObject.response.response_desc = response[1].description
@@ -204,14 +203,14 @@ const OrderController = class OrderController {
 
                 if (getHttpStatus[0][1] === 200) {
 
-                    return res.status(getHttpStatus[0][1]).send(responser.success(responseObject, getHttpStatus[0][0]));
+                    await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
+
+                    return res.status(getHttpStatus[0][1]).send(responser.success("Pesanan telah dibatalkan", getHttpStatus[0][0]));
 
                 }
 
-                await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
-
                 return res.status(getHttpStatus[0][1]).send(
-                    responser.success(paymentResponse[0][1].description, getHttpStatus[0][1]))
+                    responser.error(paymentResponse[0][1].description, getHttpStatus[0][1]))
             }
 
             await OrderModel.findOneAndUpdate(
@@ -221,6 +220,11 @@ const OrderController = class OrderController {
                         status: "ORDER_CANCELLED",
                         payment_date: date.time(),
                         description: PaymentResponse.ORDER_CANCELLED.description
+                        },
+                        "payment": {
+                            payment_status_code: 8,
+                            payment_status_desc: "Pesanan dibatalkan",
+                            payment_date: date.time(),
                     }
                 }
             }, {
@@ -230,12 +234,12 @@ const OrderController = class OrderController {
             return res.status(HttpStatus.OK).send(
                 responser.success("Pesanan Dibatalkan", HttpStatus.OK))
 
-        } catch (err) {
+        // } catch (err) {
 
-            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+        //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        //         responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
 
-        }
+        // }
 
     }
 
@@ -415,20 +419,9 @@ const OrderController = class OrderController {
 
     async getSHA1(signature_secret, user_id, password, bill_no, payment_status_code = "") {
 
-        let md5 = ""
-
-        if (payment_status_code === "") {
-
-            md5 = crypto.createHash('md5', signature_secret)
+        const md5 = crypto.createHash('md5', signature_secret)
                 .update(user_id + password + bill_no)
                 .digest('hex')
-
-        } else {
-
-            md5 = crypto.createHash('md5', signature_secret)
-                .update(user_id + password + bill_no + payment_status_code)
-                .digest('hex')
-        }
 
         const sha_signature = crypto.createHash('sha1', process.env.SIGNATURE_SECRET)
             .update(md5)

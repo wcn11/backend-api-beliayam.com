@@ -415,7 +415,7 @@ const CheckoutController = class CheckoutController {
             })
         }
 
-        // await this.deleteProductFromCart(req, total)
+        await this.deleteProductFromCart(req, total)
 
         newCheckout.user.otpEmail = undefined
 
