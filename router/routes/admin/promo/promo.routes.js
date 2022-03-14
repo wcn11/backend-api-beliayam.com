@@ -10,7 +10,14 @@ const multer = require('multer');
 
 const storage = require('@middleware/images/ImagePromo.middleware')
 
-var imagePromo = multer({ storage: storage })
+const limits = require('@middleware/images/validation/promo.limit')
+
+const errorHandlerImage = require('@middleware/images/validation/error')
+
+var imagePromo = multer({
+    storage,
+    limits
+})
 
 router.get('/', (req, res) => PromoController.getAllPromo(req, res))
 
@@ -20,7 +27,7 @@ router.get('/:promoId', verifyToken, (req, res) => PromoController.getPromoByPro
 
 router.get('/:slug/product', (req, res) => PromoController.getPromoProductByPromoIdOrSlug(req, res))
 
-router.post('/', verifyToken, imagePromo.single('image_promo'), (req, res) => PromoController.createNewPromo(req, res))
+router.post('/', verifyToken, imagePromo.single('image_promo'), errorHandlerImage, (req, res) => PromoController.createNewPromo(req, res))
 
 router.put('/:promoId', verifyToken, imagePromo.single('image_promo'), (req, res) => PromoController.updatePromoByPromoId(req, res))
 

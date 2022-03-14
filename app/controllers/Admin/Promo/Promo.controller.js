@@ -7,9 +7,13 @@ const VoucherModel = require('@model/voucher/voucher.model')
 const UserModel = require('@model/user/user.model')
 const ProductModel = require('@model/product/product.model')
 const PromoModel = require('@model/promo/promo.model')
+
+var fs = require('fs');
+
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
+
 const moment = require('moment')
 moment.locale('id-ID');
 
@@ -241,25 +245,27 @@ const PromoController = class PromoController {
                 promoEnd: input.promoEnd,
                 isActive: input.isActive ?? false,
                 description: input.description,
-                platform: []
+                platform: ['all']
             }
-
             if (input.products) {
 
-                if (input.products.length <= 0) {
-                    return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST))
-                }
+                // if (input.products.length <= 0) {
+                //     return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST))
+                // }
 
                 for (let i = 0; i < input.products.length; i++) {
 
                     if (!this.isIdValid(input.products[i])) {
+
+                        this.removeFile(req)
+
                         return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST))
                     }
                     promoObject['products'].push(input.products[i])
                 }
             }
 
-            if (input.platform.length > 0) {
+            if (input.platform && input.platform.length > 0) {
 
                 for (let i = 0; i < input.platform.length; i++) {
                     promoObject['platform'].push(input.platform[i])
@@ -270,6 +276,8 @@ const PromoController = class PromoController {
 
 
             const savedPromo = await promo.save()
+
+            if (input.products && input.products.length > 0) {
 
             input.products.map(async product => {
 
@@ -285,10 +293,13 @@ const PromoController = class PromoController {
                 })
 
             })
+            }
+
 
             return res.status(HttpStatus.OK).send(responser.success(savedPromo, "Promo Ditetapkan"))
 
         } catch (e) {
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambah Promo", HttpStatus.BAD_REQUEST))
         }
 
@@ -332,13 +343,13 @@ const PromoController = class PromoController {
             //     this.sendError("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST)
             // }
 
-            // if (input.products) {
-            //     for (let i = 0; i < input.products.length; i++) {
+            if (input.products) {
+                for (let i = 0; i < input.products.length; i++) {
 
-            //         this.validateId(input.products[i], 'Produk')
+                    this.validateId(input.products[i], 'Produk')
 
-            //     }
-            // }
+                }
+            }
 
             if (req.file) {
                 req.body.banner = req.file.path
@@ -647,26 +658,10 @@ const PromoController = class PromoController {
         return false
     }
 
-    setConstructor(req, res) {
-        this.req = req
-        this.res = res
-    }
-
-    validateId(id) {
-
-        if (!mongoose.isValidObjectId(id)) {
-            return false
+    removeFile(req) {
+        if (req.file) {
+            fs.unlinkSync(req.file.path)
         }
-
-        return true
-    }
-
-    sendSuccess(data, message, code = 200) {
-        return this.res.status(code).send(responser.success(data, message, code))
-    }
-
-    sendError(message, code = 404) {
-        return this.res.status(code).send(responser.validation(message, code))
     }
 
 }

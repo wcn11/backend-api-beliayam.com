@@ -22,4 +22,4 @@ COPY . .
 
 RUN npm install
 
-ENTRYPOINT ["sh","./server-start.sh", "npm", "run", "prod"]
+ENTRYPOINT ["sh","./server-start.sh"]
