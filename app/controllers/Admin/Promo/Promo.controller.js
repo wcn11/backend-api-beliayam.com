@@ -285,20 +285,20 @@ const PromoController = class PromoController {
 
             if (input.products && input.products.length > 0) {
 
-            input.products.map(async product => {
+                input.products.map(async product => {
 
-                await ProductModel.findOneAndUpdate(
-                    {
-                        _id: product
+                    await ProductModel.findOneAndUpdate(
+                        {
+                            _id: product
+                        }, {
+                        $set: {
+                            hasPromo: [savedPromo._id]
+                        }
                     }, {
-                    $set: {
-                        hasPromo: [savedPromo._id]
-                    }
-                }, {
-                    new: true
-                })
+                        new: true
+                    })
 
-            })
+                })
             }
 
 
@@ -316,10 +316,14 @@ const PromoController = class PromoController {
         const { error } = updatePromoByPromoIdValidation(req.body)
 
         if (error) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
         if (!this.isIdValid(req.params.promoId)) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("ID Promo Tidak Valid", HttpStatus.BAD_REQUEST))
         }
 
@@ -328,62 +332,71 @@ const PromoController = class PromoController {
         let isPromoExist = await this.isPromoExist(input.name, 'name')
 
         if (isPromoExist && isPromoExist._id !== req.params.promoId) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
         }
 
         let isSlugExist = await this.isPromoExist(input.slug, 'slug')
 
         if (isSlugExist && isSlugExist._id !== req.params.promoId) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Slug Telah Ada, Harap Gunakan Slug Berbeda`, HttpStatus.NOT_ACCEPTABLE))
         }
 
         let isTagExist = await this.isPromoExist(input.tags, 'tags')
 
         if (isTagExist && isTagExist._id !== req.params.promoId) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Tag Telah Ada, Harap Gunakan Tag Berbeda`, HttpStatus.NOT_ACCEPTABLE))
         }
 
-        try {
+        // try {
 
-            // if (input.products && input.products.length < 0) {
-            //     this.sendError("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST)
-            // }
+        // if (input.products && input.products.length < 0) {
+        //     this.sendError("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST)
+        // }
 
-            if (input.products) {
-                for (let i = 0; i < input.products.length; i++) {
+        if (input.products) {
+            for (let i = 0; i < input.products.length; i++) {
 
-                    this.validateId(input.products[i], 'Produk')
+                this.validateId(input.products[i], 'Produk')
 
-                }
             }
-
-            if (req.file) {
-                req.body.banner = req.file.path
-            }
-
-            const promo = await PromoModel.findOneAndUpdate(
-                req.params.promoId, {
-                $set: req.body
-            }, {
-                new: true
-            }).select({
-                name: 1,
-                products: 1,
-                banner: 1,
-                termsAndConditions: 1,
-                promoStart: 1,
-                promoEnd: 1,
-                isActive: 1,
-                description: 1,
-                platform: 1
-            })
-
-            return res.status(HttpStatus.OK).send(responser.success(promo, 'Promo Diperbarui'))
-
-        } catch (e) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Memperbarui Promo", HttpStatus.BAD_REQUEST))
-
         }
+
+        if (req.file) {
+            req.body.banner = req.file.path
+        }
+
+        const promo = await PromoModel.findOneAndUpdate(
+            req.params.promoId, {
+            $set: req.body
+        }, {
+            new: true
+        }).select({
+            name: 1,
+            products: 1,
+            banner: 1,
+            termsAndConditions: 1,
+            promoStart: 1,
+            promoEnd: 1,
+            isActive: 1,
+            description: 1,
+            platform: 1
+        })
+        const oldFile = await this.isPromoExist(req.params.promoId, 'id')
+
+        this.removeFile('public/' + oldFile.image_promo)
+
+        return res.status(HttpStatus.OK).send(responser.success(promo, 'Promo Diperbarui'))
+
+        // } catch (e) {
+        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Memperbarui Promo", HttpStatus.BAD_REQUEST))
+
+        // }
     }
 
     async addProductToPromo(req, res) {
@@ -664,9 +677,19 @@ const PromoController = class PromoController {
         return false
     }
 
+    validateId(id) {
+
+        if (!mongoose.isValidObjectId(id)) {
+            return false
+        }
+
+    }
+
     removeFile(req) {
         if (req.file) {
             fs.unlinkSync(req.file.path)
+        } else {
+            fs.unlinkSync(req)
         }
     }
 

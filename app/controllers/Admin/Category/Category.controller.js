@@ -6,6 +6,7 @@ const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 
+var fs = require('fs');
 
 const {
     addCategory,
@@ -161,18 +162,24 @@ const CategoryController = class CategoryController {
         const { error } = addCategory(req.body)
 
         if (error) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
         const isExist = await this.getCategoryBySku(req.body.sku)
 
         if (isExist) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error(`SKU: ${req.body.sku} sudah ada, harap menggunakan SKU yang lain`, HttpStatus.BAD_REQUEST))
         }
 
         const isSlugExist = await this.getCategoryBySlug(req.body.slug)
 
         if (isSlugExist) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.OK).send(responser.error(`Slug sudah ada, harap menggunakan slug yang lain`, HttpStatus.OK))
         }
 
@@ -210,12 +217,16 @@ const CategoryController = class CategoryController {
         const { error } = addCategory(req.body)
 
         if (error) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
         let isValid = await this.isIdValid(req.params.categoryId)
 
         if (!isValid) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error("Kategori ID Tidak Valid", HttpStatus.BAD_REQUEST)
             );
@@ -224,6 +235,8 @@ const CategoryController = class CategoryController {
         const isCategoryExists = await CategoryModel.findOne({ _id: req.params.categoryId })
 
         if (!isCategoryExists) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error("Kategori Tidak Ditemukan", HttpStatus.BAD_REQUEST)
             );
@@ -262,6 +275,8 @@ const CategoryController = class CategoryController {
                 additional: 1,
                 description: 1,
             })
+
+            this.removeFile('public/' + isCategoryExists.image)
 
             return res.status(HttpStatus.OK).send(responser.success(category, `Kategori ${input.name} Diperbarui`))
 
@@ -353,6 +368,22 @@ const CategoryController = class CategoryController {
             return true
         }
         return false
+    }
+
+    validateId(id) {
+
+        if (!mongoose.isValidObjectId(id)) {
+            return false
+        }
+
+    }
+
+    removeFile(req) {
+        if (req.file) {
+            fs.unlinkSync(req.file.path)
+        } else {
+            fs.unlinkSync(req)
+        }
     }
 }
 

@@ -6,6 +6,8 @@ const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 
+var fs = require('fs');
+
 
 const {
     addProductValidation,
@@ -158,11 +160,17 @@ const ProductController = class ProductController {
         const { error } = addProductValidation(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+
+            this.removeFile(req)
+
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         if (!this.isIdValid(req.body.category_id)) {
-            return false;
+
+            this.removeFile(req)
+
+            return res.status(HttpStatus.OK).send(responser.validation("ID Produk Tidak Valid", HttpStatus.OK))
         }
 
         // buat jika ada sku duplikat
@@ -258,12 +266,17 @@ const ProductController = class ProductController {
         const { error } = updateProductByIdValidation(req.body)
 
         if (error) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
         let isValid = await this.isIdValid(req.params.productId)
 
         if (!isValid) {
+
+            this.removeFile(req)
+
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error("ID Produk Tidak Valid", HttpStatus.BAD_REQUEST)
             );
@@ -272,18 +285,20 @@ const ProductController = class ProductController {
         const isProductExist = await ProductModel.findOne({ _id: req.params.productId })
 
         if (!isProductExist) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Produk Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
 
         let category = await this.isCategoryExists(req.body.category_id)
 
         if (!category) {
+
+            this.removeFile(req)
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Kategori Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
 
-        // buat jika ada sku duplikat
-
-        // try {
+        try {
 
         let input = req.body
 
@@ -341,13 +356,15 @@ const ProductController = class ProductController {
             hasPromotion: 1,
         })
 
-        return res.status(HttpStatus.OK).send(responser.success(product, "Produk Diperbarui"))
+            this.removeFile("public/" + isProductExist.image)
 
-        // } catch (err) {
+            return res.status(HttpStatus.OK).send(responser.success({}, "Produk Diperbarui"))
 
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Mengubah Produk, Harap Cek Input", HttpStatus.BAD_REQUEST))
+        } catch (err) {
 
-        // }
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Mengubah Produk, Harap Cek Input", HttpStatus.BAD_REQUEST))
+
+        }
     }
 
     async isCategoryExists(categoryId) {
@@ -364,6 +381,22 @@ const ProductController = class ProductController {
             return true
         }
         return false
+    }
+
+    validateId(id) {
+
+        if (!mongoose.isValidObjectId(id)) {
+            return false
+        }
+
+    }
+
+    removeFile(req) {
+        if (req.file) {
+            fs.unlinkSync(req.file.path)
+        } else {
+            fs.unlinkSync(req)
+        }
     }
 }
 

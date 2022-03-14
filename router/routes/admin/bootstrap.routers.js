@@ -1,5 +1,7 @@
 const Router = require('express').Router();
 
+const verifyToken = require('@middleware/authAdmin/verifyToken')
+
 // routes
 // const AdminRouter = require('@router/admin/admin.routes')
 const AuthRouter = require('@router/admin/auth/auth.routes')
@@ -18,20 +20,20 @@ const VoucherRouter = require('@router/admin/voucher/voucher.routes')
 
 Router.use('/auth', AuthRouter)
 
-Router.use('/charge', ChargeRouter)
+Router.use('/charge', ChargeRouter, verifyToken)
 
-Router.use('/category', CategoryRouter)
+Router.use('/category', CategoryRouter, verifyToken)
 
-Router.use('/order', OrderRouter)
+Router.use('/order', OrderRouter, verifyToken)
 
-Router.use('/product', ProductRouter)
+Router.use('/product', ProductRouter, verifyToken)
 
-Router.use('/promo', PromoRouter)
+Router.use('/promo', PromoRouter, verifyToken)
 
-Router.use('/user', AdminRouter)
+Router.use('/user', AdminRouter, verifyToken)
 
-Router.use('/users', UsersRouter)
+Router.use('/users', UsersRouter, verifyToken)
 
-Router.use('/voucher', VoucherRouter)
+Router.use('/voucher', VoucherRouter, verifyToken)
 
 module.exports = Router

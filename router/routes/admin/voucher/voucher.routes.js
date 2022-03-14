@@ -6,12 +6,6 @@ const verifyToken = require('@middleware/authAdmin/verifyToken')
 // controller
 const VoucherController = require('@controller/Admin/Voucher/Voucher.controller')
 
-const multer = require('multer');
-
-const storage = require('@middleware/images/ImageVoucher.middleware')
-
-var imageVoucher = multer({ storage: storage })
-
 router.get('/', verifyToken, (req, res) => VoucherController.getAllVouchers(req, res))
 
 router.get('/user/:userId', verifyToken, (req, res) => VoucherController.getVouchersByUser(req, res))
