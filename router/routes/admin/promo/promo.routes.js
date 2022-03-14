@@ -41,4 +41,4 @@ router.get('/:promoId', verifyToken, (req, res) => PromoController.getPromoByPro
 
 router.delete('/:promoId', verifyToken, (req, res) => PromoController.deletePromoByPromoId(req, res))
 
-module.exports = router;
+module.exports = router; 
