@@ -46,6 +46,7 @@ const CheckoutController = class CheckoutController {
             { path: 'user' },
         ])  //.lean().populate(['charges', 'items.product', 'items.product.category', 'user'])
 
+
         if (!checkIfCheckoutIsExist) {
             return res.status(HttpStatus.NOT_FOUND).send(
                 responser.error("Anda Belum Memilih Barang Untuk Dibayarkan", HttpStatus.NOT_FOUND))
@@ -101,8 +102,6 @@ const CheckoutController = class CheckoutController {
         checkIfCheckoutIsExist.user.otpSms = undefined
 
         checkIfCheckoutIsExist.user.password = undefined
-
-        checkIfCheckoutIsExist.vouchers = []
 
         checkIfCheckoutIsExist['address'] = address
 
@@ -206,12 +205,12 @@ const CheckoutController = class CheckoutController {
                             let promoPrice = (promo.promoValue / 100) * products[i].price
                             let priceAfterPromo = products[i].price - promoPrice
                             calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
-                            products[i].price = products[i].price - promoPrice
+                            // products[i].price = products[i].price - promoPrice
 
                         } else if (promo.promoBy === "price") {
 
                             calculateItem += (products[i].price - promo.promoValue) * productAtCart[0]['products'][0].quantity
-                            products[i].price = (products[i].price - promo.promoValue)
+                            // products[i].price = (products[i].price - promo.promoValue)
                             calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
 
                         }
@@ -226,7 +225,7 @@ const CheckoutController = class CheckoutController {
                             let discountPrice = (discount.discount / 100) * products[i].price
                             let priceAfterDiscount = products[i].price - discountPrice
                             calculateItem += priceAfterDiscount * productAtCart[0]['products'][0].quantity
-                            products[i].price = products[i].price - discountPrice
+                            // products[i].price = products[i].price - discountPrice
 
                         } else if (discount.discountBy === "price") {
 
@@ -235,20 +234,20 @@ const CheckoutController = class CheckoutController {
                     } else {
 
                         calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
-                        products[i].price = calculateItem
+                        // products[i].price = calculateItem
                     }
 
                 }
                 else {
 
                     calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
-                    products[i].price = calculateItem
+                    // products[i].price = calculateItem
 
                 }
 
             } else {
                 calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
-                products[i].price = calculateItem
+                // products[i].price = calculateItem
             }
 
             totalQuantity += productAtCart[0]['products'][0].quantity
@@ -347,7 +346,7 @@ const CheckoutController = class CheckoutController {
 
                     if (isVoucherExist.minimumOrderBy === "quantity") {
 
-                        if (totalQuantity <= isVoucherExist.minimumOrderValue) {
+                        if (totalQuantity < isVoucherExist.minimumOrderValue) {
 
                             return res.status(HttpStatus.OK).send(responser.validation(`Belum mencapai minimum kuantitas. min: ${isVoucherExist.minimumOrderValue} kuantitas`, HttpStatus.OK))
                         }
@@ -355,7 +354,7 @@ const CheckoutController = class CheckoutController {
 
                     if (isVoucherExist.minimumOrderBy === "price") {
 
-                        if (totalQuantity <= isVoucherExist.minimumOrderValue) {
+                        if (totalQuantity < isVoucherExist.minimumOrderValue) {
 
                             let totalMinPrice = this.formatMoney(isVoucherExist.minimumOrderValue)
 

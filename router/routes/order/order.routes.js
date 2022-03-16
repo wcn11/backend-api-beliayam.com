@@ -16,7 +16,7 @@ router.get('/:order_id', verifyToken, (req, res) => OrderController.getOrderById
 
 router.post('/', verifyToken, (req, res) => OrderController.placeOrder(req, res))
 
-router.post('/cancel-order', verifyToken, (req, res) => OrderController.cancelPayment(req, res))
+router.put('/cancel-order', verifyToken, (req, res) => OrderController.cancelPayment(req, res))
 
 // router.post('/voucher/apply', verifyToken, (req, res) => CheckoutController.applyVoucher(req, res))
 

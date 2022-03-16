@@ -85,7 +85,7 @@ const OrderController = class OrderController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        const currentTime = moment().add(7, 'hour').toDate()
+        const currentTime = date.time().toDate()
 
         let isUserValid = await this.isIdValid(req.body.user_id)
 
@@ -210,84 +210,50 @@ const OrderController = class OrderController {
             "signature": ""
         }
 
-        try {
+        // try {
 
-            let base_total_products = 0
+        let base_total_products = 0
 
-            const items = checkout.items
+        const items = checkout.items
 
-            for (let i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
 
-                const isProductStillExist = await this.getProductByProductId(items[i].product._id)
+            const isProductStillExist = await this.getProductByProductId(items[i].product._id)
 
-                if (!isProductStillExist[0]) {
-                    return res.status(HttpStatus.BAD_REQUEST).send(
-                        responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia", HttpStatus.BAD_REQUEST))
-                }
+            if (!isProductStillExist[0]) {
+                return res.status(HttpStatus.BAD_REQUEST).send(
+                    responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia", HttpStatus.BAD_REQUEST))
+            }
 
-                if (isProductStillExist[0].stock < items[i].details.quantity) {
+            if (isProductStillExist[0].stock < items[i].details.quantity) {
 
-                    return res.status(HttpStatus.OK).send(
-                        responser.error(`Kuantitas Pembelian '${items[i].product.name}' Melebihi Persediaan Saat Ini`, HttpStatus.OK))
-                }
+                return res.status(HttpStatus.OK).send(
+                    responser.error(`Kuantitas Pembelian '${items[i].product.name}' Melebihi Persediaan Saat Ini`, HttpStatus.OK))
+            }
 
-                let promo = items[i].product.hasPromo
+            let promo = items[i].product.hasPromo
 
-                let discount = items[i].product.hasDiscount
+            let discount = items[i].product.hasDiscount
 
-                if (promo) {
+            if (promo) {
 
-                    switch (promo) {
-                        case promo.length > 0:
-                            for (let j = 0; j < promo.length; j++) {
+                switch (promo) {
+                    case promo.length > 0:
+                        for (let j = 0; j < promo.length; j++) {
 
-                                if (promo[j].promoStart < nowDateLocale && promo[j].promoEnd > nowDateLocale) {
-
-                                    let price = 0
-
-                                    if (promo[j].promoBy === "percent") {
-
-                                        let promoPrice = (promo[j].promoValue / 100) * items[i].product.price
-                                        let priceAfterPromo = items[i].product.price - promoPrice
-                                        price = priceAfterPromo * items[i].details.quantity
-
-                                    } else if (promo[j].promoBy === "price") {
-
-                                        price = (items[i].details.quantity + promo[j].promoValue) * items[i].product.price
-
-                                    }
-
-                                    let priceConcat = price + '00'
-
-                                    base_total_products += price
-
-                                    postDataObject.item.push({
-                                        "id": items[i].product._id,
-                                        "product": items[i].product.name,
-                                        "qty": items[i].details.quantity,
-                                        "amount": parseInt(priceConcat),
-                                        "payment_plan": "01",
-                                        "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                                        "tenor": "00"
-                                    })
-                                    break
-                                }
-                            }
-                        case promo.length <= 0 && discount.isDiscount === true:
-
-                            if (discount.discountStart > nowDateLocale && discount.discountEnd < nowDateLocale) {
+                            if (promo[j].promoStart < nowDateLocale && promo[j].promoEnd > nowDateLocale) {
 
                                 let price = 0
 
-                                if (discount.discountBy === "percent") {
+                                if (promo[j].promoBy === "percent") {
 
-                                    let discountPrice = (discount.discount / 100) * items[i].product.price
-                                    let priceAfterDiscount = items[i].product.price - discountPrice
-                                    price = priceAfterDiscount * items[i].details.quantity
+                                    let promoPrice = (promo[j].promoValue / 100) * items[i].product.price
+                                    let priceAfterPromo = items[i].product.price - promoPrice
+                                    price = priceAfterPromo * items[i].details.quantity
 
-                                } else if (discount.discountBy === "price") {
+                                } else if (promo[j].promoBy === "price") {
 
-                                    price = (items[i].details.quantity + discount.discount) * items[i].product.price
+                                    price = (items[i].details.quantity + promo[j].promoValue) * items[i].product.price
 
                                 }
 
@@ -304,26 +270,41 @@ const OrderController = class OrderController {
                                     "merchant_id": process.env.FASPAY_MERCHANT_ID,
                                     "tenor": "00"
                                 })
-                            } else {
-
-                                let price = items[i].product.price * items[i].details.quantity
-
-                                let priceConcat = price + '00'
-
-                                base_total_products += price
-
-                                postDataObject.item.push({
-                                    "id": items[i].product._id,
-                                    "product": items[i].product.name,
-                                    "qty": items[i].details.quantity,
-                                    "amount": parseInt(priceConcat),
-                                    "payment_plan": "01",
-                                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                                    "tenor": "00"
-                                })
+                                break
                             }
-                            break;
-                        default:
+                        }
+                    case promo.length <= 0 && discount.isDiscount === true:
+
+                        if (discount.discountStart > nowDateLocale && discount.discountEnd < nowDateLocale) {
+
+                            let price = 0
+
+                            if (discount.discountBy === "percent") {
+
+                                let discountPrice = (discount.discount / 100) * items[i].product.price
+                                let priceAfterDiscount = items[i].product.price - discountPrice
+                                price = priceAfterDiscount * items[i].details.quantity
+
+                            } else if (discount.discountBy === "price") {
+
+                                price = (items[i].details.quantity + discount.discount) * items[i].product.price
+
+                            }
+
+                            let priceConcat = price + '00'
+
+                            base_total_products += price
+
+                            postDataObject.item.push({
+                                "id": items[i].product._id,
+                                "product": items[i].product.name,
+                                "qty": items[i].details.quantity,
+                                "amount": parseInt(priceConcat),
+                                "payment_plan": "01",
+                                "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                                "tenor": "00"
+                            })
+                        } else {
 
                             let price = items[i].product.price * items[i].details.quantity
 
@@ -340,320 +321,333 @@ const OrderController = class OrderController {
                                 "merchant_id": process.env.FASPAY_MERCHANT_ID,
                                 "tenor": "00"
                             })
+                        }
+                        break;
+                    default:
 
-                            break
+                        let price = items[i].product.price * items[i].details.quantity
 
-                    }
-                } else {
+                        let priceConcat = price + '00'
 
-                    let price = items[i].product.price * items[i].details.quantity
+                        base_total_products += price
 
-                    let priceConcat = price + '00'
+                        postDataObject.item.push({
+                            "id": items[i].product._id,
+                            "product": items[i].product.name,
+                            "qty": items[i].details.quantity,
+                            "amount": parseInt(priceConcat),
+                            "payment_plan": "01",
+                            "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                            "tenor": "00"
+                        })
 
-                    base_total_products += price
-
-                    postDataObject.item.push({
-                        "id": items[i].product._id,
-                        "product": items[i].product.name,
-                        "qty": items[i].details.quantity,
-                        "amount": parseInt(priceConcat),
-                        "payment_plan": "01",
-                        "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                        "tenor": "00"
-                    })
+                        break
 
                 }
+            } else {
+
+                let price = items[i].product.price * items[i].details.quantity
+
+                let priceConcat = price + '00'
+
+                base_total_products += price
+
+                postDataObject.item.push({
+                    "id": items[i].product._id,
+                    "product": items[i].product.name,
+                    "qty": items[i].details.quantity,
+                    "amount": parseInt(priceConcat),
+                    "payment_plan": "01",
+                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                    "tenor": "00"
+                })
+
             }
+        }
 
-            let sub_total = checkout.baseTotal
+        let sub_total = checkout.baseTotal
 
-            let sub_total_voucher = 0
+        let sub_total_voucher = checkout.subTotalVoucher
 
-            let all_voucher = []
+        let all_voucher = []
 
-            const vouchers = req.body.vouchers
+        const vouchers = checkout.vouchers ?? []
 
-            if (vouchers) {
+        if (vouchers.length > 0) {
 
-                for (let i = 0; i < vouchers.length; i++) {
+            for (let i = 0; i < vouchers.length; i++) {
 
-                    let isVoucherValid = await this.isIdValid(vouchers[i])
+                let isVoucherValid = await this.isIdValid(vouchers[i]._id)
 
-                    if (!isVoucherValid) {
-                        return res.status(HttpStatus.BAD_REQUEST).send(
-                            responser.error("Voucher Tidak Valid", HttpStatus.BAD_REQUEST)
-                        );
-                    }
-
-                    let isVoucherExist = await this.isVoucherExist(vouchers[i], "id")
-
-                    if (!isVoucherExist.isActive) {
-                        return res.status(HttpStatus.OK).send(
-                            responser.error(`Voucher '${isVoucherExist.voucherName}' Sudah Tidak Aktif`, HttpStatus.OK))
-                    }
-
-                    if (isVoucherExist.discountStart > currentTime) {
-                        return res.status(HttpStatus.OK).send(
-                            responser.error(`Voucher '${isVoucherExist.voucherName}' Belum Aktif`, HttpStatus.OK))
-                    }
-
-                    if (isVoucherExist.discountEnd < currentTime) {
-                        return res.status(HttpStatus.OK).send(
-                            responser.error(`Voucher '${isVoucherExist.voucherName}' Telah Kadaluarsa`, HttpStatus.OK))
-                    }
-
-                    if (isVoucherExist.minimumOrderValue > base_total_products) {
-
-                        return res.status(HttpStatus.OK).send(
-                            responser.error(`Voucher Tidak Dapat Digunakan. Belum Mencapai Minimal Belanja`, HttpStatus.OK))
-                    }
-
-                    let platform = await isVoucherExist.platform.map(value => {
-                        if (value === "all") {
-                            return true
-                        } else if (value.toLowerCase() === req.body.platform.toLowerCase()) {
-                            return true
-                        } else {
-                            return false
-                        }
-                    })
-
-                    if (isVoucherExist.discountBy === "percent") {
-                        let priceAfterDiscount = (isVoucherExist.discountValue / 100) * base_total_products
-                        discountValue = priceAfterDiscount
-                        sub_total += base_total_products - priceAfterDiscount
-                        sub_total_voucher += priceAfterDiscount
-
-
-                    } else if (isVoucherExist.discountBy === "price") {
-                        let afterPrice = base_total_products - isVoucherExist.discountValue
-                        sub_total += afterPrice
-                        sub_total_voucher += isVoucherExist.discountValue
-                    }
-
-                    if (!platform) {
-
-                        return res.status(HttpStatus.OK).send(
-                            responser.error(`Voucher Tidak Dapat Digunakan Diperangkat Ini`, HttpStatus.OK))
-                    }
-
-                    if (isVoucherExist.isPrivate.private) {
-                        let isUserExist = isVoucherExist.isPrivate.users.filter(user => user === req.body.user_id)
-
-                        if (isUserExist.length <= 0) {
-
-                            return res.status(HttpStatus.OK).send(
-                                responser.error(`Voucher Ini Private, Tidak Dapat Digunakan Oleh Anda`, HttpStatus.OK))
-                        }
-                    }
-
-                    all_voucher.push(isVoucherExist)
+                if (!isVoucherValid) {
+                    return res.status(HttpStatus.OK).send(
+                        responser.error("Voucher Tidak Valid", HttpStatus.OK)
+                    );
                 }
 
-            }
+                let isVoucherExist = await this.isVoucherExist(vouchers[i]._id, "id")
 
-            let charges = await this.getAllCharge()
+                if (!isVoucherExist.isActive) {
+                    return res.status(HttpStatus.OK).send(
+                        responser.error(`Voucher '${isVoucherExist.voucherName}' Tidak Aktif`, HttpStatus.OK))
+                }
 
-            let sub_total_charge = 0
+                if (isVoucherExist.discountStart > currentTime) {
+                    return res.status(HttpStatus.OK).send(
+                        responser.error(`Voucher '${isVoucherExist.voucherName}' Belum Aktif`, HttpStatus.OK))
+                }
 
-            await charges.reduce(async (accumulator, charge) => {
+                if (isVoucherExist.discountEnd < currentTime) {
+                    return res.status(HttpStatus.OK).send(
+                        responser.error(`Voucher '${isVoucherExist.voucherName}' Telah Kadaluarsa`, HttpStatus.OK))
+                }
 
-                let platform = await charge.platform.map(value => {
+                let platform = await isVoucherExist.platform.map(value => {
                     if (value === "all") {
                         return true
-                    } else if (value.toLowerCase() === req.body.platform.toLowerCase()) {
+                    } else if (value === req.body.platform) {
                         return true
                     } else {
                         return false
                     }
-                })[0]
+                })
 
-                if (platform) {
+                // if (isVoucherExist.discountBy === "percent") {
+                //     let priceAfterDiscount = (isVoucherExist.discountValue / 100) * base_total_products
+                //     discountValue = priceAfterDiscount
+                //     sub_total += base_total_products - priceAfterDiscount
+                //     sub_total_voucher += priceAfterDiscount
 
-                    if (charge.chargeBy.toLowerCase() === "price") {
-                        sub_total_charge += (accumulator + parseInt(charge.chargeValue))
-                        return accumulator
 
+                // } else if (isVoucherExist.discountBy === "price") {
+                //     let afterPrice = base_total_products - isVoucherExist.discountValue
+                //     sub_total += afterPrice
+                //     sub_total_voucher += isVoucherExist.discountValue
+                // }
+
+                if (!platform) {
+
+                    return res.status(HttpStatus.OK).send(
+                        responser.error(`Voucher Tidak Dapat Digunakan Diperangkat Ini`, HttpStatus.OK))
+                }
+
+                if (isVoucherExist.isPrivate.private) {
+                    let isUserExist = isVoucherExist.isPrivate.users.filter(user => user === req.body.user_id)
+
+                    if (isUserExist.length <= 0) {
+
+                        return res.status(HttpStatus.OK).send(
+                            responser.error(`Voucher Ini Private, Tidak Dapat Digunakan Oleh Anda`, HttpStatus.OK))
                     }
-                    // else if (charge.chargeBy === "percent") {
-                    //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
-                    // }
-                    else {
-                        sub_total_charge += (accumulator + parseInt(charge.chargeValue))
-                        return accumulator
-                    }
+                }
+
+                all_voucher.push(isVoucherExist)
+            }
+
+        }
+
+        let charges = await this.getAllCharge()
+
+        let sub_total_charge = 0
+
+        await charges.reduce(async (accumulator, charge) => {
+
+            let platform = await charge.platform.map(value => {
+                if (value === "all") {
+                    return true
+                } else if (value.toLowerCase() === req.body.platform.toLowerCase()) {
+                    return true
+                } else {
+                    return false
+                }
+            })[0]
+
+            if (platform) {
+
+                if (charge.chargeBy.toLowerCase() === "price") {
+                    sub_total_charge += (accumulator + parseInt(charge.chargeValue))
+                    return accumulator
 
                 }
-            }, 0)
+                // else if (charge.chargeBy === "percent") {
+                //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
+                // }
+                else {
+                    sub_total_charge += (accumulator + parseInt(charge.chargeValue))
+                    return accumulator
+                }
 
-            const grand_total = sub_total_charge + sub_total
-
-            const grand_total_concat = grand_total + '00'
-
-            const objectResponse = {
-                "bill": {
-                    "bill_no": bill_no,
-                    "bill_reff": bill_reff,
-                    "bill_date": now,
-                    "bill_expired": later,
-                    "bill_desc": "Pembayaran #" + bill_reff,
-                    "bill_total": grand_total,
-                    "bill_items": items
-                },
-                "user": user,
-                "shipping_address": address[0].address
             }
+        }, 0)
 
-            let signature_temp = ""
+        const grand_total = sub_total
 
-            switch (isPaymentGatewayExist.data.type.toLowerCase()) {
-                case "cash":
-                    objectResponse.payment = {
-                        "pg_code": isPaymentGatewayExist.data.pg_code,
-                        "pg_name": isPaymentGatewayExist.data.pg_name,
-                        "type": isPaymentGatewayExist.data.type
-                    }
+        const grand_total_concat = grand_total + '00'
 
-                    objectResponse.response = {
-                        "trx_id": 0,
-                        "bill_no": bill_no,
-                        "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                        "merchant": process.env.FASPAY_MERCHANT,
-                        "response_code": HttpStatus.OK,
-                        "response_desc": `Metode Pembayaran Dengan ${isPaymentGatewayExist.data.pg_name}`,
-                        "redirect_url": ""
-                    }
-
-                    break
-                case "va":
-                case "ibanking":
-                case "retail":
-                case "emoney":
-                case "emoney":
-                case "emoney":
-                case "jumpapp":
-                case "qris":
-
-                    objectResponse.payment = {
-                        "pg_code": isPaymentGatewayExist.data.pg_code,
-                        "pg_name": isPaymentGatewayExist.data.pg_name,
-                        "type": isPaymentGatewayExist.data.type
-                    }
-
-                    const md5 = crypto.createHash('md5', process.env.SIGNATURE_SECRET)
-                        .update(process.env.FASPAY_USER_ID + process.env.FASPAY_PASSWORD + bill_no)
-                        .digest('hex')
-
-                    const signature = crypto.createHash('sha1', process.env.SIGNATURE_SECRET)
-                        .update(md5)
-                        .digest('hex')
-
-                    signature_temp = signature
-
-                    postDataObject.signature = signature
-
-                    postDataObject.bill_total = grand_total_concat
-
-                    const paymentGateway = await PaymentGateway.send(url, postDataObject)
-
-                    if (!paymentGateway.trx_id) {
-
-                        return res.status(HttpStatus.REQUEST_TIMEOUT).send(
-                            responser.error(`Server Pembayaran Sedang Sibuk, Harap Coba Kembali`, HttpStatus.REQUEST_TIMEOUT))
-                    }
-
-                    objectResponse.response = {
-                        "trx_id": paymentGateway.trx_id,
-                        "bill_no": paymentGateway.bill_no,
-                        "merchant_id": paymentGateway.merchant_id,
-                        "merchant": paymentGateway.merchant,
-                        "response_code": paymentGateway.response_code,
-                        "response_desc": paymentGateway.response_desc
-                    }
-
-                    if (req.body.payment.pg_code == 713) {
-                        objectResponse.response.deeplink = paymentGateway.deeplink
-                        objectResponse.response.web_url = paymentGateway.web_url
-                        objectResponse.response.redirect_url = paymentGateway.redirect_url
-                    } else if (req.body.payment.pg_code == 711 || req.body.payment.pg_code == 716) {
-                        objectResponse.response.web_url = paymentGateway.web_url
-                        objectResponse.response.redirect_url = paymentGateway.redirect_url
-                    }
-                    else {
-                        objectResponse.response.redirect_url = paymentGateway.redirect_url
-                    }
-
-                    address[0].address.receiver_name = user.name
-                    break
-            }
-
-            const orderObject = {
-                order_id: bill_no,
-                bill: {
-                    bill_no: bill_no,
-                    bill_reff: bill_reff,
-                    bill_date: now,
-                    bill_expired: later,
-                    bill_desc: postDataObject.bill_desc,
-                    bill_total: grand_total,
-                    bill_items: items,
-                },
-                grand_total: grand_total,
-                sub_total_product: base_total_products,
-                sub_total_charges: sub_total_charge,
-                sub_total_voucher: sub_total_voucher,
-                charges: charges,
-                vouchers_applied: all_voucher,
-                platform: req.body.platform,
-                payment: {
-                    pg_code: isPaymentGatewayExist.data.pg_code,
-                    pg_name: isPaymentGatewayExist.data.pg_name,
-                    pg_type: isPaymentGatewayExist.data.type,
-                    // status: PaymentStatus.IN_PROCESS,
-                    payment_reff: "",
-                    payment_date: "",
-                    payment_status_code: PaymentStatus.IN_PROCESS.code,
-                    payment_status_desc: "",
-                    payment_channel_uid: parseInt(isPaymentGatewayExist.data.pg_code),
-                    payment_channel: isPaymentGatewayExist.data.pg_name
-                },
-                user: {
-                    _id: user._id,
-                    name: user._name,
-                    email: user.email,
-                    isEmailVerified: user.isEmailVerified,
-                    registeredBy: user.registeredBy,
-                    registeredAt: user.registeredAt,
-                    isActive: user.isActive,
-                    isPhoneVerified: user.isPhoneVerified,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt,
-                    phone: user.phone
-                },
-                shipping_address: address[0].address,
-                order_status: {
-                    status: "IN_PROCESS",
-                    payment_date: date.time(),
-                    description: "Waiting for payment"
-                },
-                response: objectResponse.response,
-                signature: signature_temp
-            }
-
-            let saveOrder = new OrderModel(orderObject)
-
-            await saveOrder.save()
-
-            await this.setStockProducts(items)
-
-            await CheckoutModel.deleteOne({
-                user: user._id
-            })
-            return res.status(HttpStatus.OK).send(responser.success(orderObject, "OK"));
-        } catch (err) {
-            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                responser.error(`Tidak Dapat Melakukan Pembayaran, Harap Coba Kembali`, HttpStatus.INTERNAL_SERVER_ERROR))
+        const objectResponse = {
+            "bill": {
+                "bill_no": bill_no,
+                "bill_reff": bill_reff,
+                "bill_date": now,
+                "bill_expired": later,
+                "bill_desc": "Pembayaran #" + bill_reff,
+                "bill_total": grand_total,
+                "bill_items": items
+            },
+            "user": user,
+            "shipping_address": address[0].address
         }
+
+        let signature_temp = ""
+
+        switch (isPaymentGatewayExist.data.type.toLowerCase()) {
+            case "cash":
+                objectResponse.payment = {
+                    "pg_code": isPaymentGatewayExist.data.pg_code,
+                    "pg_name": isPaymentGatewayExist.data.pg_name,
+                    "type": isPaymentGatewayExist.data.type
+                }
+
+                objectResponse.response = {
+                    "trx_id": 0,
+                    "bill_no": bill_no,
+                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                    "merchant": process.env.FASPAY_MERCHANT,
+                    "response_code": HttpStatus.OK,
+                    "response_desc": `Metode Pembayaran Dengan ${isPaymentGatewayExist.data.pg_name}`,
+                    "redirect_url": ""
+                }
+
+                break
+            case "va":
+            case "ibanking":
+            case "retail":
+            case "emoney":
+            case "emoney":
+            case "emoney":
+            case "jumpapp":
+            case "qris":
+
+                objectResponse.payment = {
+                    "pg_code": isPaymentGatewayExist.data.pg_code,
+                    "pg_name": isPaymentGatewayExist.data.pg_name,
+                    "type": isPaymentGatewayExist.data.type
+                }
+
+                const md5 = crypto.createHash('md5', process.env.SIGNATURE_SECRET)
+                    .update(process.env.FASPAY_USER_ID + process.env.FASPAY_PASSWORD + bill_no)
+                    .digest('hex')
+
+                const signature = crypto.createHash('sha1', process.env.SIGNATURE_SECRET)
+                    .update(md5)
+                    .digest('hex')
+
+                signature_temp = signature
+
+                postDataObject.signature = signature
+
+                postDataObject.bill_total = grand_total_concat
+
+                const paymentGateway = await PaymentGateway.send(url, postDataObject)
+
+                if (!paymentGateway.trx_id) {
+
+                    return res.status(HttpStatus.REQUEST_TIMEOUT).send(
+                        responser.error(`Server Pembayaran Sedang Sibuk, Harap Coba Kembali`, HttpStatus.REQUEST_TIMEOUT))
+                }
+
+                objectResponse.response = {
+                    "trx_id": paymentGateway.trx_id,
+                    "bill_no": paymentGateway.bill_no,
+                    "merchant_id": paymentGateway.merchant_id,
+                    "merchant": paymentGateway.merchant,
+                    "response_code": paymentGateway.response_code,
+                    "response_desc": paymentGateway.response_desc
+                }
+
+                if (req.body.payment.pg_code == 713) {
+                    objectResponse.response.deeplink = paymentGateway.deeplink
+                    objectResponse.response.web_url = paymentGateway.web_url
+                    objectResponse.response.redirect_url = paymentGateway.redirect_url
+                } else if (req.body.payment.pg_code == 711 || req.body.payment.pg_code == 716) {
+                    objectResponse.response.web_url = paymentGateway.web_url
+                    objectResponse.response.redirect_url = paymentGateway.redirect_url
+                }
+                else {
+                    objectResponse.response.redirect_url = paymentGateway.redirect_url
+                }
+
+                address[0].address.receiver_name = user.name
+                break
+        }
+
+        const orderObject = {
+            order_id: bill_no,
+            bill: {
+                bill_no: bill_no,
+                bill_reff: bill_reff,
+                bill_date: now,
+                bill_expired: later,
+                bill_desc: postDataObject.bill_desc,
+                bill_total: grand_total,
+                bill_items: items,
+            },
+            grand_total: grand_total,
+            sub_total_product: base_total_products,
+            sub_total_charges: sub_total_charge,
+            sub_total_voucher: sub_total_voucher,
+            charges: charges,
+            vouchers_applied: all_voucher,
+            platform: req.body.platform,
+            payment: {
+                pg_code: isPaymentGatewayExist.data.pg_code,
+                pg_name: isPaymentGatewayExist.data.pg_name,
+                pg_type: isPaymentGatewayExist.data.type,
+                // status: PaymentStatus.IN_PROCESS,
+                payment_reff: "",
+                payment_date: "",
+                payment_status_code: PaymentStatus.IN_PROCESS.code,
+                payment_status_desc: "",
+                payment_channel_uid: parseInt(isPaymentGatewayExist.data.pg_code),
+                payment_channel: isPaymentGatewayExist.data.pg_name
+            },
+            user: {
+                _id: user._id,
+                name: user._name,
+                email: user.email,
+                isEmailVerified: user.isEmailVerified,
+                registeredBy: user.registeredBy,
+                registeredAt: user.registeredAt,
+                isActive: user.isActive,
+                isPhoneVerified: user.isPhoneVerified,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                phone: user.phone
+            },
+            shipping_address: address[0].address,
+            order_status: {
+                status: "IN_PROCESS",
+                payment_date: date.time(),
+                description: "Waiting for payment"
+            },
+            response: objectResponse.response,
+            signature: signature_temp
+        }
+
+        let saveOrder = new OrderModel(orderObject)
+
+        await saveOrder.save()
+
+        await this.setStockProducts(items)
+
+        await CheckoutModel.deleteOne({
+            user: user._id
+        })
+        return res.status(HttpStatus.OK).send(responser.success(orderObject, "OK"));
+        // } catch (err) {
+        //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        //         responser.error(`Tidak Dapat Melakukan Pembayaran, Harap Coba Kembali`, HttpStatus.INTERNAL_SERVER_ERROR))
+        // }
     }
 
     async cancelPayment(req, res) {
@@ -661,18 +655,28 @@ const OrderController = class OrderController {
         const { error } = cancelOrderValidation(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
         }
 
         const isOrderExist = await this.getOrderByOrderId(req.body.order_id)
 
         if (!isOrderExist) {
-            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.NOT_FOUND))
+            return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
         }
 
-        const currentTime = moment().add(7, 'hour').toDate()
+        if (isOrderExist.payment.payment_status_code === 2) {
+            return res.status(HttpStatus.OK).send(responser.error("Tidak dapat membatalkan pesanan yang telah selesai", HttpStatus.OK))
+        }
 
-        try {
+        if (req.user.user._id !== req.body.user_id) {
+            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Pengguna tidak sesuai dengan sesi login saat ini", HttpStatus.UNAUTHORIZED))
+        }
+
+        const currentTime = date.time().toDate()
+
+        // try {
+
+        if (parseInt(isOrderExist.payment.pg_code) !== 101) {
 
             const url = "/cvr/100005/10"
 
@@ -763,13 +767,35 @@ const OrderController = class OrderController {
 
             return res.status(getHttpStatus[0][1]).send(
                 responser.error(paymentResponse[0][1].description, getHttpStatus[0][1]))
-
-        } catch (err) {
-
-            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
-
         }
+
+        await OrderModel.findOneAndUpdate(
+            req.body.order_id, {
+            $set: {
+                "order_status": {
+                    status: "ORDER_CANCELLED",
+                    payment_date: currentTime,
+                    description: PaymentResponse.ORDER_CANCELLED.description
+                },
+                "payment": {
+                    payment_status_code: 8,
+                    payment_status_desc: "Pesanan dibatalkan",
+                    payment_date: currentTime,
+                }
+            }
+        }, {
+            new: true
+        })
+
+        return res.status(HttpStatus.OK).send(
+            responser.success({}, "Pesanan Dibatalkan"))
+
+        // } catch (err) {
+
+        //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        //         responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+
+        // }
 
     }
 

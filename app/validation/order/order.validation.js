@@ -31,8 +31,7 @@ const getOrderByIdValidation = (data) => {
 const cancelOrderValidation = (data) => {
 
     const schema = Joi.object({
-        trx_id: Joi.string().required(),
-        bill_no: Joi.string().required(),
+        user_id: Joi.string().required(),
         order_id: Joi.string().required(),
     })
 

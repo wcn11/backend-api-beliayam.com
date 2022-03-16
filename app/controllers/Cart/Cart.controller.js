@@ -569,7 +569,7 @@ const CartController = class CartController {
 
         if (isVoucherExist.minimumOrderBy === "quantity") {
 
-            if (isCartExist.totalQuantity <= isVoucherExist.minimumOrderValue) {
+            if (isCartExist.totalQuantity < isVoucherExist.minimumOrderValue) {
 
                 return res.status(HttpStatus.OK).send(responser.validation(`Belum mencapai minimum kuantitas. min: ${isVoucherExist.minimumOrderValue} kuantitas`, HttpStatus.OK))
             }
