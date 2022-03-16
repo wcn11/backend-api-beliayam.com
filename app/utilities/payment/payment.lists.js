@@ -6,7 +6,6 @@ Module._extensions['.png'] = function (module, fn) {
     module._compile('module.exports="data:image/png;base64,' + base64 + '"', fn);
 };
 
-
 payment_channels = [
     {
         "pg_code": "101",

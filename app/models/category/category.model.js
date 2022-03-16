@@ -30,19 +30,11 @@ const CategorySchema = mongoose.Schema({
     },
     image: {
         type: String,
-        required: false,
-        // extraSmall: {
-        //     type: String
-        // },
-        // small: {
-        //     type: String
-        // },
-        // medium: {
-        //     type: String
-        // },
-        // large: {
-        //     type: String
-        // },
+        required: false
+    },
+    icon: {
+        type: String,
+        required: false
     },
     status: {
         type: String,

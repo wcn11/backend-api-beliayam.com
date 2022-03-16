@@ -2,7 +2,6 @@ const router = require('express').Router();
 
 const multer = require('multer');
 
-// controller
 const CategoryController = require('@controller/Admin/Category/Category.controller')
 
 const storage = require('@middleware/validation/category/category.middleware')
@@ -24,9 +23,21 @@ router.post('/:slug/product', imageCategory.single('image_category'), errorHandl
 
 router.get('/:categoryId', (req, res) => CategoryController.getCategoryById(req, res))
 
-router.post('/', imageCategory.single('image_category'), errorHandlerImage, (req, res) => CategoryController.createCategory(req, res))
+router.post('/', imageCategory.fields([
+    {
+        name: 'image_category', maxCount: 1
+    },
+    {
+        name: 'icon', maxCount: 1
+    }]), errorHandlerImage, (req, res) => CategoryController.createCategory(req, res))
 
-router.put('/:categoryId', imageCategory.single('image_category'), errorHandlerImage, (req, res) => CategoryController.updateCategory(req, res))
+router.put('/:categoryId', imageCategory.fields([
+    {
+        name: 'image_category', maxCount: 1
+    },
+    {
+        name: 'icon', maxCount: 1
+    }]), errorHandlerImage, (req, res) => CategoryController.updateCategory(req, res))
 
 router.delete('/:categoryId', (req, res) => CategoryController.deleteCategoryById(req, res))
 

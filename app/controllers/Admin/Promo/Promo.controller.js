@@ -251,7 +251,7 @@ const PromoController = class PromoController {
                 promoEnd: input.promoEnd,
                 isActive: input.isActive ?? false,
                 description: input.description,
-                platform: ['all']
+                platform: []
             }
             if (input.products) {
 

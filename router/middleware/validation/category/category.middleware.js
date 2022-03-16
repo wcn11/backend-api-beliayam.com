@@ -12,28 +12,62 @@ const whitelistMimeType = {
 }
 
 var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function (req, files, cb) {
 
-        cb(null, path.join('public/images/category'))
+        if (files.fieldname === "image_category") {
+
+            cb(null, path.join('public/images/category'))
+        }
+
+        if (files.fieldname === "icon") {
+
+            cb(null, path.join('public/images/category/icon'))
+        }
 
     },
-    filename: function (req, file, cb) {
+    filename: function (req, files, cb) {
 
-        if (whitelistMimeType[file.mimetype] == undefined) {
+        const image = checkMimeType(files)
 
-            const message = responser.validation("Format File Tidak Valid. Format yang diperbolehkan: .png, .jpg, .jpeg, .webp.", HttpStatus.BAD_REQUEST)
+        if (!image) {
+
+            const message = responser.validation(`Format File ${files.fieldname} Tidak Valid. Format yang diperbolehkan: .png, .jpg, .jpeg, .webp.`, HttpStatus.BAD_REQUEST)
 
             cb(message, null)
+        }
 
-        } else {
-            let date = Date.now()
+        let date = Date.now()
 
-            let fileName = slugify(file.originalname)
+        if (files.fieldname === "image_category") {
 
-            file.url = `images/category/${date}-${fileName}`
+            let fileNameImageCategory = slugify(files.originalname)
 
-            cb(null, date + "-" + file.originalname)
+            files.url = `images/category/${date}-${fileNameImageCategory}`
+
+            cb(null, date + "-" + fileNameImageCategory)
+        }
+
+        if (files.fieldname === "icon") {
+
+            let fileNameImageCategory = slugify(files.originalname)
+
+            files.url = `images/category/icon/${date}-${fileNameImageCategory}`
+
+            cb(null, date + "-" + fileNameImageCategory)
         }
     }
 })
+
+function checkMimeType(files) {
+
+
+    if (whitelistMimeType[files.mimetype] == undefined) {
+
+        return false
+
+    }
+
+    return true
+}
+
 module.exports = storage

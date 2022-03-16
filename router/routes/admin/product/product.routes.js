@@ -1,15 +1,19 @@
 const router = require('express').Router();
 
+const ProductController = require('@controller/Admin/Product/Product.controller')
+
 const multer = require('multer');
 
-const storage = require('@middleware/images/ImageProduct.middleware')
+const storage = require('@middleware/validation/product/product.middleware')
+
+const limits = require('@middleware/validation/product/product.limit')
 
 const errorHandlerImage = require('@middleware/validation/error')
 
-// controller
-const ProductController = require('@controller/Admin/Product/Product.controller')
-
-var imageProduct = multer({ storage: storage })
+var imageProduct = multer({
+    storage,
+    limits
+})
 
 router.get('/', (req, res) => ProductController.getProducts(req, res))
 

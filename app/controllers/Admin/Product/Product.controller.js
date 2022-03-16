@@ -182,6 +182,8 @@ const ProductController = class ProductController {
             let category = await this.isCategoryExists(input.category_id)
 
             if (!category) {
+
+                this.removeFile(req)
                 return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Kategori Tidak Ditemukan", HttpStatus.NOT_FOUND))
             }
 

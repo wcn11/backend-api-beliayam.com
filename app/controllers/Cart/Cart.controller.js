@@ -3,14 +3,16 @@ const CartModel = require('@model/cart/cart.model')
 const UserModel = require('@model/user/user.model')
 const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
+const VoucherModel = require('@model/voucher/voucher.model')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const date = require('@helper/date')
+const ChargeModel = require('@model/charge/charge.model')
 
 const {
     getCartsValidation,
     addToCartValidation,
-    // getProductsValidation,
+    applyVoucherValidation,
     updateProductNoteByProductIdValidation,
     updateProductQuantityByProductIdValidation,
     deleteProductAtCartByProductIdValidation
@@ -50,9 +52,15 @@ const CartController = class CartController {
             }).populate([{ path: 'user' }, {
                 path: 'products',
                 populate: {
-                    path: 'productOnLive'
+                    path: 'productOnLive',
                 },
-            }])
+            }, {
+                    path: 'products',
+                    populate: {
+                        path: 'hasPromo',
+                    },
+                },
+            ])
                 .sort({
                     orderBy: sortBy
                 }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
@@ -119,33 +127,35 @@ const CartController = class CartController {
 
             let price = product.price;
 
-            if (product.hasPromo &&
-                product.hasPromo.isActive &&
-                product.hasPromo.promoStart < date.time() &&
-                product.hasPromo.promoEnd > date.time()) {
+            let currentTime = date.time().toDate()
 
-                if (product.hasPromo.promoBy === "percent") {
-                    let discountPrice =
-                        (product.hasPromo.promoValue / 100) * product.price;
-                    price = product.price - discountPrice;
-                } else if (product.hasPromo.promoBy === "price") {
-                    price = product.price - product.hasPromo.promoValue;
-                } else {
-                    price = product.price;
-                }
-            } else if (product.hasDiscount && product.hasDiscount.isDiscount &&
-                product.hasDiscount.discountStart < date.time() &&
-                product.hasDiscount.discountEnd > date.time()) {
-                if (product.hasDiscount.discountBy === "percent") {
-                    let discountPrice =
-                        (product.hasDiscount.discount / 100) * product.price;
-                    price = product.price - discountPrice;
-                } else if (product.hasDiscount.discountBy === "price") {
-                    price = product.price - product.hasDiscount.discount;
-                } else {
-                    price = product.price;
-                }
-            }
+            // if (product.hasPromo &&
+            //     product.hasPromo.isActive &&
+            //     product.hasPromo.promoStart < currentTime &&
+            //     product.hasPromo.promoEnd > currentTime) {
+
+            //     if (product.hasPromo.promoBy === "percent") {
+            //         let discountPrice =
+            //             (product.hasPromo.promoValue / 100) * product.price;
+            //         price = product.price - discountPrice;
+            //     } else if (product.hasPromo.promoBy === "price") {
+            //         price = product.price - product.hasPromo.promoValue;
+            //     } else {
+            //         price = product.price;
+            //     }
+            // } else if (product.hasDiscount && product.hasDiscount.isDiscount &&
+            //     product.hasDiscount.discountStart < currentTime &&
+            //     product.hasDiscount.discountEnd > currentTime) {
+            //     if (product.hasDiscount.discountBy === "percent") {
+            //         let discountPrice =
+            //             (product.hasDiscount.discount / 100) * product.price;
+            //         price = product.price - discountPrice;
+            //     } else if (product.hasDiscount.discountBy === "price") {
+            //         price = product.price - product.hasDiscount.discount;
+            //     } else {
+            //         price = product.price;
+            //     }
+            // }
 
             if (carts) {
 
@@ -444,6 +454,172 @@ const CartController = class CartController {
         }
     }
 
+    async applyVoucher(req, res) {
+
+        const { error } = applyVoucherValidation(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.OK).send(
+                responser.validation(error.details[0].message, HttpStatus.OK))
+        }
+
+        let isUserIdValid = this.isIdValid(req.body.user_id)
+
+        if (!isUserIdValid) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("ID User Tidak Valid", HttpStatus.OK))
+        }
+
+        let cartObject = await CartModel.findOne({
+            user: req.body.user_id
+        })
+
+        if (!cartObject) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Belum Ada Barang Untuk Diterapkan Voucher", HttpStatus.OK))
+        }
+
+        if (req.user.user._id !== req.body.user_id) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Pengguna Tidak Sama Dengan Sesi Login Saat Ini", HttpStatus.OK))
+        }
+
+        let voucherCode = req.query.voucherCode
+
+        let isVoucherExist
+
+        if (!voucherCode) {
+
+            isVoucherExist = await this.isVoucherExist(req.body.voucher_id, "id")
+        } else {
+            isVoucherExist = await this.isVoucherExist(voucherCode, "code")
+
+        }
+
+        if (!isVoucherExist) {
+            return res.status(HttpStatus.NOT_FOUND).send(
+                responser.error("Voucher Tidak Valid", HttpStatus.NOT_FOUND))
+        }
+
+        let currentDate = date.time().toDate()
+
+        if (!isVoucherExist.isActive) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Voucher Tidak Aktif", HttpStatus.OK))
+        }
+
+        if (isVoucherExist.discountStart > currentDate) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Voucher Belum Aktif", HttpStatus.OK))
+        }
+
+        if (isVoucherExist.discountEnd < currentDate) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Voucher Kadaluarsa", HttpStatus.OK))
+        }
+
+        let platform = await isVoucherExist.platform.map(value => {
+            if (value === "all") {
+                return true
+            } else if (value === req.body.platform) {
+                return true
+            } else {
+                return false
+            }
+        })
+
+        if (!platform) {
+
+            return res.status(HttpStatus.OK).send(
+                responser.error(`Voucher Tidak Dapat Digunakan Diperangkat Ini`, HttpStatus.OK))
+        }
+
+        let isCartExist = await this.isCartExist(req.user.user._id)
+
+        if (!isCartExist) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Keranjang Tidak Ditemukan", HttpStatus.OK))
+        }
+
+        let charges = await this.getAllCharge()
+
+        const calculateCharge = charges.reduce((accumulator, charge) => {
+
+            if (charge.chargeBy === "price") {
+                return accumulator + parseInt(charge.chargeValue)
+            }
+
+            // else if (charge.chargeBy === "percent") {
+            //     return accumulator + ((charge.chargeValue / 100) * calculateItem)
+            // }
+            else {
+                return accumulator
+            }
+        }, 0)
+
+        if (isVoucherExist.isPrivate.private) {
+            let isUserExist = isVoucherExist.isPrivate.users.filter(user => user === req.body.user_id)
+
+            if (isUserExist.length <= 0) {
+
+                return res.status(HttpStatus.OK).send(
+                    responser.error(`Voucher Ini Private, Tidak Dapat Digunakan Oleh Anda`, HttpStatus.OK))
+            }
+        }
+
+        if (isVoucherExist.minimumOrderBy === "quantity") {
+
+            if (isCartExist.totalQuantity <= isVoucherExist.minimumOrderValue) {
+
+                return res.status(HttpStatus.OK).send(responser.validation(`Belum mencapai minimum kuantitas. min: ${isVoucherExist.minimumOrderValue} kuantitas`, HttpStatus.OK))
+            }
+        }
+
+        if (isVoucherExist.minimumOrderBy === "price") {
+
+            if ((isCartExist.baseTotal - calculateCharge) <= isVoucherExist.minimumOrderValue) {
+
+                let totalMinPrice = this.formatMoney(isVoucherExist.minimumOrderValue)
+
+                return res.status(HttpStatus.OK).send(responser.validation(`Belum mencapai minimum belanja total. Total minimum: ${totalMinPrice} `, HttpStatus.OK))
+            }
+        }
+
+        // if (isVoucherExist.minimumOrderValue > cartObject.subTotalProduct) {
+
+        //     return res.status(HttpStatus.OK).send(
+        //         responser.error(`Belum Mencapai Minimum Belanja`, HttpStatus.OK))
+        // }
+
+        return res.status(HttpStatus.OK).send(responser.success(isVoucherExist, "OK"));
+
+    }
+
+    async isCartExist(user_id) {
+
+        let cart = await CartModel.findOne({
+            user: user_id
+        })
+
+        return cart
+
+    }
+
+    async getAllCharge(defaultCharge = "checkout", platform = "all", isActive = true) {
+
+        const charges = await ChargeModel.find(
+            {
+                "default": defaultCharge,
+                "isActive": isActive,
+                "platform": {
+                    "$in": [platform]
+                },
+            }
+        );
+
+        return charges
+    }
+
     async isProductExist(productId) {
 
         let product = await ProductModel.findOne({
@@ -460,6 +636,35 @@ const CartController = class CartController {
         })
 
         return user
+    }
+
+    async isVoucherExist(voucherBy, type = "code") {
+
+        let voucher
+
+        if (type.toLowerCase() === "code") {
+
+            voucher = await VoucherModel.findOne({
+                voucherCode: voucherBy
+            })
+        } else if (type.toLowerCase() === "id") {
+
+            voucher = await VoucherModel.findOne({
+                _id: voucherBy
+            })
+        }
+
+        return voucher
+
+    }
+
+    formatMoney(val) {
+        let formatter = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+        });
+
+        return formatter.format(val);
     }
 
     isIdValid(id) {

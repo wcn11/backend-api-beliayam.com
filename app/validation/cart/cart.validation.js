@@ -22,13 +22,18 @@ const getCartsValidation = (data) => {
     return schema.validate(data)
 }
 
-// const getProductByIdValidation = (data) => {
-//     const schema = Joi.object({
-//         productId: Joi.string().max(255).required()
-//     })
 
-//     return schema.validate(data)
-// }
+const applyVoucherValidation = (data) => {
+
+    const schema = Joi.object({
+        voucher_id: Joi.string().required(),
+        user_id: Joi.string().required(),
+        cart_id: Joi.string().required(),
+        platform: Joi.string().valid('all', 'website', 'mobile').required()
+    })
+
+    return schema.validate(data)
+}
 
 const deleteProductAtCartByProductIdValidation = (data) => {
     const schema = Joi.object({
@@ -64,6 +69,7 @@ const updateProductNoteByProductIdValidation = (data) => {
 module.exports = {
     getCartsValidation,
     addToCartValidation,
+    applyVoucherValidation,
     updateProductNoteByProductIdValidation,
     updateProductQuantityByProductIdValidation,
     deleteProductAtCartByProductIdValidation

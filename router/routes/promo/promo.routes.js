@@ -1,5 +1,7 @@
 const router = require('express').Router();
 
+const PromoController = require('@controller/Promo/Promo.controller')
+
 // middleware
 const verifyToken = require('@middleware/auth/verifyToken')
 

@@ -183,33 +183,51 @@ const CategoryController = class CategoryController {
             return res.status(HttpStatus.OK).send(responser.error(`Slug sudah ada, harap menggunakan slug yang lain`, HttpStatus.OK))
         }
 
-        // buat jika ada sku duplikat
+        try {
 
-        // try {
+            let input = req.body
 
-        let input = req.body
+            let categoryObject = {
+                "sku": input.sku,
+                "slug": input.slug,
+                "name": input.name,
+                "position": input.position,
+                "icon": "",
+                "image": "",
+                "status": input.status,
+                "additional": input.additional,
+                "description": input.description
+            }
 
-        let category = new CategoryModel({
-            "sku": input.sku,
-            "slug": input.slug,
-            "name": input.name,
-            "position": input.position,
+            if (req.files.image_category) {
 
-            "image": req.file ? `images/category/${req.file.filename}` : "images/category/default.jpg",
-            "status": input.status,
-            "additional": input.additional,
-            "description": input.description
-        })
+                for (let i = 0; i < req.files.image_category.length; i++) {
+                    categoryObject.image = req.files.image_category[i].url
+                }
 
-        const savedCategory = await category.save()
+            }
 
-        return res.status(HttpStatus.OK).send(responser.success(savedCategory, "Kategori Ditambahkan"))
+            if (req.files.icon) {
 
-        // } catch (err) {
+                for (let i = 0; i < req.files.icon.length; i++) {
+                    categoryObject.icon = req.files.icon[i].url
+                }
 
-        //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambahkan Kategori, Harap Cek Duplikasi", HttpStatus.BAD_REQUEST))
+            }
 
-        // }
+            let category = new CategoryModel(categoryObject)
+
+            const savedCategory = await category.save()
+
+            return res.status(HttpStatus.OK).send(responser.success(savedCategory, "Kategori Ditambahkan"))
+
+        } catch (err) {
+
+            this.removeFile(req)
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Menambahkan Kategori, Harap Cek Duplikasi", HttpStatus.BAD_REQUEST))
+
+        }
     }
 
     async updateCategory(req, res) {
@@ -242,8 +260,6 @@ const CategoryController = class CategoryController {
             );
         }
 
-        // buat jika ada sku duplikat
-
         try {
 
             let input = req.body
@@ -253,13 +269,27 @@ const CategoryController = class CategoryController {
                 "slug": input.slug,
                 "name": input.name,
                 "position": input.position,
+                "icon": "",
+                "image": "",
                 "status": input.status,
                 "additional": input.additional,
                 "description": input.description
             }
 
-            if (req.file) {
-                categoryObject.image = req.file.path
+            if (req.files.image_category) {
+
+                for (let i = 0; i < req.files.image_category.length; i++) {
+                    categoryObject.image = req.files.image_category[i].url
+                }
+
+            }
+
+            if (req.files.icon) {
+
+                for (let i = 0; i < req.files.icon.length; i++) {
+                    categoryObject.icon = req.files.icon[i].url
+                }
+
             }
 
             const category = await CategoryModel.findOneAndUpdate(
@@ -268,21 +298,29 @@ const CategoryController = class CategoryController {
             }, {
                 new: true
             }).select({
-                sku: 1,
-                name: 1,
-                position: 1,
-                status: 1,
-                additional: 1,
-                description: 1,
+                "_id": 1,
+                "sku": 1,
+                "slug": 1,
+                "name": 1,
+                "position": 1,
+                "image": 1,
+                "icon": 1,
+                "status": 1,
+                "additional": 1,
+                "description": 1,
+                "createdAt": 1,
+                "updatedAt": 1
             })
 
-            this.removeFile('public/' + isCategoryExists.image)
+            this.removeFile(isCategoryExists, "update")
 
             return res.status(HttpStatus.OK).send(responser.success(category, `Kategori ${input.name} Diperbarui`))
 
         } catch (err) {
 
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Mengubah Kategori, Harap Cek Input", HttpStatus.BAD_REQUEST))
+            this.removeFile(req)
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Terjadi Kesalahan. Tidak Dapat Mengubah Kategori, Harap Cek Input", HttpStatus.BAD_REQUEST))
 
         }
     }
@@ -378,11 +416,40 @@ const CategoryController = class CategoryController {
 
     }
 
-    removeFile(req) {
-        if (req.file) {
-            fs.unlinkSync(req.file.path)
-        } else {
-            fs.unlinkSync(req)
+    removeFile(req, type = "add") {
+
+        if (type === "add") {
+
+
+            if (req.files.image_category) {
+
+                for (let i = 0; i < req.files.image_category.length; i++) {
+                    fs.unlinkSync(req.files.image_category[i].path)
+                }
+
+            }
+
+            if (req.files.icon) {
+
+                for (let i = 0; i < req.files.icon.length; i++) {
+                    fs.unlinkSync(req.files.icon[i].path)
+                }
+
+            }
+        }
+
+        if (type === "update") {
+
+
+            if (req.image) {
+                fs.unlinkSync("public/" + req.image)
+
+            }
+
+            if (req.icon) {
+                fs.unlinkSync("public/" + req.icon)
+
+            }
         }
     }
 }

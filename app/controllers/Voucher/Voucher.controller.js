@@ -6,7 +6,7 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
-const { currentTime } = require('@helper/date')
+const date = require('@helper/date')
 
 const moment = require('moment')
 moment.locale('id-ID');
@@ -93,39 +93,70 @@ const VoucherController = class VoucherController {
             }
             orderBy = req.query.orderBy ?? 1
 
-            var currentDate = moment().add(7, 'hour').toDate()
+            var currentDate = date.time().toDate()
 
             const userId = req.user.user._id
 
             const platform = req.query.platform
 
-            const isActive = req.query.isActive ?? false
+            const isActive = req.query.isActive === "true" ? true : false
 
-            const voucher = await VoucherModel.find({
-                $or: [
-                    {
-                        "isPrivate.private": true,
-                        "isPrivate.users": {
-                            $in: [`${userId}`]
-                        },
-                    },
-                    {
-                        "isPrivate.private": false
-                    },
-                ],
-                platform: {
-                    $in: [platform, 'all']
+            var currentDate = date.time().toDate()
+
+            let voucher = await VoucherModel.aggregate([
+                {
+                    $match: {
+                        $or: [
+                            {
+                                "isPrivate.private": true,
+                                "isPrivate.users": {
+                                    $in: [`${userId}`]
+                                },
+                                platform: {
+                                    $in: [platform, "all"]
+                                },
+                                isActive: isActive,
+                                discountStart: {
+                                    $lte: currentDate
+                                },
+                                discountEnd: {
+                                    $gte: currentDate
+                                }
+
+                            },
+                            {
+                                "isPrivate.private": false,
+                                platform: {
+                                    $in: [platform, "all"]
+                                },
+                                isActive: isActive,
+                                discountStart: {
+                                    $lte: currentDate
+                                },
+                                discountEnd: {
+                                    $gte: currentDate
+                                }
+                            }
+                        ]
+                    }
                 },
-                isActive: isActive,
-                discountStart: {
-                    $lte: currentDate
-                },
-                discountEnd: {
-                    $gte: currentDate
+                {
+                    "$project": {
+                        voucherName: 1,
+                        voucherCode: 1,
+                        isPrivate: 1,
+                        platform: 1,
+                        banner: 1,
+                        discountBy: 1,
+                        discountValue: 1,
+                        minimumOrderValue: 1,
+                        termsAndConditions: 1,
+                        isActive: 1,
+                        discountStart: 1,
+                        discountEnd: 1
+                    }
                 }
-            }).sort({
-                orderBy: sortBy
-            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+            ])
 
             return res.status(HttpStatus.OK).send(responser.success(voucher, "OK"));
 
@@ -224,6 +255,7 @@ const VoucherController = class VoucherController {
                 banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
                 discountBy: input.discountBy,
                 discountValue: input.discountValue,
+                minimumOrderBy: input.minimumOrderBy,
                 minimumOrderValue: input.minimumOrderValue,
                 max: input.max,
                 termsAndConditions: input.termsAndConditions,
@@ -284,6 +316,7 @@ const VoucherController = class VoucherController {
                 banner: req.file ? req.file.path : "images/voucher/default.jpg",
                 discountBy: input.discountBy,
                 discountValue: input.discountValue,
+                minimumOrderBy: input.minimumOrderBy,
                 minimumOrderValue: input.minimumOrderValue,
                 max: input.max,
                 termsAndConditions: input.termsAndConditions,

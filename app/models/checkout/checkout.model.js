@@ -68,6 +68,8 @@ const CheckoutSchema = mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'charge'
     }],
+    vouchers: {},
+    subTotalVoucher: {},
     platform: [{
         type: String,
         enum: ['all', 'website', "mobile"],

@@ -8,7 +8,7 @@ const addCategory = (data) => {
                 "any.required": `{{#label}} dibutuhkan`,
                 "any.regex": "Slug tidak valid"
             }),
-        name: Joi.string().min(6).max(100).required(),
+        name: Joi.string().min(3).max(100).required(),
         position: Joi.number().min(1).max(10),
         image_category: Joi.any(),
         status: Joi.string().min(3).max(50),

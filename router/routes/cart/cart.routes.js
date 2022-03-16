@@ -18,4 +18,6 @@ router.put('/update/note', verifyToken, (req, res) => CartController.updateProdu
 
 router.delete('/:user_id/product/:product_id', verifyToken, (req, res) => CartController.deleteProductAtCartByProductId(req, res))
 
+router.post('/voucher/apply', verifyToken, (req, res) => CartController.applyVoucher(req, res))
+
 module.exports = router;

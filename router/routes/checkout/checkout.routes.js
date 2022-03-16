@@ -16,8 +16,6 @@ router.get('/cart', verifyToken, (req, res) => CheckoutController.getUserCheckou
 
 router.post('/cart', verifyToken, (req, res) => CheckoutController.calculateCheckout(req, res))
 
-router.post('/voucher/apply', verifyToken, (req, res) => CheckoutController.applyVoucher(req, res))
-
 // router.post('/voucher/remove', verifyToken, (req, res) => CheckoutController.removeVoucher(req, res))
 
 // router.put('/:voucherId', verifyToken, (req, res) => VoucherController.updateVoucherByVoucherId(req, res))

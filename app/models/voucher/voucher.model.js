@@ -22,8 +22,15 @@ const VoucherSchema = mongoose.Schema({
         default: 0,
         required: true
     },
+    minimumOrderBy: {
+        type: String,
+        enum: ['quantity', "percent"],
+        required: false
+    },
     minimumOrderValue: {
         type: Number,
+        default: 0,
+        required: false
     },
     isPrivate: {
         private: {

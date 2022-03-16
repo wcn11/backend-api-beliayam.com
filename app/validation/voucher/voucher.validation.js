@@ -7,6 +7,7 @@ const createNewVoucherValidation = (data) => {
         banner: Joi.any(),
         discountBy: Joi.string().valid('percent', 'price').required(),
         discountValue: Joi.number(),
+        minimumOrderBy: Joi.string().valid('quantity', 'price'),
         minimumOrderValue: Joi.number(),
         private: Joi.boolean(),
         maxUser: Joi.number().max(10).default(0),

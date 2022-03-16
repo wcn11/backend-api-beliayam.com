@@ -159,7 +159,6 @@ const CheckoutController = class CheckoutController {
         //         responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Nomor Telepon Anda", HttpStatus.BAD_REQUEST))
         // }
 
-        //check product on real inventory
         let products = await this.getProductByProductId(req.body.cart.products)
 
         if (!products && products.length !== req.body.cart.products.length) {
@@ -170,11 +169,11 @@ const CheckoutController = class CheckoutController {
         let calculateItem = 0
         let allProducts = []
         let objectProduct = []
+        let totalQuantity = 0
 
-        //check if product at cart exist in inventory products
         for (let i = 0; i < products.length; i++) {
 
-            let currentDate = date.time()
+            let currentDate = date.time().toDate()
 
             let discount = products[i].hasDiscount
 
@@ -194,58 +193,65 @@ const CheckoutController = class CheckoutController {
                 return res.status(HttpStatus.OK).send(
                     responser.error(`Produk ${products[i].name} Kehabisan Persediaan`, HttpStatus.OK))
             }
+            if (req.body.vouchers <= 0) {
 
-            let promo = products[i].hasPromo
+                let promo = products[i].hasPromo
 
-            if (promo) {
+                if (promo) {
 
-                if (promo.promoStart < currentDate && promo.promoEnd > currentDate) {
+                    if (promo.promoStart < currentDate && promo.promoEnd > currentDate) {
 
-                    if (promo.promoBy === "percent") {
+                        if (promo.promoBy === "percent") {
 
-                        let promoPrice = (promo.promoValue / 100) * products[i].price
-                        let priceAfterPromo = products[i].price - promoPrice
-                        calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
-                        products[i].price = products[i].price - promoPrice
+                            let promoPrice = (promo.promoValue / 100) * products[i].price
+                            let priceAfterPromo = products[i].price - promoPrice
+                            calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
+                            products[i].price = products[i].price - promoPrice
 
-                    } else if (promo.promoBy === "price") {
+                        } else if (promo.promoBy === "price") {
 
-                        calculateItem += (products[i].price - promo.promoValue) * productAtCart[0]['products'][0].quantity
-                        products[i].price = (products[i].price - promo.promoValue)
-                        calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
+                            calculateItem += (products[i].price - promo.promoValue) * productAtCart[0]['products'][0].quantity
+                            products[i].price = (products[i].price - promo.promoValue)
+                            calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
 
+                        }
                     }
                 }
-            }
-            else if (discount.isDiscount && !promo) {
+                else if (discount.isDiscount && !promo) {
 
-                if (discount.discountStart > currentDate && discount.discountEnd < currentDate) {
+                    if (discount.discountStart < currentDate && discount.discountEnd > currentDate) {
 
-                    if (discount.discountBy === "percent") {
+                        if (discount.discountBy === "percent") {
 
-                        let discountPrice = (discount.discount / 100) * products[i].price
-                        let priceAfterDiscount = products[i].price - discountPrice
-                        calculateItem += priceAfterDiscount * productAtCart[0]['products'][0].quantity
-                        products[i].price = products[i].price - discountPrice
+                            let discountPrice = (discount.discount / 100) * products[i].price
+                            let priceAfterDiscount = products[i].price - discountPrice
+                            calculateItem += priceAfterDiscount * productAtCart[0]['products'][0].quantity
+                            products[i].price = products[i].price - discountPrice
 
-                    } else if (discount.discountBy === "price") {
+                        } else if (discount.discountBy === "price") {
 
-                        calculateItem += (productAtCart[0]['products'][0].quantity + discount.discount) * products[i].price
+                            calculateItem += (products[i].price - discount.discount) * productAtCart[0]['products'][0].quantity
+                        }
+                    } else {
 
+                        calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
+                        products[i].price = calculateItem
                     }
-                } else {
+
+                }
+                else {
 
                     calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
                     products[i].price = calculateItem
+
                 }
 
-            }
-            else {
-
+            } else {
                 calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
                 products[i].price = calculateItem
-
             }
+
+            totalQuantity += productAtCart[0]['products'][0].quantity
 
             products[i].quantity = productAtCart[0]['products'][0].quantity
             products[i].note = productAtCart[0]['products'][0].note
@@ -289,13 +295,15 @@ const CheckoutController = class CheckoutController {
             }
         }, 0)
 
-        let voucherNotValid = []
+        let baseTotal = calculateItem + calculateCharge
 
         let vouchers = []
 
-        let allVouchers = req.body.vouchers || []
+        let allVouchers = req.body.vouchers
 
-        if (allVouchers && allVouchers > 0) {
+        let subTotalVoucher = 0
+
+        if (allVouchers.length > 0) {
 
             for (let i = 0; i < allVouchers.length; i++) {
 
@@ -303,29 +311,24 @@ const CheckoutController = class CheckoutController {
 
                 if (!isVoucherExist && isVoucherExist === null) {
 
-                    voucherNotValid.push(`Salah satu voucher tidak dapat digunakan, mungkin telah kadaluarsa`)
 
-                    continue
+                    return res.status(HttpStatus.OK).send(responser.validation(`Salah satu voucher tidak dapat digunakan, mungkin telah kadaluarsa`, HttpStatus.OK))
                 }
 
-                var currentDate = currentTime
+                var currentDate = date.time().toDate()
 
                 if (isVoucherExist.discountStart > currentDate) {
 
                     let voucherName = isVoucherExist.voucherName ?? 'Anda'
 
-                    voucherNotValid.push(`Voucher ${voucherName} Belum Aktif`)
-
-                    continue
+                    return res.status(HttpStatus.OK).send(responser.validation(`Voucher ${voucherName} Belum Aktif`, HttpStatus.OK))
                 }
 
                 if (isVoucherExist.discountEnd < currentDate) {
 
                     let voucherName = isVoucherExist.voucherName ?? "Anda"
 
-                    voucherNotValid.push(`Voucher ${voucherName} Telah Kadaluarsa`)
-
-                    continue
+                    return res.status(HttpStatus.OK).send(responser.validation(`Voucher ${voucherName} Telah Kadaluarsa`, HttpStatus.OK))
                 }
 
                 if (isVoucherExist.isPrivate.private) {
@@ -336,13 +339,43 @@ const CheckoutController = class CheckoutController {
 
                     if (!isUserExist) {
 
-                        voucherNotValid.push(`Voucher ${voucherName}, Bersifat Private. Tidak Dapat Digunakan Oleh Anda`)
+                        return res.status(HttpStatus.OK).send(responser.validation(`Voucher ${voucherName}, Bersifat Private. Tidak Dapat Digunakan Oleh Anda`, HttpStatus.OK))
+                    }
+                }
 
-                        continue
+                if (isVoucherExist.minimumOrderBy) {
+
+                    if (isVoucherExist.minimumOrderBy === "quantity") {
+
+                        if (totalQuantity <= isVoucherExist.minimumOrderValue) {
+
+                            return res.status(HttpStatus.OK).send(responser.validation(`Belum mencapai minimum kuantitas. min: ${isVoucherExist.minimumOrderValue} kuantitas`, HttpStatus.OK))
+                        }
+                    }
+
+                    if (isVoucherExist.minimumOrderBy === "price") {
+
+                        if (totalQuantity <= isVoucherExist.minimumOrderValue) {
+
+                            let totalMinPrice = this.formatMoney(isVoucherExist.minimumOrderValue)
+
+                            return res.status(HttpStatus.OK).send(responser.validation(`Belum mencapai minimum belanja total. Total minimum: ${totalMinPrice} `, HttpStatus.OK))
+                        }
                     }
                 }
 
                 vouchers.push(isVoucherExist)
+
+                if (isVoucherExist.discountBy === "percent") {
+
+                    let discountPrice = (isVoucherExist.discountValue / 100) * baseTotal
+                    subTotalVoucher += discountPrice
+
+                } else if (isVoucherExist.discountBy === "price") {
+                    subTotalVoucher += isVoucherExist.discountValue
+                } else {
+                    subTotalVoucher += 0
+                }
 
             }
         }
@@ -360,10 +393,12 @@ const CheckoutController = class CheckoutController {
         let saveCheckout = new CheckoutModel({
             cart_id: req.body.cart.cart_id,
             items: objectProduct,
-            baseTotal: calculateItem + calculateCharge,
+            baseTotal: baseTotal - subTotalVoucher,
             subTotalProduct: calculateItem,
             subTotalCharges: calculateCharge,
             charges: chargesObjectIds,
+            vouchers: vouchers,
+            subTotalVoucher,
             platform: [req.body.platform],
             user: req.body.user_id,
         })
@@ -415,7 +450,7 @@ const CheckoutController = class CheckoutController {
             })
         }
 
-        await this.deleteProductFromCart(req, total)
+        // await this.deleteProductFromCart(req, total)
 
         newCheckout.user.otpEmail = undefined
 
@@ -424,8 +459,6 @@ const CheckoutController = class CheckoutController {
         newCheckout.user.password = undefined
 
         newCheckout.vouchers = vouchers
-
-        newCheckout.voucherNotValid = voucherNotValid
 
         return res.status(HttpStatus.OK).send(responser.success(newCheckout, HttpStatus.OK));
 
@@ -639,8 +672,8 @@ const CheckoutController = class CheckoutController {
 
         await CartModel.updateOne({
             _id: req.body.cart.cart_id,
-            "products.$._id": {
-                $in: [req.body.cart.products]
+            "products._id": {
+                $in: req.body.cart.products
             }
         }, {
             $unset: {
@@ -703,7 +736,7 @@ const CheckoutController = class CheckoutController {
 
     async getAllVoucher(user_id, platform = "all", isActive = true) {
 
-        var currentDate = currentTime
+        var currentDate = date.time().toDate()
 
         let voucher = await VoucherModel.aggregate([
             {
@@ -809,6 +842,15 @@ const CheckoutController = class CheckoutController {
         })
 
         return user
+    }
+
+    formatMoney(val) {
+        let formatter = new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+        });
+
+        return formatter.format(val);
     }
 
     isIdValid(id) {
