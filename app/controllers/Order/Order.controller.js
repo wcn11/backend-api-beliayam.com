@@ -664,7 +664,7 @@ const OrderController = class OrderController {
             return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
         }
 
-        if (isOrderExist.payment.payment_status_code === 2) {
+        if (isOrderExist.payment.payment_status_code == 2) {
             return res.status(HttpStatus.OK).send(responser.error("Tidak dapat membatalkan pesanan yang telah selesai", HttpStatus.OK))
         }
 
@@ -676,119 +676,136 @@ const OrderController = class OrderController {
 
         try {
 
-        if (parseInt(isOrderExist.payment.pg_code) !== 101) {
+            if (parseInt(isOrderExist.payment.pg_code) !== 101) {
 
-            const url = "/cvr/100005/10"
+                const url = "/cvr/100005/10"
 
-            let postDataObject = {
-                "request": "Canceling Payment",
-                "trx_id": req.body.trx_id,
-                "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                "merchant": process.env.FASPAY_MERCHANT_NAME,
-                "bill_no": req.body.bill_no,
-                "payment_cancel": "Barang Habis",
-                "signature": ""
-            }
+                let postDataObject = {
+                    "request": "Canceling Payment",
+                    "trx_id": isOrderExist.response.trx_id,
+                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                    "merchant": process.env.FASPAY_MERCHANT_NAME,
+                    "bill_no": req.body.order_id,
+                    "payment_cancel": "Barang Habis",
+                    "signature": isOrderExist.signature
+                }
 
-            let signature = await this.getSHA1(process.env.SIGNATURE_SECRET, process.env.FASPAY_USER_ID, process.env.FASPAY_PASSWORD, req.body.bill_no)
+                const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
-            postDataObject.signature = signature
+                if (!paymentGateway.trx_id) {
 
-            const paymentGateway = await PaymentGateway.send(url, postDataObject)
+                    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+                        responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+                }
 
-            if (!paymentGateway.trx_id) {
+                await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
 
-                return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                    responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
-            }
+                let responseObject = {
+                    order_id: isOrderExist.order_id,
+                    bill: isOrderExist.bill,
+                    grand_total: isOrderExist.grand_total,
+                    sub_total_product: isOrderExist.sub_total_product,
+                    sub_total_charges: isOrderExist.sub_total_charges,
+                    sub_total_voucher: isOrderExist.sub_total_voucher,
+                    charges: isOrderExist.charges,
+                    vouchers_applied: isOrderExist.vouchers_applied,
+                    platform: isOrderExist.platform,
+                    payment: isOrderExist.payment,
+                    user: isOrderExist.user,
+                    shipping_address: isOrderExist.shipping_address,
+                    order_status: {},
+                    response: isOrderExist.response
+                }
 
-            await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
+                const paymentResponse = Object.entries(PaymentResponse).filter(response => {
 
-            let responseObject = {
-                order_id: isOrderExist.order_id,
-                bill: isOrderExist.bill,
-                grand_total: isOrderExist.grand_total,
-                sub_total_product: isOrderExist.sub_total_product,
-                sub_total_charges: isOrderExist.sub_total_charges,
-                sub_total_voucher: isOrderExist.sub_total_voucher,
-                charges: isOrderExist.charges,
-                vouchers_applied: isOrderExist.vouchers_applied,
-                platform: isOrderExist.platform,
-                payment: isOrderExist.payment,
-                user: isOrderExist.user,
-                shipping_address: isOrderExist.shipping_address,
-                order_status: {},
-                response: isOrderExist.response
-            }
+                    if (response[1].code.toString() === paymentGateway.response_code.toString()) {
 
-            const paymentResponse = Object.entries(PaymentResponse).filter(response => {
+                        responseObject.payment.reff = ""
+                        responseObject.payment.date = currentTime
+                        responseObject.payment.payment_status_code = response[1].code.toString()
+                        responseObject.payment.payment_status_desc = paymentGateway.response_desc
+                        responseObject.payment.signature = isOrderExist.signature
 
-                if (response[1].code.toString() === paymentGateway.response_code.toString()) {
+                        responseObject.response.response_code = response[1].code.toString()
+                        responseObject.response.response_desc = response[1].description
 
-                    responseObject.payment.reff = ""
-                    responseObject.payment.date = currentTime
-                    responseObject.payment.payment_status_code = response[1].code.toString()
-                    responseObject.payment.payment_status_desc = paymentGateway.response_desc
-                    responseObject.payment.signature = signature
+                        Object.entries(PaymentStatus).filter(status => {
 
-                    responseObject.response.response_code = response[1].code.toString()
-                    responseObject.response.response_desc = response[1].description
-
-                    Object.entries(PaymentStatus).filter(status => {
-
-                        if (status[1].code.toString() === paymentGateway.payment_status_code.toString()) {
-                            return responseObject.order_status = {
-                                status: status[1].name,
-                                payment_date: status[1].payment_date,
-                                description: status[1].description
+                            if (status[1].code.toString() === paymentGateway.payment_status_code.toString()) {
+                                return responseObject.order_status = {
+                                    status: status[1].name,
+                                    payment_date: status[1].payment_date,
+                                    description: status[1].description
+                                }
                             }
-                        }
 
+                        })
+
+                        return response[1]
+                    }
+
+                })
+
+                const getHttpStatus = Object.entries(HttpStatus).filter(status => {
+
+                    if ((status[0].toUpperCase() === paymentResponse[0][1].type.toUpperCase())) {
+                        return status[0]
+                    }
+
+                })
+
+                if (getHttpStatus[0][1] === 200) {
+
+                    await OrderModel.findOneAndUpdate(
+                        {
+                            order_id: req.body.order_id
+                        },
+                        {
+                            $set: {
+                                "order_status": {
+                                    status: "PAYMENT_CANCELLED",
+                                    payment_date: currentTime,
+                                    description: PaymentResponse.ORDER_CANCELLED.description
+                                },
+                                "payment": {
+                                    payment_status_code: 8,
+                                    payment_status_desc: "Pesanan dibatalkan",
+                                    payment_date: currentTime,
+                                }
+                            }
+                        }, {
+                        new: true
                     })
 
-                    return response[1]
+                    return res.status(getHttpStatus[0][1]).send(responser.success(responseObject, "Pesanan dibatalkan"));
+
                 }
 
-            })
-
-            const getHttpStatus = Object.entries(HttpStatus).filter(status => {
-
-                if ((status[0].toUpperCase() === paymentResponse[0][1].type.toUpperCase())) {
-                    return status[0]
-                }
-
-            })
-
-            if (getHttpStatus[0][1] === 200) {
-
-                return res.status(getHttpStatus[0][1]).send(responser.success(responseObject, getHttpStatus[0][0]));
-
+                return res.status(getHttpStatus[0][1]).send(
+                    responser.error(paymentResponse[0][1].description, getHttpStatus[0][1]))
             }
 
-            return res.status(getHttpStatus[0][1]).send(
-                responser.error(paymentResponse[0][1].description, getHttpStatus[0][1]))
-        }
-
-        await OrderModel.findOneAndUpdate(
-            req.body.order_id, {
-            $set: {
-                "order_status": {
-                    status: "PAYMENT_CANCELLED",
-                    payment_date: currentTime,
-                    description: PaymentResponse.ORDER_CANCELLED.description
-                },
-                "payment": {
-                    payment_status_code: 8,
-                    payment_status_desc: "Pesanan dibatalkan",
-                    payment_date: currentTime,
+            await OrderModel.findOneAndUpdate(
+                req.body.order_id, {
+                $set: {
+                    "order_status": {
+                        status: "PAYMENT_CANCELLED",
+                        payment_date: currentTime,
+                        description: PaymentResponse.ORDER_CANCELLED.description
+                    },
+                    "payment": {
+                        payment_status_code: 8,
+                        payment_status_desc: "Pesanan dibatalkan",
+                        payment_date: currentTime,
+                    }
                 }
-            }
-        }, {
-            new: true
-        })
+            }, {
+                new: true
+            })
 
-        return res.status(HttpStatus.OK).send(
-            responser.success({}, "Pesanan Dibatalkan"))
+            return res.status(HttpStatus.OK).send(
+                responser.success({}, "Pesanan Dibatalkan"))
 
         } catch (err) {
 
