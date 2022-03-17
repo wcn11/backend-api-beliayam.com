@@ -46,9 +46,7 @@ const CartController = class CartController {
             orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
 
             let cart = await CartModel.findOne({
-                "user": {
-                    "$in": [req.user.user._id]
-                },
+                "user": req.user.user._id
             }).populate([{ path: 'user' }, {
                 path: 'products',
                 populate: {
