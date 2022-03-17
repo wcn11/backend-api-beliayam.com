@@ -11,7 +11,7 @@ const createNewVoucherValidation = (data) => {
         private: Joi.boolean(),
         maxUser: Joi.number().max(10).default(0),
         user_id: Joi.array(),
-        max: Joi.number().max(10),
+        max: Joi.number().max(10).allow("", null),
         termsAndConditions: Joi.string().max(500),
         discountStart: Joi.date().required(),
         discountEnd: Joi.date().required(),
