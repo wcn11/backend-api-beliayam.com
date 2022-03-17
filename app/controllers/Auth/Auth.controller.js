@@ -300,10 +300,10 @@ const AuthController = class AuthController {
             })
         }
 
-        user.password = undefined || null
+        user.password = undefined
         user.otpEmail = undefined
         user.otpSms = undefined
-        user.addresses = undefined || null
+        user.addresses = undefined
 
         const loggedUser = {
             user

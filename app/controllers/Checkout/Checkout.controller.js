@@ -114,44 +114,49 @@ const CheckoutController = class CheckoutController {
         const { error } = calculateCheckoutValidation(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(
+                responser.error(error.details[0].message, HttpStatus.OK))
         }
 
         let isValid = this.isIdValid(req.body.cart.cart_id)
 
         if (!isValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("ID Keranjang Tidak Valid", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("ID Keranjang Tidak Valid", HttpStatus.OK)
             );
         }
 
         let isCartExist = await this.isCartExist(req.body.cart.cart_id)
 
         if (!isCartExist) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Keranjang Tidak Ditemukan", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(
+                responser.error("Keranjang Tidak Ditemukan", HttpStatus.OK))
         }
 
         let isUserValid = this.isIdValid(req.body.user_id)
 
         if (!isUserValid) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("ID Pelanggan Tidak Valid", HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.OK).send(
+                responser.error("ID Pelanggan Tidak Valid", HttpStatus.OK)
             );
         }
 
         const user = await this.getUserById(req.body.user_id)
 
         if (user.addresses.length <= 0) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Memiliki 1 Alamat Minimal Untuk Pengiriman", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(
+                responser.error("Memiliki 1 Alamat Minimal Untuk Pengiriman", HttpStatus.OK))
         }
 
-        if (!user.isEmailVerified && !user.isPhoneVerified) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Alamat Email", HttpStatus.BAD_REQUEST))
+        if (!user.email) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Untuk Melanjutkan Checkout, Harap menambahkan alamat email", HttpStatus.OK))
         }
+
+        // if (!user.isEmailVerified && !user.isPhoneVerified) {
+        //     return res.status(HttpStatus.OK).send(
+        //         responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Alamat Email", HttpStatus.OK))
+        // }
 
         // if (!user.isPhoneVerified) {
         //     return res.status(HttpStatus.BAD_REQUEST).send(
@@ -161,8 +166,8 @@ const CheckoutController = class CheckoutController {
         let products = await this.getProductByProductId(req.body.cart.products)
 
         if (!products && products.length !== req.body.cart.products.length) {
-            return res.status(HttpStatus.BAD_REQUEST).send(
-                responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.OK).send(
+                responser.error("Beberapa Produk Dalam Keranjang Anda, Sudah Tidak Tersedia", HttpStatus.OK))
         }
 
         let calculateItem = 0

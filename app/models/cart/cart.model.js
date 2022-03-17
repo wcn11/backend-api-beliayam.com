@@ -21,13 +21,14 @@ const CartSchema = mongoose.Schema({
         quantity: 'Number',
         note: {
             type: String,
-            required: false
-
+            required: false,
+            default: ''
         },
-        hasPromo: {
-            type: mongoose.Types.ObjectId,
-            ref: 'promo'
-        },
+        // hasPromo: {
+        //     type: mongoose.Types.ObjectId,
+        //     ref: 'promo',
+        //     default: null
+        // },
         productOnLive: {
             type: mongoose.Types.ObjectId,
             ref: 'product'

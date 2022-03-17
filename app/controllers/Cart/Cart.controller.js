@@ -92,9 +92,9 @@ const CartController = class CartController {
                         });
                     }
                 })
-            }
 
-            carts.products = cartFilterProductStillExist
+                carts.products = cartFilterProductStillExist
+            }
 
             return res.status(HttpStatus.OK).send(responser.success(carts, HttpStatus.OK));
 
