@@ -17,6 +17,7 @@ const createNewVoucherValidation = (data) => {
         discountEnd: Joi.date().required(),
         isActive: Joi.bool(),
         description: Joi.string().max(500)
+
     })
 
     return schema.validate(data)
