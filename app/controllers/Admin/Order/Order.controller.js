@@ -28,7 +28,9 @@ const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNPQRSTUVWXYZ', 12) // NO L
 
 const {
     getOrderByIdValidation,
-    cancelOrderValidation
+    cancelOrderValidation,
+    completeOrderValidation,
+    setDeliveryOrderStatusValidation
 } = require('@validation/admin/order/order.validation')
 
 const OrderController = class OrderController {
@@ -42,24 +44,339 @@ const OrderController = class OrderController {
 
             let sortBy;
 
-            let orderBy;
+            let orderBy = req.query.orderBy;
 
             if (!req.query.sortBy) {
-                sortBy = req.query.sortBy === "ASC" ? 1 : -1
+                sortBy = 1
             }
-            sortBy = req.query.sortBy ?? 1
+
+            sortBy = req.query.sortBy == "ASC" ? 1 : -1
 
             if (!req.query.orderBy) {
-                orderBy = req.query.orderBy === "updatedAt" ? 1 : -1
+                orderBy = "updatedAt"
             }
-            orderBy = req.query.orderBy ?? 1
 
-            let category = await OrderModel.find({
-            }).sort({
-                orderBy: sortBy
-            }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+            let sortir = {}
 
-            return res.status(HttpStatus.OK).send(responser.success(category, "OK"));
+            sortir[orderBy] = sortBy
+
+            let countTotalOrder = await OrderModel.aggregate([
+                {
+                    $match: {
+
+                        "delivery": {
+                            $exists: false
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: 1,
+                        totalOrder: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            if (countTotalOrder.length > 0) {
+                countTotalOrder = countTotalOrder[0].totalOrder
+            }
+
+            let order = await OrderModel.aggregate([
+                {
+                    $match: {
+
+                        "delivery": {
+                            $exists: false
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        order_id: 1,
+                        bill: 1,
+                        grand_total: 1,
+                        sub_total_product: 1,
+                        sub_total_charges: 1,
+                        sub_total_voucher: 1,
+                        charges: 1,
+                        vouchers_applied: 1,
+                        platform: 1,
+                        payment: 1,
+                        user: 1,
+                        shipping_address: 1,
+                        order_status: 1,
+                        response: 1,
+                        signature: 1
+                    }
+                },
+                { $skip: (page - 1) * parseInt(show) },
+                { $limit: parseInt(show) },
+                // {
+                //     $group: {
+                //         _id: 1,
+                //         detail: { $first: '$$ROOT' },
+                //         totalOrder: {
+                //             $sum: 1,
+                //         },
+                //     }
+                // },
+                // {
+                //     $replaceRoot: {
+                //         newRoot: { $mergeObjects: [{ totalOrder: '$totalOrder' }, '$detail'] },
+                //     }
+                // }
+            ])
+
+            let totalOrder = {
+                "totalOrder": countTotalOrder,
+                order
+            }
+            return res.status(HttpStatus.OK).send(responser.success(totalOrder, "OK"));
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
+
+    async getOrdersByStatus(req, res) {
+
+        try {
+
+            let page = req.query.page ?? 1
+            let show = req.query.show ?? 10
+
+            let sortBy;
+
+            let orderBy = req.query.orderBy;
+
+            if (!req.query.sortBy) {
+                sortBy = 1
+            }
+
+            sortBy = req.query.sortBy == "ASC" ? 1 : -1
+
+            if (!req.query.orderBy) {
+                orderBy = "updatedAt"
+            }
+
+            let sortir = {}
+
+            sortir[orderBy] = sortBy
+
+            let status
+
+            if (req.query.status) {
+
+                const isPaymentStatusExist = this.getPaymentCode(req.query.status.toUpperCase(), "name")
+
+
+                if (!isPaymentStatusExist) {
+                    return res.status(HttpStatus.OK).send(responser.error(`Unknown query status: ${req.body.status}`, HttpStatus.OK));
+                }
+
+                status = req.query.status.toUpperCase()
+            } else {
+
+                status = "PAYMENT_SUCCESS"
+            }
+
+
+            let countTotalOrder = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "order_status.status": status,
+                        "delivery": {
+                            $exists: false
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: 1,
+                        totalOrder: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            if (countTotalOrder.length > 0) {
+                countTotalOrder = countTotalOrder[0].totalOrder
+            }
+
+            let order = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "order_status.status": status,
+                        "delivery": {
+                            $exists: false
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        order_id: 1,
+                        bill: 1,
+                        grand_total: 1,
+                        sub_total_product: 1,
+                        sub_total_charges: 1,
+                        sub_total_voucher: 1,
+                        charges: 1,
+                        vouchers_applied: 1,
+                        platform: 1,
+                        payment: 1,
+                        user: 1,
+                        shipping_address: 1,
+                        order_status: 1,
+                        response: 1,
+                        signature: 1
+                    }
+                },
+                { $skip: (page - 1) * parseInt(show) },
+                { $limit: parseInt(show) },
+                // {
+                //     $group: {
+                //         _id: 1,
+                //         detail: { $first: '$$ROOT' },
+                //         totalOrder: {
+                //             $sum: 1,
+                //         },
+                //     }
+                // }, {
+                //     $replaceRoot: {
+                //         newRoot: { $mergeObjects: [{ totalOrder: '$totalOrder' }, '$detail'] },
+                //     }
+                // }
+            ])
+
+            let totalOrder = {
+                "totalOrder": countTotalOrder,
+                order
+            }
+
+            return res.status(HttpStatus.OK).send(responser.success(totalOrder, "OK"));
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
+
+    async getDeliveryOrders(req, res) {
+
+        try {
+
+            let page = req.query.page ?? 1
+            let show = req.query.show ?? 10
+
+            let sortBy;
+
+            let orderBy = req.query.orderBy;
+
+            if (!req.query.sortBy) {
+                sortBy = 1
+            }
+
+            sortBy = req.query.sortBy == "ASC" ? 1 : -1
+
+            if (!req.query.orderBy) {
+                orderBy = "updatedAt"
+            }
+
+            let sortir = {}
+
+            sortir[orderBy] = sortBy
+
+            let status
+
+            if (req.query.status) {
+
+                const isPaymentStatusExist = this.getPaymentCode(req.query.status.toUpperCase(), "name")
+
+
+                if (!isPaymentStatusExist) {
+                    return res.status(HttpStatus.OK).send(responser.error(`Unknown query status: ${req.body.status}`, HttpStatus.OK));
+                }
+
+                status = req.query.status.toUpperCase()
+            } else {
+
+                status = "PAYMENT_SUCCESS"
+            }
+
+
+
+            let countTotalOrder = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "order_status.status": "PAYMENT_SUCCESS",
+                        "delivery.isDelivery": true
+                    }
+                },
+                {
+                    $group: {
+                        _id: 1,
+                        totalOrder: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            if (countTotalOrder.length > 0) {
+                countTotalOrder = countTotalOrder[0].totalOrder
+            }
+
+            let order = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "order_status.status": "PAYMENT_SUCCESS",
+                        "delivery.isDelivery": true
+                    }
+                },
+                {
+                    $project: {
+                        order_id: 1,
+                        bill: 1,
+                        grand_total: 1,
+                        sub_total_product: 1,
+                        sub_total_charges: 1,
+                        sub_total_voucher: 1,
+                        charges: 1,
+                        vouchers_applied: 1,
+                        platform: 1,
+                        payment: 1,
+                        user: 1,
+                        shipping_address: 1,
+                        order_status: 1,
+                        response: 1,
+                        signature: 1
+                    }
+                },
+                { $skip: (page - 1) * parseInt(show) },
+                { $limit: parseInt(show) },
+                // {
+                //     $group: {
+                //         _id: 1,
+                //         detail: { $first: '$$ROOT' },
+                //         totalOrder: {
+                //             $sum: 1,
+                //         },
+                //     }
+                // }, {
+                //     $replaceRoot: {
+                //         newRoot: { $mergeObjects: [{ totalOrder: '$totalOrder' }, '$detail'] },
+                //     }
+                // }
+            ])
+
+            let totalOrder = {
+                "totalOrder": countTotalOrder,
+                order
+            }
+
+            return res.status(HttpStatus.OK).send(responser.success(totalOrder, "OK"));
         } catch (err) {
 
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
@@ -116,15 +433,15 @@ const OrderController = class OrderController {
             return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
         }
 
-        // if (!isOrderExist) {
-        //     return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
-        // }
+        if (isOrderExist.order_status.status === 2) {
+            return res.status(HttpStatus.OK).send(responser.error("Tidak bisa membatalkan pesanan yang telah selesai", HttpStatus.OK))
+        }
 
         const currentTime = date.time()
 
-        // try {
+        try {
 
-            if (isOrderExist.payment.pg_code !== 101) {
+            if (parseInt(isOrderExist.payment.pg_code) !== 101) {
 
                 const url = "/cvr/100005/10"
 
@@ -140,91 +457,58 @@ const OrderController = class OrderController {
 
                 const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
-                if (paymentGateway.payment_status_code !== '8') {
+                let paymentStatus = this.getPaymentCode(paymentGateway)
 
-                    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                        responser.error(`Tidak Dapat Membatalkan Pesanan Pengguna`, HttpStatus.INTERNAL_SERVER_ERROR))
-                }
-
-                let responseObject = {
-                    order_id: isOrderExist.order_id,
-                    bill: isOrderExist.bill,
-                    grand_total: isOrderExist.grand_total,
-                    sub_total_product: isOrderExist.sub_total_product,
-                    sub_total_charges: isOrderExist.sub_total_charges,
-                    sub_total_voucher: isOrderExist.sub_total_voucher,
-                    charges: isOrderExist.charges,
-                    vouchers_applied: isOrderExist.vouchers_applied,
-                    platform: isOrderExist.platform,
-                    payment: isOrderExist.payment,
-                    user: isOrderExist.user,
-                    shipping_address: isOrderExist.shipping_address,
-                    order_status: {},
-                    response: isOrderExist.response
-                }
-
-                const paymentResponse = Object.entries(PaymentResponse).filter(response => {
-
-                    if (response[1].code.toString() === paymentGateway.response_code.toString()) {
-
-                        responseObject.payment.reff = ""
-                        responseObject.payment.date = currentTime
-                        responseObject.payment.payment_status_code = response[1].code.toString()
-                        responseObject.payment.payment_status_desc = paymentGateway.response_desc
-                        responseObject.payment.signature = isOrderExist.signature
-
-                        responseObject.response.response_code = response[1].code.toString()
-                        responseObject.response.response_desc = response[1].description
-
-                        Object.entries(PaymentStatus).filter(status => {
-
-                            if (status[1].code.toString() === paymentGateway.payment_status_code.toString()) {
-                                return responseObject.order_status = {
-                                    status: status[1].name,
-                                    payment_date: status[1].payment_date,
-                                    description: status[1].description
-                                }
-                            }
-
-                        })
-
-                        return response[1]
-                    }
-
-                })
-
-                const getHttpStatus = Object.entries(HttpStatus).filter(status => {
-
-                    if ((status[0].toUpperCase() === paymentResponse[0][1].type.toUpperCase())) {
-                        return status[0]
-                    }
-
-                })
-
-                if (getHttpStatus[0][1] === 200) {
-
-                    await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
-
-                    return res.status(getHttpStatus[0][1]).send(responser.success("Pesanan telah dibatalkan", getHttpStatus[0][0]));
-
-                }
-
-                return res.status(getHttpStatus[0][1]).send(
-                    responser.error(paymentResponse[0][1].description, getHttpStatus[0][1]))
-            }
-
-            await OrderModel.findOneAndUpdate(
-                req.params.order_id, {
-                $set: {
-                    "order_status": {
-                        status: "ORDER_CANCELLED",
-                        payment_date: date.time(),
-                        description: PaymentResponse.ORDER_CANCELLED.description
+                await OrderModel.findOneAndUpdate(
+                    {
+                        "order_id": req.params.order_id,
+                    }, {
+                    $set: {
+                        "order_status": {
+                            status: paymentStatus,
+                            payment_date: currentTime,
+                            description: paymentGateway.response_desc,
                         },
                         "payment": {
-                            payment_status_code: 8,
-                            payment_status_desc: "Pesanan dibatalkan",
-                            payment_date: date.time(),
+                            pg_code: isOrderExist.payment.pg_code,
+                            pg_name: isOrderExist.payment.pg_name,
+                            pg_type: isOrderExist.payment.pg_type,
+                            payment_status_code: parseInt(paymentGateway.payment_status_code),
+                            payment_status_desc: paymentGateway.payment_status_desc,
+                            payment_date: currentTime,
+                            payment_reff: `Pembayaran #${isOrderExist.order_id}`,
+                            payment_date: currentTime,
+                            payment_channel_uid: isOrderExist.payment.payment_channel_uid,
+                        }
+                    }
+                }, {
+                    new: true
+                })
+
+                return res.status(HttpStatus.OK).send(
+                    responser.error(paymentGateway.response_desc, HttpStatus.OK))
+            }
+
+            // saat di update hilang semua yang ada
+            await OrderModel.findOneAndUpdate(
+                {
+                    "order_id": req.params.order_id,
+                }, {
+                $set: {
+                    "order_status": {
+                        status: "PAYMENT_CANCELLED",
+                        payment_date: currentTime,
+                        description: PaymentResponse.ORDER_CANCELLED.description
+                    },
+                    "payment": {
+                        pg_code: isOrderExist.payment.pg_code,
+                        pg_name: isOrderExist.payment.pg_name,
+                        pg_type: isOrderExist.payment.pg_type,
+                        payment_status_code: 8,
+                        payment_status_desc: "Pesanan dibatalkan",
+                        payment_reff: `Pembayaran #${isOrderExist.order_id}`,
+                        payment_date: currentTime,
+                        payment_channel_uid: isOrderExist.payment.payment_channel_uid,
                     }
                 }
             }, {
@@ -234,12 +518,103 @@ const OrderController = class OrderController {
             return res.status(HttpStatus.OK).send(
                 responser.success("Pesanan Dibatalkan", HttpStatus.OK))
 
-        // } catch (err) {
+        } catch (err) {
 
-        //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-        //         responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+                responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
 
-        // }
+        }
+
+    }
+
+    async completePayment(req, res) {
+
+        const { error } = completeOrderValidation(req.params)
+
+        if (error) {
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
+        }
+
+        const isOrderExist = await this.getOrderByOrderId(req.params.order_id)
+
+        if (!isOrderExist) {
+            return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
+        }
+
+        if (isOrderExist.order_status.status === PaymentStatus.PAYMENT_SUCCESS.name) {
+            return res.status(HttpStatus.OK).send(responser.error("Pembayaran sudah diselesaikan", HttpStatus.OK))
+        }
+
+        const currentTime = date.time().toDate()
+
+        try {
+
+            if (isOrderExist.payment.pg_code !== 101) {
+
+                await OrderModel.findOneAndUpdate(
+                    {
+                        "order_id": req.params.order_id,
+                    }, {
+                    $set: {
+                        "order_status": {
+                            status: "PAYMENT_SUCCESS",
+                            payment_date: currentTime,
+                            description: PaymentStatus.PAYMENT_SUCCESS.description
+                        },
+                        "payment": {
+                            pg_code: isOrderExist.payment.pg_code,
+                            pg_name: isOrderExist.payment.pg_name,
+                            pg_type: isOrderExist.payment.pg_type,
+                            payment_status_code: 2,
+                            payment_status_desc: "Pembayaran Berhasil",
+                            payment_date: currentTime,
+                            payment_reff: `Pembayaran #${isOrderExist.order_id}`,
+                            payment_date: currentTime,
+
+                        }
+                    }
+                }, {
+                    new: true
+                })
+
+                return res.status(HttpStatus.OK).send(
+                    responser.success({}, "Pembayaran Berhasil"))
+            }
+
+            await OrderModel.findOneAndUpdate(
+                {
+                    "order_id": req.params.order_id,
+                },
+                {
+                    $set: {
+                        "order_status": {
+                            status: "PAYMENT_SUCCESS",
+                            payment_date: currentTime,
+                            description: PaymentResponse.PAYMENT_SUCCESS.description
+                        },
+                        "payment": {
+                            payment_status_code: 2,
+                            payment_status_desc: "Pembayaran Berhasil",
+                            payment_date: currentTime,
+                            payment_reff: `Pembayaran #${isOrderExist.order_id}`,
+                            pg_code: isOrderExist.payment.pg_code,
+                            pg_name: isOrderExist.payment.pg_name,
+                            pg_type: isOrderExist.payment.pg_type,
+                        }
+                    }
+                }, {
+                new: true
+            })
+
+            return res.status(HttpStatus.OK).send(
+                responser.success({}, "Pembayaran Berhasil"))
+
+        } catch (err) {
+
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+                responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+
+        }
 
     }
 
@@ -264,6 +639,52 @@ const OrderController = class OrderController {
         ])
 
         return address
+    }
+
+    async setDeliveryOrderStatus(req, res) {
+
+        const { error } = setDeliveryOrderStatusValidation(req.body)
+
+        if (error) {
+            return res.status(HttpStatus.OK).send(responser.validation(error.details[0].message, HttpStatus.OK))
+        }
+
+        const isOrderExist = await this.getOrderByOrderId(req.body.order_id)
+
+        if (!isOrderExist) {
+            return res.status(HttpStatus.OK).send(responser.error("Pesanan Tidak Ditemukan", HttpStatus.OK))
+        }
+
+        if (parseInt(isOrderExist.payment.pg_code) !== 101) {
+
+            if (isOrderExist.payment.payment_status_code == 0 || isOrderExist.payment.payment_status_code == 1) {
+                return res.status(HttpStatus.OK).send(responser.error("Pengguna belum membayar pesanan!", HttpStatus.OK))
+            }
+
+            if (isOrderExist.order_status !== "PAYMENT_SUCCESS") {
+                return res.status(HttpStatus.OK).send(responser.error("Tidak bisa meneruskan pesanan yang dibatalkan", HttpStatus.OK))
+            }
+        }
+
+        const order = await OrderModel.findOneAndUpdate(
+            {
+                order_id: req.body.order_id,
+            },
+            {
+                $set: {
+                    delivery: {
+                        isDelivery: req.body.delivery.isDelivery,
+                        deliveryDate: req.body.delivery.deliveryDaute
+                    }
+                }
+
+            },
+            {
+                new: true
+            }
+        )
+
+        return res.status(HttpStatus.OK).send(responser.success(order, "Pesanan telah dikirimkan"))
     }
 
     async checkPaymentGateway(data) {
@@ -320,6 +741,37 @@ const OrderController = class OrderController {
     async countOrderSize() {
 
         return await OrderModel.findOne({}).count()
+    }
+
+    getPaymentCode(payment, type = "code") {
+
+        if (type === "code") {
+
+
+            const status = Object.entries(PaymentStatus).filter(status => {
+
+                if (status[1].code === parseInt(payment.payment_status_code)) {
+
+                    return status[1].name
+                }
+
+            })
+
+            return status[0][1].name
+        } else {
+
+
+            const status = Object.entries(PaymentStatus).filter(status => {
+
+                if (status[1].name === payment) {
+
+                    return status[1].name
+                }
+
+            })
+
+            return status[0][1].name
+        }
     }
 
     async getProductByProductId(product_id) {
@@ -420,8 +872,8 @@ const OrderController = class OrderController {
     async getSHA1(signature_secret, user_id, password, bill_no, payment_status_code = "") {
 
         const md5 = crypto.createHash('md5', signature_secret)
-                .update(user_id + password + bill_no)
-                .digest('hex')
+            .update(user_id + password + bill_no)
+            .digest('hex')
 
         const sha_signature = crypto.createHash('sha1', process.env.SIGNATURE_SECRET)
             .update(md5)

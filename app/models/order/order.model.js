@@ -64,6 +64,7 @@ const OrderSchema = mongoose.Schema({
         description: String
     },
     response: {},
+    delivery: {},
     signature: String
 
 }, {

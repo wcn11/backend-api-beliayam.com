@@ -125,7 +125,7 @@ const CartController = class CartController {
 
             let price = product.price;
 
-            let currentTime = date.time().toDate()
+            // let currentTime = date.time().toDate()
 
             // if (product.hasPromo &&
             //     product.hasPromo.isActive &&
@@ -154,7 +154,6 @@ const CartController = class CartController {
             //         price = product.price;
             //     }
             // }
-
             if (carts) {
 
                 let isProductExist = carts.products.filter(product => product.id === req.body.product_id)
@@ -210,7 +209,7 @@ const CartController = class CartController {
                             additional: product.additional,
                             description: product.description,
                             note: input.note ?? "",
-                            hasPromo: product.hasPromo ?? null,
+                            hasPromo: product.hasPromo,
                             hasDiscount: product.hasDiscount,
                             productOnLive: product._id
                         },
@@ -240,7 +239,7 @@ const CartController = class CartController {
                     description: product.description,
                     weight: product.weight,
                     note: input.note ?? "",
-                    hasPromo: product.hasPromo ?? null,
+                    hasPromo: product.hasPromo,
                     hasDiscount: product.hasDiscount,
                     productOnLive: product._id
                 },
@@ -249,6 +248,7 @@ const CartController = class CartController {
                 subTotal: price * input.quantity,
                 baseTotal: price * input.quantity
             }
+
 
             let cart = new CartModel(cartObject)
 

@@ -674,7 +674,7 @@ const OrderController = class OrderController {
 
         const currentTime = date.time().toDate()
 
-        // try {
+        try {
 
         if (parseInt(isOrderExist.payment.pg_code) !== 101) {
 
@@ -773,7 +773,7 @@ const OrderController = class OrderController {
             req.body.order_id, {
             $set: {
                 "order_status": {
-                    status: "ORDER_CANCELLED",
+                    status: "PAYMENT_CANCELLED",
                     payment_date: currentTime,
                     description: PaymentResponse.ORDER_CANCELLED.description
                 },
@@ -790,12 +790,12 @@ const OrderController = class OrderController {
         return res.status(HttpStatus.OK).send(
             responser.success({}, "Pesanan Dibatalkan"))
 
-        // } catch (err) {
+        } catch (err) {
 
-        //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-        //         responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+                responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
 
-        // }
+        }
 
     }
 

@@ -38,8 +38,19 @@ const cancelOrderValidation = (data) => {
     return schema.validate(data)
 }
 
+const completeOrderValidation = (data) => {
+
+    const schema = Joi.object({
+        user_id: Joi.string().required(),
+        order_id: Joi.string().required(),
+    })
+
+    return schema.validate(data)
+}
+
 module.exports = {
     placeOrderValidation,
     getOrderByIdValidation,
-    cancelOrderValidation
+    cancelOrderValidation,
+    completeOrderValidation
 }
