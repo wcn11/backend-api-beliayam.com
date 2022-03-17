@@ -71,7 +71,7 @@ const CartController = class CartController {
                 carts.user.password = undefined
 
                 cartFilterProductStillExist = carts.products.filter(async product => {
-                    if (product.productOnLive !== null && product.productOnLive._id) {
+                    if (product.productOnLive !== null && product.productOnLive._id && product.productOnLive.status === "active") {
                         return product
                     } else {
 
