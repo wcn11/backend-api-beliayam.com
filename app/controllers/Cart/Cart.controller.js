@@ -45,7 +45,7 @@ const CartController = class CartController {
 
             orderBy = req.query.orderBy ? `products.${req.query.orderBy}` : 'products.name'
 
-            let cart = await CartModel.findOne({
+            let carts = await CartModel.findOne({
                 "user": req.user.user._id
             }).populate([{ path: 'user' }, {
                 path: 'products',
@@ -63,13 +63,40 @@ const CartController = class CartController {
                     orderBy: sortBy
                 }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
 
-            if (cart) {
-                cart.user.otpEmail = undefined
-                cart.user.otpSms = undefined
-                cart.user.password = undefined
+            let cartFilterProductStillExist = []
+
+            if (carts) {
+                carts.user.otpEmail = undefined
+                carts.user.otpSms = undefined
+                carts.user.password = undefined
+
+                cartFilterProductStillExist = carts.products.filter(async product => {
+                    if (product.productOnLive !== null && product.productOnLive._id) {
+                        return product
+                    } else {
+
+                        await CartModel.updateOne({
+                            "user": req.user.user._id,
+                            "products._id": product._id
+                        }, {
+                            $pull: {
+                                "products": {
+                                    _id: product._id
+                                }
+                            },
+                            $set: {
+                                totalQuantity: carts.totalQuantity - product.quantity,
+                                subTotal: carts.subTotal - (product.price * product.quantity),
+                                baseTotal: carts.subTotal - (product.price * product.quantity)
+                            }
+                        });
+                    }
+                })
             }
 
-            return res.status(HttpStatus.OK).send(responser.success(cart, HttpStatus.OK));
+            carts.products = cartFilterProductStillExist
+
+            return res.status(HttpStatus.OK).send(responser.success(carts, HttpStatus.OK));
 
         } catch (err) {
 
