@@ -30,11 +30,13 @@ const CategorySchema = mongoose.Schema({
     },
     image: {
         type: String,
-        required: false
+        required: false,
+        default: ''
     },
     icon: {
         type: String,
-        required: false
+        required: false,
+        default: ''
     },
     status: {
         type: String,

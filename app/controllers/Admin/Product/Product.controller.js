@@ -205,7 +205,7 @@ const ProductController = class ProductController {
             }
 
             if (req.file) {
-                productObject.image = req.file ? `images/product/${req.file.filename}` : "images/product/default.jpg"
+                productObject.image = req.file ? `images/product/${req.file.filename}` : ""
             }
 
             if (input.isDiscount) {
@@ -253,6 +253,8 @@ const ProductController = class ProductController {
             await ProductModel.deleteOne({
                 _id: req.params.productId
             });
+
+            this.removeFile(product.image)
 
             return res.status(HttpStatus.OK).send(responser.validation("Produk Telah Dihapus", HttpStatus.OK))
 
@@ -322,7 +324,7 @@ const ProductController = class ProductController {
         }
 
         if (req.file) {
-            productObject.image = req.file ? `images/product/${req.file.filename}` : "images/product/default.jpg"
+            productObject.image = req.file ? `images/product/${req.file.filename}` : ""
         }
 
         if (input.isDiscount) {

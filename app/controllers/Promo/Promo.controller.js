@@ -222,7 +222,7 @@ const PromoController = class PromoController {
                 slug: input.slug,
                 tags: input.tags,
                 products: [],
-                image_promo: req.file ? `images/promo/${req.file.filename}` : "images/promo/default.jpg",
+                image_promo: req.file ? `images/promo/${req.file.filename}` : "",
                 termsAndConditions: input.termsAndConditions,
                 promoValue: input.promoValue,
                 promoBy: input.promoBy,

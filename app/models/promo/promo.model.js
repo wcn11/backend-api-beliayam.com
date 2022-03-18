@@ -19,7 +19,9 @@ const PromoSchema = mongoose.Schema({
         ref: "product"
     }],
     image_promo: {
-        type: String
+        type: String,
+        required: false,
+        default: ""
     },
     termsAndConditions: {
         type: String,
