@@ -235,7 +235,7 @@ const OrderController = class OrderController {
 
             let discount = items[i].product.hasDiscount
 
-                // validasi jika product promo atau discount atau menggunakan vou
+            // validasi jika product promo atau discount atau menggunakan vou
             if (promo) {
 
                 switch (promo) {
@@ -697,11 +697,9 @@ const OrderController = class OrderController {
 
                 if (!paymentGateway.trx_id) {
 
-                return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
-                    responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
-            }
-
-                await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
+                    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+                        responser.error(`Tidak Dapat Membatalkan Pesanan`, HttpStatus.INTERNAL_SERVER_ERROR))
+                }
 
                 let responseObject = {
                     order_id: isOrderExist.order_id,
@@ -722,54 +720,74 @@ const OrderController = class OrderController {
 
                 const paymentResponse = Object.entries(PaymentResponse).filter(response => {
 
-                if (response[1].code.toString() === paymentGateway.response_code.toString()) {
+                    if (response[1].code.toString() === paymentGateway.response_code.toString()) {
 
-                    responseObject.payment.reff = ""
-                    responseObject.payment.date = currentTime
-                    responseObject.payment.payment_status_code = response[1].code.toString()
-                    responseObject.payment.payment_status_desc = paymentGateway.response_desc
-                    responseObject.payment.signature = isOrderExist.signature
+                        responseObject.payment.reff = ""
+                        responseObject.payment.date = currentTime
+                        responseObject.payment.payment_status_code = response[1].code.toString()
+                        responseObject.payment.payment_status_desc = paymentGateway.response_desc
+                        responseObject.payment.signature = isOrderExist.signature
 
-                    responseObject.response.response_code = response[1].code.toString()
-                    responseObject.response.response_desc = response[1].description
+                        responseObject.response.response_code = response[1].code.toString()
+                        responseObject.response.response_desc = response[1].description
 
-                    Object.entries(PaymentStatus).filter(status => {
+                        Object.entries(PaymentStatus).filter(status => {
 
-                        if (status[1].code.toString() === paymentGateway.payment_status_code.toString()) {
-                            return responseObject.order_status = {
-                                status: status[1].name,
-                                payment_date: status[1].payment_date,
-                                description: status[1].description
+                            if (status[1].code.toString() === paymentGateway.payment_status_code.toString()) {
+                                return responseObject.order_status = {
+                                    status: status[1].name,
+                                    payment_date: status[1].payment_date,
+                                    description: status[1].description
+                                }
                             }
-                        }
 
-                    })
+                        })
 
-                    return response[1]
-                }
+                        return response[1]
+                    }
 
-            })
+                })
 
                 const getHttpStatus = Object.entries(HttpStatus).filter(status => {
 
-                if ((status[0].toUpperCase() === paymentResponse[0][1].type.toUpperCase())) {
-                    return status[0]
-                }
+                    if ((status[0].toUpperCase() === paymentResponse[0][1].type.toUpperCase())) {
+                        return status[0]
+                    }
 
-            })
+                })
 
                 if (getHttpStatus[0][1] === 200) {
 
-                return res.status(getHttpStatus[0][1]).send(responser.success(responseObject, getHttpStatus[0][0]));
+                    await OrderModel.findOneAndUpdate(
+                        { order_id: req.body.order_id }, {
+                        $set: {
+                            "order_status": {
+                                status: "PAYMENT_CANCELLED",
+                                payment_date: currentTime,
+                                description: PaymentResponse.ORDER_CANCELLED.description
+                            },
+                            "payment": {
+                                payment_status_code: 8,
+                                payment_status_desc: "Pesanan dibatalkan",
+                                payment_date: currentTime,
+                            }
+                        }
+                    }, {
+                        new: true
+                    })
 
-            }
+                    await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
+
+                    return res.status(getHttpStatus[0][1]).send(responser.success(responseObject, getHttpStatus[0][0]));
+
+                }
 
                 return res.status(getHttpStatus[0][1]).send(
                     responser.error(paymentResponse[0][1].description, getHttpStatus[0][1]))
             }
 
             await OrderModel.findOneAndUpdate(
-                req.body.order_id, {
+                { order_id: req.body.order_id }, {
                 $set: {
                     "order_status": {
                         status: "PAYMENT_CANCELLED",
@@ -785,6 +803,8 @@ const OrderController = class OrderController {
             }, {
                 new: true
             })
+
+            await this.setStockProducts(isOrderExist.bill.bill_items, "inc")
 
             return res.status(HttpStatus.OK).send(
                 responser.success({}, "Pesanan Dibatalkan"))

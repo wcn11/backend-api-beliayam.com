@@ -122,16 +122,16 @@ const AdminController = class AdminController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        if (!req.header('Authorization')) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
+        if (!req.header('Authorization')) return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Not Provided", HttpStatus.FORBIDDEN))
 
         const token = req.header('Authorization').split(" ")[1]
 
-        if (!token) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
+        if (!token) return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Not Provided", HttpStatus.FORBIDDEN))
 
         const decode = jwt.decode(token);
 
         if (!decode) {
-            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Token", HttpStatus.UNAUTHORIZED))
+            return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Token", HttpStatus.FORBIDDEN))
         }
 
         const cache = await redis.get(`admin.${decode.data.admin._id}`)
@@ -143,11 +143,11 @@ const AdminController = class AdminController {
         const payload = cache
 
         if (token !== payload.token) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Token Not Match", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Not Match", HttpStatus.FORBIDDEN))
         }
 
         if (req.body.refreshToken.toUpperCase() !== payload.refreshToken.toUpperCase()) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Refresh Token Not Match", HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Refresh Token Not Match", HttpStatus.NOT_ACCEPTABLE))
         }
 
         try {
@@ -155,7 +155,7 @@ const AdminController = class AdminController {
             const admin = await AdminModel.findOne({ _id: decode.data.admin._id })
 
             if (!admin) {
-                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Payload Refresh Token", HttpStatus.UNAUTHORIZED))
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Invalid Payload Refresh Token", HttpStatus.NOT_ACCEPTABLE))
             }
 
             admin.password = undefined

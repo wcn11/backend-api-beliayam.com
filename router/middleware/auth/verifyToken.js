@@ -16,9 +16,9 @@ module.exports = function(req, res, next) {
 
     if (!token) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Unauthorized", HttpStatus.UNAUTHORIZED))
 
-    if (token.split(" ")[0] !== "Bearer") return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Type Authorization Mismatch", HttpStatus.UNAUTHORIZED))
+    if (token.split(" ")[0] !== "Bearer") return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Type Authorization Mismatch", HttpStatus.FORBIDDEN))
 
-    if (!token.split(" ")[1]) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Unauthorized", HttpStatus.UNAUTHORIZED))
+    if (!token.split(" ")[1]) return res.status(HttpStatus.FORBIDDEN).send(responser.error("Unauthorized", HttpStatus.FORBIDDEN))
 
     try {
 
@@ -30,12 +30,12 @@ module.exports = function(req, res, next) {
 
             if (!request) {
 
-                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Required", HttpStatus.UNAUTHORIZED))
+                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Session Expired", HttpStatus.UNAUTHORIZED))
             }
 
             if (!req.user.user.isActive) {
 
-                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.UNAUTHORIZED))
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.NOT_ACCEPTABLE))
             }
 
             next()

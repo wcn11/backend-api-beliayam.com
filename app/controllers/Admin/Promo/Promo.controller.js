@@ -292,7 +292,15 @@ const PromoController = class PromoController {
                             _id: product
                         }, {
                         $set: {
-                            hasPromo: [savedPromo._id]
+                                hasPromo: [savedPromo._id],
+                                hasDiscount: {
+                                    isDiscount: false,
+                                    discount: 0,
+                                    discountBy: "price",
+                                    discountStart: null,
+                                    discountEnd: null,
+                                    priceAfterDiscount: 0,
+                                }
                         }
                     }, {
                         new: true
@@ -366,7 +374,6 @@ const PromoController = class PromoController {
 
             }
         }
-
 
         if (req.file) {
             req.body.banner = req.file.path
@@ -446,7 +453,15 @@ const PromoController = class PromoController {
                 },
                 {
                     $set: {
-                        hasPromo: req.params.promoId
+                        hasPromo: req.params.promoId,
+                        hasDiscount: {
+                            isDiscount: false,
+                            discount: 0,
+                            discountBy: "price",
+                            discountStart: null,
+                            discountEnd: null,
+                            priceAfterDiscount: 0,
+                        }
                     }
                 }, {
                 new: true

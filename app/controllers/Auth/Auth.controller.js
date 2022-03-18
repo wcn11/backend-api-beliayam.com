@@ -1383,16 +1383,16 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        if (!req.header('Authorization')) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
+        if (!req.header('Authorization')) return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Not Provided", HttpStatus.FORBIDDEN))
 
         const token = req.header('Authorization').split(" ")[1]
 
-        if (!token) return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Token Not Provided", HttpStatus.UNAUTHORIZED))
+        if (!token) return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Not Provided", HttpStatus.FORBIDDEN))
 
         const decode = jwt.decode(token);
 
         if (!decode) {
-            return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Token", HttpStatus.UNAUTHORIZED))
+            return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Token", HttpStatus.FORBIDDEN))
         }
 
         client.get(`${decode.aud}`, async (err, request) => {
@@ -1402,17 +1402,17 @@ const AuthController = class AuthController {
             }
 
             if (!request) {
-                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Refresh Token", HttpStatus.UNAUTHORIZED))
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Invalid Refresh Token", HttpStatus.FORBIDDEN))
             }
 
             const payload = JSON.parse(request)
 
             if (token !== payload.token) {
-                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Token Not Match", HttpStatus.BAD_REQUEST))
+                return res.status(HttpStatus.FORBIDDEN).send(responser.error("Token Not Match", HttpStatus.FORBIDDEN))
             }
 
             if (req.body.refreshToken.toUpperCase() !== payload.refreshToken.toUpperCase()) {
-                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Refresh Token Not Match", HttpStatus.BAD_REQUEST))
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Refresh Token Not Match", HttpStatus.NOT_ACCEPTABLE))
             }
 
             try {
@@ -1420,7 +1420,7 @@ const AuthController = class AuthController {
                 const user = await User.findOne({ _id: decode.aud })
 
                 if (!user) {
-                    return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Invalid Payload Refresh Token", HttpStatus.UNAUTHORIZED))
+                    return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Invalid Payload Refresh Token", HttpStatus.NOT_ACCEPTABLE))
                 }
 
                 user.otpEmail = undefined
@@ -1450,7 +1450,7 @@ const AuthController = class AuthController {
 
             } catch (err) {
                 console.error(err)
-                return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Session Expired", HttpStatus.UNAUTHORIZED))
+                return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Session Expired", HttpStatus.NOT_ACCEPTABLE))
             }
         })
     }
@@ -1460,13 +1460,13 @@ const AuthController = class AuthController {
         const token = req.header('Authorization').split(" ")[1]
 
         if (!token) {
-            return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.UNAUTHORIZED).send(responser.error("Unauthorized", HttpStatus.UNAUTHORIZED))
+            return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.FORBIDDEN).send(responser.error("Unauthorized", HttpStatus.FORBIDDEN))
         }
 
         const decodedToken = jwt.decode(token);
 
         if (!decodedToken) {
-            return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.UNAUTHORIZED).send(responser.error("Unauthorized", HttpStatus.UNAUTHORIZED))
+            return res.header("Authorization", "").cookie('token', "").cookie('refreshToken', "").status(HttpStatus.FORBIDDEN).send(responser.error("Unauthorized", HttpStatus.FORBIDDEN))
         }
 
         client.del(decodedToken.aud);
