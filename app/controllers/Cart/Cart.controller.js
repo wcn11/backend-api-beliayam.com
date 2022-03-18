@@ -53,7 +53,7 @@ const CartController = class CartController {
                     path: 'productOnLive',
                 },
             }, {
-                    path: 'products',
+                path: 'products.productOnLive',
                     populate: {
                         path: 'hasPromo',
                     },

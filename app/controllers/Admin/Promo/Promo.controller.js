@@ -367,6 +367,7 @@ const PromoController = class PromoController {
             }
         }
 
+
         if (req.file) {
             req.body.banner = req.file.path
         }
