@@ -271,12 +271,12 @@ const AuthController = class AuthController {
         const user = await User.findOne({ email: req.body.email })
 
         if (user) {
+            if (user.registeredBy !== req.body.loginBy) {
+                return res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan ${user.registerBy}, harap login dengan metode ${user.registerBy}`, HttpStatus.OK));
+            }
 
             if (!user.active) {
-                res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
-            }
-            if (user.registeredBy !== req.body.loginBy) {
-                res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan ${user.registerBy}, harap login dengan metode ${user.registerBy}`, HttpStatus.OK));
+                return res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
             }
         }
 
@@ -1449,7 +1449,6 @@ const AuthController = class AuthController {
                 return res.status(HttpStatus.OK).send(responser.success(loggedUser, "OK", HttpStatus.OK))
 
             } catch (err) {
-                console.error(err)
                 return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Session Expired", HttpStatus.NOT_ACCEPTABLE))
             }
         })

@@ -33,7 +33,7 @@ module.exports = function(req, res, next) {
                 return res.status(HttpStatus.UNAUTHORIZED).send(responser.error("Session Expired", HttpStatus.UNAUTHORIZED))
             }
 
-            if (!req.user.user.isActive) {
+            if (!req.user.user.active) {
 
                 return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.NOT_ACCEPTABLE))
             }

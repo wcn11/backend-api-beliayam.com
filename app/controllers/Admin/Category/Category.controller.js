@@ -318,10 +318,12 @@ const CategoryController = class CategoryController {
 
         } catch (err) {
 
-            this.removeFile(req)
+            if (err) {
+                this.removeFile(req)
 
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Terjadi Kesalahan. Tidak Dapat Mengubah Kategori, Harap Cek Input", HttpStatus.BAD_REQUEST))
+                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Terjadi Kesalahan. Tidak Dapat Mengubah Kategori, Harap Cek Input", HttpStatus.BAD_REQUEST))
 
+            }
         }
     }
 
