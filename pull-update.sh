@@ -1,3 +1,3 @@
 git pull
 
-pm2 restart backend-api --ignore-watch="public"
+pm2 restart backend-api --update-env --ignore-watch="public"
