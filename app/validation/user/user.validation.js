@@ -29,7 +29,6 @@ const changeEmailUser = (data) => {
 
 const updateActiveUserValidation = (data) => {
     const schema = Joi.object({
-        user_id: Joi.string().min(6).max(255).required(),
         active: Joi.boolean().required()
     })
 

@@ -396,10 +396,14 @@ const ProductController = class ProductController {
     }
 
     removeFile(req) {
+
         if (req.file) {
-            fs.unlinkSync(req.file.path)
-        } else {
-            fs.unlinkSync(req)
+
+            if (req.file) {
+                fs.unlinkSync(req.file.path)
+            } else {
+                fs.unlinkSync(req)
+            }
         }
     }
 }

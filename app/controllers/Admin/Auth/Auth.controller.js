@@ -204,7 +204,7 @@ const AdminController = class AdminController {
 
         if (!validPass) return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.BAD_REQUEST));
 
-        if (!admin.isActive) {
+        if (!admin.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan", HttpStatus.BAD_REQUEST));
         }
 

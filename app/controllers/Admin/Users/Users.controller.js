@@ -314,7 +314,7 @@ const UsersController = class UsersController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Telah Diverifikasi", HttpStatus.NOT_FOUND));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
@@ -439,7 +439,7 @@ const UsersController = class UsersController {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Tidak Bisa Mem-verifikasi Ulang Nomor Yang Telah Terverifikasi Sebelumnya", HttpStatus.NOT_ACCEPTABLE));
         }
 
-        if (!user.isActive) {
+        if (!user.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Aktifkan Terlebih Dahulu", HttpStatus.BAD_REQUEST));
         }
 
@@ -492,7 +492,7 @@ const UsersController = class UsersController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = this.isIdValid(req.body.user_id)
+        let isValid = this.isIdValid(req.params.user_id)
 
         if (!isValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -500,7 +500,7 @@ const UsersController = class UsersController {
             );
         }
 
-        const userExist = await UserModel.findOne({ _id: req.body.user_id })
+        const userExist = await UserModel.findOne({ _id: req.params.user_id })
 
         if (!userExist) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
@@ -509,10 +509,10 @@ const UsersController = class UsersController {
         let message = req.body.active ? "Akun Telah Diaktifkan" : "Akun Telah Di Non-Aktifkan"
 
         await UserModel.updateOne({
-            _id: req.body.user_id
+            _id: req.params.user_id
         }, {
             $set: {
-                isActive: req.body.active
+                active: req.body.active
 
             }
         })

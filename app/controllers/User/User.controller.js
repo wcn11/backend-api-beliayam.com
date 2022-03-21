@@ -294,7 +294,7 @@ const UserController = class UserController {
         const { error } = updateActiveUserValidation(req.body)
 
         if (error) {
-            return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
+            return res.status(HttpStatus.BAD_isAXREQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
         let isValid = this.isIdValid(req.body.user_id)
@@ -311,7 +311,7 @@ const UserController = class UserController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.FORBIDDEN));
         }
 
@@ -319,7 +319,7 @@ const UserController = class UserController {
             _id: req.body.user_id
         }, {
             $set: {
-                isActive: false
+                active: false
 
             }
         })
@@ -416,7 +416,7 @@ const UserController = class UserController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.BAD_REQUEST));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
@@ -530,7 +530,7 @@ const UserController = class UserController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Telah Diverifikasi", HttpStatus.NOT_FOUND));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 

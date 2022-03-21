@@ -229,7 +229,7 @@ const AuthController = class AuthController {
 
         if (!validPass) return res.status(HttpStatus.OK).send(responser.error("Email Atau Kata Sandi Salah", HttpStatus.OK));
 
-        if (!user.isActive) {
+        if (!user.active) {
             return res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -272,7 +272,7 @@ const AuthController = class AuthController {
 
         if (user) {
 
-            if (!user.isActive) {
+            if (!user.active) {
                 res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
             }
             if (user.registeredBy !== req.body.loginBy) {
@@ -360,7 +360,7 @@ const AuthController = class AuthController {
             );
         }
 
-        if (!user.isActive) {
+        if (!user.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
@@ -404,7 +404,7 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.OK).send(
                 responser.error("Nomor Telah Terdaftar", HttpStatus.OK)
             );
-        } else if (isPhoneExist && !isPhoneExist.isActive) {
+        } else if (isPhoneExist && !isPhoneExist.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -520,7 +520,7 @@ const AuthController = class AuthController {
 
         const isPhoneExist = await User.findOne({ phone: req.body.phone })
 
-        if (isPhoneExist && !isPhoneExist.isActive) {
+        if (isPhoneExist && !isPhoneExist.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -649,7 +649,7 @@ const AuthController = class AuthController {
             );
         }
 
-        if (!isPhoneExist.isActive) {
+        if (!isPhoneExist.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -710,7 +710,7 @@ const AuthController = class AuthController {
             );
         }
 
-        if (!isPhoneExist.isActive) {
+        if (!isPhoneExist.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -775,7 +775,7 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
         }
 
-        if (!user.isActive) {
+        if (!user.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
@@ -880,7 +880,7 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.OK).send(responser.error("Tidak Bisa Mem-verifikasi Ulang Nomor Yang Telah Terverifikasi Sebelumnya", HttpStatus.OK));
         }
 
-        if (!user.isActive) {
+        if (!user.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -939,7 +939,7 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.OK).send(responser.error("Email Atau Kode Verifikasi Salah", HttpStatus.OK));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -1046,7 +1046,7 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Email Telah Diverifikasi", HttpStatus.NOT_FOUND));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
@@ -1099,7 +1099,7 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.OK).send(responser.error("Email Tidak Terdaftar", HttpStatus.OK));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
@@ -1218,7 +1218,7 @@ const AuthController = class AuthController {
                 return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Tidak Ditemukan", HttpStatus.FORBIDDEN));
             }
 
-            if (!getUserById.isActive) {
+            if (!getUserById.active) {
                 return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
             }
 
@@ -1274,7 +1274,7 @@ const AuthController = class AuthController {
                     return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Tidak Ditemukan", HttpStatus.FORBIDDEN));
                 }
 
-                if (!getUserById.isActive) {
+                if (!getUserById.active) {
                     res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
                 }
 

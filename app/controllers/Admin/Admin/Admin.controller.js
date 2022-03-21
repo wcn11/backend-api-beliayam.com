@@ -225,7 +225,7 @@ const AdminController = class AdminController {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
         }
 
-        if (!userExist.isActive) {
+        if (!userExist.active) {
             return res.status(HttpStatus.FORBIDDEN).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.FORBIDDEN));
         }
 
@@ -233,7 +233,7 @@ const AdminController = class AdminController {
             _id: req.body.user_id
         }, {
             $set: {
-                isActive: false
+                active: false
 
             }
         })
