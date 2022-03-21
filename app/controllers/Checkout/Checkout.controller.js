@@ -210,13 +210,12 @@ const CheckoutController = class CheckoutController {
                             let promoPrice = (promo.promoValue / 100) * products[i].price
                             let priceAfterPromo = products[i].price - promoPrice
                             calculateItem += priceAfterPromo * productAtCart[0]['products'][0].quantity
-                            // products[i].price = products[i].price - promoPrice
+                            products[i].price = priceAfterPromo
 
                         } else if (promo.promoBy === "price") {
-
                             calculateItem += (products[i].price - promo.promoValue) * productAtCart[0]['products'][0].quantity
-                            // products[i].price = (products[i].price - promo.promoValue)
-                            calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
+                            // calculateItem += (productAtCart[0]['products'][0].quantity + promo.promoValue) * products[i].price
+                            products[i].price = (products[i].price - promo.promoValue)
 
                         }
                     }
@@ -230,29 +229,30 @@ const CheckoutController = class CheckoutController {
                             let discountPrice = (discount.discount / 100) * products[i].price
                             let priceAfterDiscount = products[i].price - discountPrice
                             calculateItem += priceAfterDiscount * productAtCart[0]['products'][0].quantity
-                            // products[i].price = products[i].price - discountPrice
+                            products[i].price = products[i].price - discountPrice
 
                         } else if (discount.discountBy === "price") {
 
                             calculateItem += (products[i].price - discount.discount) * productAtCart[0]['products'][0].quantity
+                            products[i].price = (products[i].price - discount.discount)
                         }
                     } else {
 
                         calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
-                        // products[i].price = calculateItem
+                        products[i].price = products[i].price
                     }
 
                 }
                 else {
 
                     calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
-                    // products[i].price = calculateItem
+                    products[i].price = products[i].price
 
                 }
 
             } else {
                 calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
-                // products[i].price = calculateItem
+                products[i].price = products[i].price
             }
 
             totalQuantity += productAtCart[0]['products'][0].quantity

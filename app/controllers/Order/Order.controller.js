@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 
 const CheckoutModel = require('@model/checkout/checkout.model')
+const CartModel = require('@model/cart/cart.model')
 const ChargeModel = require('@model/charge/charge.model')
 const OrderModel = require('@model/order/order.model')
 const ProductModel = require('@model/product/product.model')
@@ -641,6 +642,8 @@ const OrderController = class OrderController {
 
         await this.setStockProducts(items)
 
+        await this.deleteProductFromCart(saveOrder)
+
         await CheckoutModel.deleteOne({
             user: user._id
         })
@@ -692,8 +695,6 @@ const OrderController = class OrderController {
                 }
 
                 const paymentGateway = await PaymentGateway.send(url, postDataObject)
-
-                console.log(paymentGateway)
 
                 if (!paymentGateway.trx_id) {
 
@@ -974,6 +975,39 @@ const OrderController = class OrderController {
         );
 
         return charges
+    }
+
+    async deleteProductFromCart(data, total) {
+
+        let product_ids = []
+
+        for (let i = 0; i < data.bill.bill_items.length; i++) {
+            product_ids.push(data.bill.bill_items[i].product._id)
+        }
+
+
+        await CartModel.updateOne({
+            user: data.user._id,
+            "products._id": {
+                $in: product_ids
+            }
+        }, {
+            $unset: {
+                "products.$": {
+                    $in: [product_ids]
+                }
+            }
+        })
+
+        await CartModel.updateOne({
+            user: data.user._id,
+        }, {
+            $set: total,
+            $pull: {
+                "products": null
+
+            }
+        })
     }
 
     async getUserById(userId) {
