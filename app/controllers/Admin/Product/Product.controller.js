@@ -304,61 +304,61 @@ const ProductController = class ProductController {
 
         try {
 
-        let input = req.body
+            let input = req.body
 
-        let productObject = {
+            let productObject = {
 
-            category: [
-                category._id,
-            ],
-            sku: input.sku,
-            slug: input.slug,
-            name: input.name,
-            position: input.position,
-            price: input.price,
-            stock: input.stock,
-            weight: input.weight,
-            status: input.status,
-            additional: input.additional,
-            description: input.description
-        }
-
-        if (req.file) {
-            productObject.image = req.file ? `images/product/${req.file.filename}` : ""
-        }
-
-        if (input.isDiscount) {
-            productObject.hasDiscount = {
-                isDiscount: input.isDiscount,
-                discount: input.discount,
-                discountBy: input.discountBy,
-                discountStart: input.discountStart,
-                discountEnd: input.discountEnd
+                category: [
+                    category._id,
+                ],
+                sku: input.sku,
+                slug: input.slug,
+                name: input.name,
+                position: input.position,
+                price: input.price,
+                stock: input.stock,
+                weight: input.weight,
+                status: input.status,
+                additional: input.additional,
+                description: input.description
             }
-        }
 
-        const product = await ProductModel.updateOne(
-            {
-                _id: req.params.productId,
-            },
-            {
-                $set: productObject
-            }, {
-            new: true
-        }).select({
-            category: 1,
-            sku: 1,
-            name: 1,
-            position: 1,
-            image: 1,
-            status: 1,
-            additional: 1,
-            description: 1,
-            price: 1,
-            stock: 1,
-            hasDiscount: 1,
-            hasPromotion: 1,
-        })
+            if (req.file) {
+                productObject.image = req.file ? `images/product/${req.file.filename}` : ""
+            }
+
+            if (input.isDiscount) {
+                productObject.hasDiscount = {
+                    isDiscount: input.isDiscount,
+                    discount: input.discount,
+                    discountBy: input.discountBy,
+                    discountStart: input.discountStart,
+                    discountEnd: input.discountEnd
+                }
+            }
+
+            const product = await ProductModel.updateOne(
+                {
+                    _id: req.params.productId,
+                },
+                {
+                    $set: productObject
+                }, {
+                new: true
+            }).select({
+                category: 1,
+                sku: 1,
+                name: 1,
+                position: 1,
+                image: 1,
+                status: 1,
+                additional: 1,
+                description: 1,
+                price: 1,
+                stock: 1,
+                hasDiscount: 1,
+                hasPromotion: 1,
+            })
 
             this.removeFile("public/" + isProductExist.image)
 
@@ -399,10 +399,20 @@ const ProductController = class ProductController {
 
         if (req.file) {
 
-            if (req.file) {
-                fs.unlinkSync(req.file.path)
-            } else {
-                fs.unlinkSync(req)
+            try {
+
+                if (req.file) {
+                    fs.unlinkSync(req.file.path, function (err) {
+                        if (err) return
+                    })
+                } else {
+                    fs.unlinkSync(req, function (err) {
+                        if (err) return
+                    })
+                }
+            }
+            catch (err) {
+                return
             }
         }
     }

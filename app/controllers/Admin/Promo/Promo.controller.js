@@ -702,10 +702,19 @@ const PromoController = class PromoController {
     }
 
     removeFile(req) {
-        if (req.file) {
-            fs.unlinkSync(req.file.path)
-        } else {
-            fs.unlinkSync(req)
+        try {
+            if (req.file) {
+                fs.unlinkSync(req.file.path, function (err) {
+                    if (err) return
+                })
+            } else {
+                fs.unlinkSync(req, function (err) {
+                    if (err) return
+                })
+            }
+        }
+        catch (err) {
+            return
         }
     }
 

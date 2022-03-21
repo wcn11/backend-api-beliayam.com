@@ -260,71 +260,75 @@ const CategoryController = class CategoryController {
             );
         }
 
-        try {
+        // try {
 
-            let input = req.body
+        let input = req.body
 
-            let categoryObject = {
-                "sku": input.sku,
-                "slug": input.slug,
-                "name": input.name,
-                "position": input.position,
-                "icon": "",
-                "image": "",
-                "status": input.status,
-                "additional": input.additional,
-                "description": input.description
-            }
-
-            if (req.files.image_category) {
-
-                for (let i = 0; i < req.files.image_category.length; i++) {
-                    categoryObject.image = req.files.image_category[i].url
-                }
-
-            }
-
-            if (req.files.icon) {
-
-                for (let i = 0; i < req.files.icon.length; i++) {
-                    categoryObject.icon = req.files.icon[i].url
-                }
-
-            }
-
-            const category = await CategoryModel.findOneAndUpdate(
-                req.params.categoryId, {
-                $set: categoryObject
-            }, {
-                new: true
-            }).select({
-                "_id": 1,
-                "sku": 1,
-                "slug": 1,
-                "name": 1,
-                "position": 1,
-                "image": 1,
-                "icon": 1,
-                "status": 1,
-                "additional": 1,
-                "description": 1,
-                "createdAt": 1,
-                "updatedAt": 1
-            })
-
-            this.removeFile(isCategoryExists, "update")
-
-            return res.status(HttpStatus.OK).send(responser.success(category, `Kategori ${input.name} Diperbarui`))
-
-        } catch (err) {
-
-            if (err) {
-                this.removeFile(req)
-
-                return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Terjadi Kesalahan. Tidak Dapat Mengubah Kategori, Harap Cek Input", HttpStatus.BAD_REQUEST))
-
-            }
+        let categoryObject = {
+            "sku": input.sku,
+            "slug": input.slug,
+            "name": input.name,
+            "position": input.position,
+            "icon": "",
+            "image": "",
+            "status": input.status,
+            "additional": input.additional,
+            "description": input.description
         }
+
+        if (req.files.image_category) {
+
+            for (let i = 0; i < req.files.image_category.length; i++) {
+                categoryObject.image = req.files.image_category[i].url
+            }
+
+        }
+
+        if (req.files.icon) {
+
+            for (let i = 0; i < req.files.icon.length; i++) {
+                categoryObject.icon = req.files.icon[i].url
+            }
+
+        }
+
+        const category = await CategoryModel.findOneAndUpdate(
+            req.params.categoryId, {
+            $set: categoryObject
+        }, {
+            new: true
+        }).select({
+            "_id": 1,
+            "sku": 1,
+            "slug": 1,
+            "name": 1,
+            "position": 1,
+            "image": 1,
+            "icon": 1,
+            "status": 1,
+            "additional": 1,
+            "description": 1,
+            "createdAt": 1,
+            "updatedAt": 1
+        })
+
+        this.removeFile(isCategoryExists, "update")
+
+        return res.status(HttpStatus.OK).send(responser.success(category, `Kategori ${input.name} Diperbarui`))
+
+        // } catch (err) {
+
+        //     if (err) {
+        //         if (req) {
+        //             this.removeFile(req)
+        //         }
+
+        //         console.log(err)
+
+        //         return res.status(HttpStatus.BAD_REQUEST).send(responser.error(err, HttpStatus.BAD_REQUEST))
+
+        //     }
+        // }
     }
 
     async deleteCategoryById(req, res) {
@@ -425,16 +429,30 @@ const CategoryController = class CategoryController {
 
             if (req.files.image_category) {
 
-                for (let i = 0; i < req.files.image_category.length; i++) {
-                    fs.unlinkSync(req.files.image_category[i].path)
+                try {
+                    for (let i = 0; i < req.files.image_category.length; i++) {
+                        fs.unlinkSync(req.files.image_category[i].path, function (err) {
+                            if (err) return
+                        })
+                    }
+                }
+                catch (err) {
+                    return
                 }
 
             }
 
             if (req.files.icon) {
+                try {
 
-                for (let i = 0; i < req.files.icon.length; i++) {
-                    fs.unlinkSync(req.files.icon[i].path)
+                    for (let i = 0; i < req.files.icon.length; i++) {
+                        fs.unlinkSync(req.files.icon[i].path, function (err) {
+                            if (err) return
+                        })
+                    }
+                }
+                catch (err) {
+                    return
                 }
 
             }
@@ -444,12 +462,25 @@ const CategoryController = class CategoryController {
 
 
             if (req.image) {
-                fs.unlinkSync("public/" + req.image)
+                try {
+
+                    fs.unlink("public/" + req.image)
+                }
+                catch (err) {
+                    return
+                }
 
             }
 
             if (req.icon) {
-                fs.unlinkSync("public/" + req.icon)
+                try {
+                    fs.unlinkSync("public/" + req.icon, function (err) {
+                        if (err) return
+                    })
+                }
+                catch (err) {
+                    return
+                }
 
             }
         }
