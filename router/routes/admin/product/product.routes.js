@@ -17,6 +17,8 @@ var imageProduct = multer({
 
 router.get('/', (req, res) => ProductController.getProducts(req, res))
 
+router.get('/discounts', (req, res) => ProductController.getAllProductsOnDiscount(req, res))
+
 router.get('/stock/limit', (req, res) => ProductController.getStockByLimit(req, res))
 
 router.get('/category/:categoryId', (req, res) => ProductController.getProductsByCategoryId(req, res))

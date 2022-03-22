@@ -5,6 +5,7 @@ const ProductModel = require('@model/product/product.model')
 const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
+const date = require('@helper/date')
 
 var fs = require('fs');
 
@@ -66,13 +67,94 @@ const ProductController = class ProductController {
         }
     }
 
+    async getAllProductsOnDiscount(req, res) {
+
+
+        try {
+
+            let total = {
+                totalProductDiscount: 0,
+                totalProductExpiredDiscount: 0,
+                products: []
+            }
+
+            let countProducts = await ProductModel.aggregate([
+                {
+                    $match: {
+                        "hasDiscount.isDiscount": {
+                            $eq: true,
+                        },
+                        "status": "active",
+
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$_id",
+                        totalProductOnDiscount: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            let countExpiredProductDiscount = await ProductModel.aggregate([
+                {
+                    $match: {
+                        "hasDiscount.isDiscount": {
+                            $eq: true,
+                        },
+                        "hasDiscount.discountEnd": {
+                            $lt: date.time(0).toDate(),
+                        },
+                        "status": "active",
+
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$_id",
+                        totalProductExpiredDiscount: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            let products = await ProductModel.aggregate([
+                {
+                    $match: {
+                        "hasDiscount.isDiscount": {
+                            $eq: true,
+                        },
+                        "status": "active",
+
+                    }
+                },
+                {
+                    $sort: {
+                        name: 1
+                    }
+                },
+            ])
+
+            if (countProducts.length > 0) {
+                total['totalProductDiscount'] = countProducts[0].totalProductOnDiscount
+            }
+
+            if (countExpiredProductDiscount.length > 0) {
+                total['totalProductExpiredDiscount'] = countExpiredProductDiscount[0].totalProductExpiredDiscount
+            }
+
+            total['products'] = products
+
+            return res.status(HttpStatus.OK).send(responser.success(total));
+        } catch (err) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
+        }
+    }
+
     async getStockByLimit(req, res) {
-
-        let page = parseInt(req.query.page) ?? 1
-        let show = parseInt(req.query.show) ?? 10
-
-        let sortBy = 1;
-        let orderBy = 1;
         let min_stock = parseInt(req.query.min_stock)
         let max_stock = parseInt(req.query.max_stock)
 
@@ -88,15 +170,6 @@ const ProductController = class ProductController {
             min_stock = 0
             max_stock = 99999
         }
-
-        if (!req.query.orderBy) {
-            orderBy = req.query.orderBy ? req.query.orderBy : "name"
-        }
-
-        let sort = {
-            $sort: {}
-        }
-        sort.$sort[orderBy] = sortBy
 
         // try {
 
