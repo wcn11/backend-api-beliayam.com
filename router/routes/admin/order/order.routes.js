@@ -7,6 +7,8 @@ router.get('/', (req, res) => OrderController.getOrders(req, res))
 
 router.get('/status', (req, res) => OrderController.getOrdersByStatus(req, res))
 
+router.get('/time-range', (req, res) => OrderController.getOrdersByRangeTime(req, res))
+
 router.get('/:order_id', (req, res) => OrderController.getOrderById(req, res))
 
 router.post('/', (req, res) => OrderController.placeOrder(req, res))

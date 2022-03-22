@@ -293,7 +293,7 @@ const CategoryController = class CategoryController {
         }
 
         const category = await CategoryModel.findOneAndUpdate(
-            req.params.categoryId, {
+            { _id: req.params.categoryId }, {
             $set: categoryObject
         }, {
             new: true

@@ -140,6 +140,87 @@ const OrderController = class OrderController {
         }
     }
 
+    async getOrdersByRangeTime(req, res) {
+
+        let fromDate = moment(req.query.fromDate, "YYYY-MM-DD").toDate()
+
+        let toDate = moment(req.query.toDate, "YYYY-MM-DD").toDate()
+
+        console.log(moment(req.query.fromDate, "YYYY-MM-DD").toDate())
+
+        let countTotalOrder = await OrderModel.aggregate([
+            {
+                $match: {
+                    "order_status.payment_date": {
+                        $gte: fromDate,
+                        $lte: toDate
+                    },
+                    "delivery": {
+                        $exists: false
+                    },
+                    "order_status.status": {
+                        $eq: "PAYMENT_SUCCESS"
+                    },
+                }
+            },
+            {
+                $group: {
+                    _id: 1,
+                    totalOrder: {
+                        $sum: 1,
+                    },
+                }
+            }
+        ])
+
+        let order = await OrderModel.aggregate([
+            {
+                $match: {
+                    "order_status.payment_date": {
+                        $gte: fromDate,
+                        $lte: toDate
+                    },
+                    "delivery": {
+                        $exists: false
+                    },
+                    "order_status.status": {
+                        $eq: "PAYMENT_SUCCESS"
+                    },
+                }
+            },
+            {
+                $project: {
+                    order_id: 1,
+                    bill: 1,
+                    grand_total: 1,
+                    sub_total_product: 1,
+                    sub_total_charges: 1,
+                    sub_total_voucher: 1,
+                    charges: 1,
+                    vouchers_applied: 1,
+                    platform: 1,
+                    payment: 1,
+                    user: 1,
+                    shipping_address: 1,
+                    order_status: 1,
+                    response: 1,
+                    signature: 1
+                }
+            }
+        ])
+
+        if (countTotalOrder.length > 0) {
+            countTotalOrder = countTotalOrder[0].totalOrder
+        }
+
+        let totalOrder = {
+            "totalOrder": countTotalOrder,
+            order
+        }
+
+        return res.status(HttpStatus.OK).send(responser.success(totalOrder, "OK"));
+    }
+
     async getOrdersByStatus(req, res) {
 
         try {

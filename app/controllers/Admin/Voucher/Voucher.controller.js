@@ -127,16 +127,16 @@ const VoucherController = class VoucherController {
                     "isPrivate.private": false,
                 },
             ],
-            // platform: {
-            //     $in: [platform]
-            // },
+            platform: {
+                $in: [platform]
+            },
             isActive: isActive,
-            // discountStart: {
-            //     $lte: currentDate
-            // },
-            // discountEnd: {
-            //     $gte: currentDate
-            // }
+            discountStart: {
+                $lte: currentDate
+            },
+            discountEnd: {
+                $gte: currentDate
+            }
         }).sort({
             orderBy: sortBy
         }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))

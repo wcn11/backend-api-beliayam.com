@@ -11,6 +11,8 @@ const client = redis.createClient({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT
 })
+const moment = require('moment')
+moment.locale('id-ID');
 
 const OrderModel = require('@model/order/order.model')
 
@@ -69,6 +71,54 @@ const UsersController = class UsersController {
         } catch (err) {
             return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
         }
+    }
+
+    async getUsersByRangeTime(req, res) {
+
+        let fromDate = moment(req.query.fromDate, "YYYY-MM-DD").toDate()
+
+        let toDate = moment(req.query.toDate, "YYYY-MM-DD").toDate()
+
+        let countTotalUser = await UserModel.aggregate([
+            {
+                $match: {
+                    "createdAt": {
+                        $gte: fromDate,
+                        $lte: toDate
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: 1,
+                    totalUser: {
+                        $sum: 1,
+                    },
+                }
+            }
+        ])
+
+        let users = await UserModel.aggregate([
+            {
+                $match: {
+                    "createdAt": {
+                        $gte: fromDate,
+                        $lte: toDate
+                    }
+                }
+            }
+        ])
+
+        if (countTotalUser.length > 0) {
+            countTotalUser = countTotalUser[0].totalUser
+        }
+
+        let totalUser = {
+            "totalUser": countTotalUser,
+            users
+        }
+
+        return res.status(HttpStatus.OK).send(responser.success(totalUser, "OK"));
     }
 
     async getUserById(req, res) {

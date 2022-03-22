@@ -5,12 +5,16 @@ exports.time = (value = 0, time = 'hour') => {
     return moment().add(value, time)
 };
 
+exports.custom = (value, format) => {
+    return moment(value)
+};
+
 exports.currentTime = (value = 7, time = 'hour') => {
     return moment().add(value, time)
 };
 
 exports.format = (value, format = "YYYY-MM-DD HH:mm:ss") => {
-    return moment(value) //.format(format)
+    return moment(value).format(format)
 };
 
 exports.beginOf = (startOf = 'day') => {
