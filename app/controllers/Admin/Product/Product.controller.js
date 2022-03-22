@@ -66,6 +66,100 @@ const ProductController = class ProductController {
         }
     }
 
+    async getStockByLimit(req, res) {
+
+        let page = parseInt(req.query.page) ?? 1
+        let show = parseInt(req.query.show) ?? 10
+
+        let sortBy = 1;
+        let orderBy = 1;
+        let min_stock = parseInt(req.query.min_stock)
+        let max_stock = parseInt(req.query.max_stock)
+
+        if (!req.query.min_stock || req.query.min_stock === NaN) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Param 'min_stock' is not a valid number", HttpStatus.BAD_REQUEST));
+        }
+
+        if (!req.query.max_stock || req.query.max_stock === NaN) {
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Param 'max_stock' is not a valid number", HttpStatus.BAD_REQUEST));
+        }
+
+        if (!req.query.min_stock > req.query.max_stock) {
+            min_stock = 0
+            max_stock = 99999
+        }
+
+        if (!req.query.orderBy) {
+            orderBy = req.query.orderBy ? req.query.orderBy : "name"
+        }
+
+        let sort = {
+            $sort: {}
+        }
+        sort.$sort[orderBy] = sortBy
+
+        // try {
+
+        let countTotalProduct = await ProductModel.aggregate([
+            {
+                $match: {
+                    "stock": {
+                        $gte: min_stock,
+                        $lte: max_stock
+                    },
+                    "status": 'active',
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    totalProduct: {
+                        $sum: 1,
+                    },
+                    totalStock: {
+                        $sum: "$stock"
+                    }
+                }
+            }
+        ])
+
+        if (countTotalProduct.length > 0) {
+            countTotalProduct['totalProduct'] = countTotalProduct[0].totalProduct
+            countTotalProduct['totalStock'] = countTotalProduct[0].totalStock
+        }
+
+        countTotalProduct['totalProduct']
+
+        let products = await ProductModel.aggregate([
+            {
+                $match: {
+                    "stock": {
+                        $gte: min_stock,
+                        $lte: max_stock
+                    },
+                    "status": 'active',
+
+                }
+            },
+            {
+                $sort: {
+                    stock: 1
+                }
+            },
+        ])
+
+        let totalProduct = {
+            "totalProduct": countTotalProduct['totalProduct'],
+            "totalStock": countTotalProduct['totalStock'],
+            products
+        }
+
+        return res.status(HttpStatus.OK).send(responser.success(totalProduct, "OK"));
+        // } catch (err) {
+        //     return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
+        // }
+    }
+
     async getProductsByCategoryId(req, res) {
 
         const { error } = getProductsByCategoryIdValidation(req.query)

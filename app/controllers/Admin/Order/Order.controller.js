@@ -108,7 +108,9 @@ const OrderController = class OrderController {
                         shipping_address: 1,
                         order_status: 1,
                         response: 1,
-                        signature: 1
+                        signature: 1,
+                        createdAt: 1,
+                        updatedAt: 1
                     }
                 },
                 { $skip: (page - 1) * parseInt(show) },
@@ -145,8 +147,6 @@ const OrderController = class OrderController {
         let fromDate = moment(req.query.fromDate, "YYYY-MM-DD").toDate()
 
         let toDate = moment(req.query.toDate, "YYYY-MM-DD").toDate()
-
-        console.log(moment(req.query.fromDate, "YYYY-MM-DD").toDate())
 
         let countTotalOrder = await OrderModel.aggregate([
             {
@@ -204,7 +204,9 @@ const OrderController = class OrderController {
                     shipping_address: 1,
                     order_status: 1,
                     response: 1,
-                    signature: 1
+                    signature: 1,
+                    createdAt: 1,
+                    updatedAt: 1
                 }
             }
         ])
@@ -312,7 +314,9 @@ const OrderController = class OrderController {
                         shipping_address: 1,
                         order_status: 1,
                         response: 1,
-                        signature: 1
+                        signature: 1,
+                        createdAt: 1,
+                        updatedAt: 1
                     }
                 },
                 { $skip: (page - 1) * parseInt(show) },
@@ -432,7 +436,9 @@ const OrderController = class OrderController {
                         shipping_address: 1,
                         order_status: 1,
                         response: 1,
-                        signature: 1
+                        signature: 1,
+                        createdAt: 1,
+                        updatedAt: 1
                     }
                 },
                 { $skip: (page - 1) * parseInt(show) },

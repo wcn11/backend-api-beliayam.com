@@ -50,9 +50,16 @@ const CategorySchema = mongoose.Schema({
     description: {
         type: String,
         required: false,
-    }
-}, {
-    timestamps: { currentTime: () => Math.floor(Date.now() / 1000) }
+    },
+
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now()
+    },
 })
 
 module.exports = mongoose.model('category', CategorySchema)
