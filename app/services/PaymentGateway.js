@@ -1,4 +1,5 @@
 
+const PaymentURL = require('@utility/payment/paymentURL.lists')
 const axios = require("axios");
 const crypto = require('crypto');
 
@@ -30,7 +31,7 @@ const PaymentGateway = class PaymentGateway {
     async send(url, data, method = 'post') {
 
         return await axios({
-            url: `${process.env.FASPAY_BASE_URL}` + url,
+            url: url,
             method: method,
             headers: {
                 "Content-Type": "application/json"
@@ -87,7 +88,7 @@ const PaymentGateway = class PaymentGateway {
     async postDataTransaction(data) {
 
         const md5 = crypto.createHash('md5', process.env.SIGNATURE_SECRET)
-            .update(process.env.FASPAY_USER_ID + process.env.FASPAY_PASSWORD)
+            .update(PaymentURL.FASPAY_USER_ID + PaymentURL.FASPAY_PASSWORD)
             .digest('hex')
 
         const signature = crypto.createHash('sha1', process.env.SIGNATURE_SECRET)
@@ -97,8 +98,8 @@ const PaymentGateway = class PaymentGateway {
         const response = await this.send('/cvr/100001/10',
             {
                 "request": "List of Payment Gateway Channel Beliayam.com",
-                "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                "merchant": process.env.FASPAY_MERCHANT_NAME,
+                "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
+                "merchant": PaymentURL.FASPAY_MERCHANT_NAME,
                 "signature": signature
             },
             "post"

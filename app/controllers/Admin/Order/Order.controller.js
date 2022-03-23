@@ -11,7 +11,7 @@ const VoucherModel = require('@model/voucher/voucher.model')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const PaymentGateway = require('@service/PaymentGateway')
-// const PaymentLists = require('@utility/payment/payment.lists')
+const PaymentURL = require('@utility/payment/paymentURL.lists')
 const PaymentResponse = require('@utility/payment/paymentResponse.lists')
 const PaymentStatus = require('@utility/payment/paymentStatus.lists')
 
@@ -640,19 +640,17 @@ const OrderController = class OrderController {
 
             if (parseInt(isOrderExist.payment.pg_code) !== 101) {
 
-                const url = "/cvr/100005/10"
-
                 let postDataObject = {
                     "request": "Canceling Payment",
                     "trx_id": isOrderExist.response.trx_id,
-                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                    "merchant": process.env.FASPAY_MERCHANT_NAME,
+                    "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
+                    "merchant": PaymentURL.FASPAY_MERCHANT_NAME,
                     "bill_no": isOrderExist.bill.bill_no,
                     "payment_cancel": "Pesanan dibatalkan",
                     "signature": isOrderExist.signature
                 }
 
-                const paymentGateway = await PaymentGateway.send(url, postDataObject)
+                const paymentGateway = await PaymentGateway.send(`${PaymentURL.CANCEL_TRANSACTION.baseURL}/${PaymentURL.CANCEL_TRANSACTION.endpoint}`, postDataObject)
 
                 let paymentStatus = 8
 
@@ -866,9 +864,9 @@ const OrderController = class OrderController {
                 return res.status(HttpStatus.OK).send(responser.error("Pengguna belum membayar pesanan!", HttpStatus.OK))
             }
 
-            if (isOrderExist.order_status !== "PAYMENT_SUCCESS") {
-                return res.status(HttpStatus.OK).send(responser.error("Tidak bisa meneruskan pesanan yang dibatalkan", HttpStatus.OK))
-            }
+            // if (isOrderExist.order_status !== "PAYMENT_SUCCESS") {
+            //     return res.status(HttpStatus.OK).send(responser.error("Tidak bisa meneruskan pesanan yang dibatalkan", HttpStatus.OK))
+            // }
         }
 
 

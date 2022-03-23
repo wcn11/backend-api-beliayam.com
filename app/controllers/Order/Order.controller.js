@@ -12,6 +12,7 @@ const CartModel = require('@model/cart/cart.model')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const PaymentGateway = require('@service/PaymentGateway')
+const PaymentURL = require('@utility/payment/paymentURL.lists')
 const PaymentResponse = require('@utility/payment/paymentResponse.lists')
 const PaymentStatus = require('@utility/payment/paymentStatus.lists')
 
@@ -77,7 +78,6 @@ const OrderController = class OrderController {
     }
 
 
-    // saat user melakukan pembayaran, maka stok produk berdasarkan quantity di update menjadi berkurang dahulu, jika pembayaran tidak berhasil maka kembalikan stok ke persediaan awal
     async placeOrder(req, res) {
 
         const { error } = placeOrderValidation(req.body)
@@ -152,8 +152,6 @@ const OrderController = class OrderController {
             { path: 'user' },
         ])
 
-        const url = "/cvr/300011/10"
-
         let now = moment().format('YYYY-MM-DD HH:mm:ss').toString()
 
         let later = moment().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss')
@@ -168,8 +166,8 @@ const OrderController = class OrderController {
 
         const postDataObject = {
             "request": "Request Payment Transaction",
-            "merchant_id": process.env.FASPAY_MERCHANT_ID,
-            "merchant": process.env.FASPAY_MERCHANT_NAME,
+            "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
+            "merchant": PaymentURL.FASPAY_MERCHANT_NAME,
             "bill_no": bill_no,
             "bill_reff": bill_reff,
             "bill_date": now,
@@ -303,7 +301,7 @@ const OrderController = class OrderController {
                                 "qty": items[i].details.quantity,
                                 "amount": parseInt(priceConcat),
                                 "payment_plan": "01",
-                                "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                                "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
                                 "tenor": "00"
                             })
                         } else {
@@ -320,7 +318,7 @@ const OrderController = class OrderController {
                                 "qty": items[i].details.quantity,
                                 "amount": parseInt(priceConcat),
                                 "payment_plan": "01",
-                                "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                                "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
                                 "tenor": "00"
                             })
                         }
@@ -360,7 +358,7 @@ const OrderController = class OrderController {
                     "qty": items[i].details.quantity,
                     "amount": parseInt(priceConcat),
                     "payment_plan": "01",
-                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
+                    "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
                     "tenor": "00"
                 })
 
@@ -513,8 +511,8 @@ const OrderController = class OrderController {
                 objectResponse.response = {
                     "trx_id": 0,
                     "bill_no": bill_no,
-                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                    "merchant": process.env.FASPAY_MERCHANT,
+                    "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
+                    "merchant": PaymentURL.FASPAY_MERCHANT_NAME,
                     "response_code": HttpStatus.OK,
                     "response_desc": `Metode Pembayaran Dengan ${isPaymentGatewayExist.data.pg_name}`,
                     "redirect_url": ""
@@ -537,7 +535,7 @@ const OrderController = class OrderController {
                 }
 
                 const md5 = crypto.createHash('md5', process.env.SIGNATURE_SECRET)
-                    .update(process.env.FASPAY_USER_ID + process.env.FASPAY_PASSWORD + bill_no)
+                    .update(PaymentURL.FASPAY_USER_ID + PaymentURL.FASPAY_PASSWORD + bill_no)
                     .digest('hex')
 
                 const signature = crypto.createHash('sha1', process.env.SIGNATURE_SECRET)
@@ -550,7 +548,9 @@ const OrderController = class OrderController {
 
                 postDataObject.bill_total = grand_total_concat
 
-                const paymentGateway = await PaymentGateway.send(url, postDataObject)
+                const paymentGateway = await PaymentGateway.send(`${PaymentURL.POST_DATA_TRANSACTION.baseURL}/${PaymentURL.POST_DATA_TRANSACTION.endpoint}`, postDataObject)
+
+                console.log(paymentGateway)
 
                 if (!paymentGateway.trx_id) {
 
@@ -687,14 +687,14 @@ const OrderController = class OrderController {
                 let postDataObject = {
                     "request": "Canceling Payment",
                     "trx_id": isOrderExist.response.trx_id,
-                    "merchant_id": process.env.FASPAY_MERCHANT_ID,
-                    "merchant": process.env.FASPAY_MERCHANT_NAME,
+                    "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
+                    "merchant": PaymentURL.FASPAY_MERCHANT_NAME,
                     "bill_no": req.body.order_id,
                     "payment_cancel": "Barang Habis",
                     "signature": isOrderExist.signature
                 }
 
-                const paymentGateway = await PaymentGateway.send(url, postDataObject)
+                const paymentGateway = await PaymentGateway.send(`${PaymentURL.CANCEL_TRANSACTION.baseURL}/${PaymentURL.CANCEL_TRANSACTION.endpoint}`, postDataObject)
 
                 if (!paymentGateway.trx_id) {
 

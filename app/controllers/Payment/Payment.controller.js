@@ -37,9 +37,9 @@ const PaymentController = class PaymentController {
 
         }
 
-        const signatureFromRequest = await this.getSHA1(process.env.SIGNATURE_SECRET, process.env.FASPAY_USER_ID + process.env.FASPAY_PASSWORD + request.bill_no + request.payment_status_code)
+        const signatureFromRequest = await this.getSHA1(process.env.SIGNATURE_SECRET, PaymentURL.FASPAY_USER_ID + PaymentURL.FASPAY_PASSWORD + request.bill_no + request.payment_status_code)
 
-        const signatureFromDB = await this.getSHA1(process.env.SIGNATURE_SECRET, process.env.FASPAY_USER_ID + process.env.FASPAY_PASSWORD + getOrderByTrxId.response.bill_no + request.payment_status_code)
+        const signatureFromDB = await this.getSHA1(process.env.SIGNATURE_SECRET, PaymentURL.FASPAY_USER_ID + PaymentURL.FASPAY_PASSWORD + getOrderByTrxId.response.bill_no + request.payment_status_code)
 
         if (signatureFromDB !== signatureFromRequest) {
 
@@ -253,13 +253,12 @@ const PaymentController = class PaymentController {
         let responseToPaymentGateway = {
             "response": "Payment Notification",
             "trx_id": request.trx_id,
-            "merchant_id": process.env.FASPAY_MERCHANT_ID,
-            "merchant": process.env.FASPAY_MERCHANT_NAME,
+            "merchant_id": PaymentURL.FASPAY_MERCHANT_ID,
+            "merchant": PaymentURL.FASPAY_MERCHANT_NAME,
             "bill_no": request.bill_no,
             "response_code": payment_response_code.code,
             "response_desc": payment_response_code.description,
             "response_date": date.time()
-
         }
 
         return res.status(200).send(responseToPaymentGateway);
