@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken')
+const redis = require("redis");
 
-const redis = require("@config/redis");
+const client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+})
+
 
 exports.sign = (data, audience) => {
 
@@ -27,12 +32,16 @@ exports.refreshToken = (data, audience) => {
     return refreshToken
 };
 
-exports.setCache = (audience, token, refreshToken) => {
+exports.setCache = (audience, token, refreshToken,) => {
 
-    redis.set(`${audience}`, JSON.stringify({
+    client.set(`${audience}`, JSON.stringify({
         token,
         refreshToken
-    }), process.env.REFRESH_TOKEN_TTL);
+    }), 'EX', process.env.REFRESH_TOKEN_TTL);
+    // client.set(`${audience}`, JSON.stringify({
+    //     token,
+    //     refreshToken
+    // }), process.env.REFRESH_TOKEN_TTL);
 
 }
 

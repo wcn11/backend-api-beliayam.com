@@ -237,13 +237,13 @@ const OrderController = class OrderController {
                     p[name] = 0;
                 }
                 p[name]++;
+
                 return p;
             }, {});
 
             var countsExtended = Object.keys(counts).map(k => {
                 return { name: k, total: counts[k] };
             });
-
 
             return res.status(HttpStatus.OK).send(responser.success(countsExtended, "OK"));
         } catch (err) {

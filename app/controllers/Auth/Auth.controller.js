@@ -351,6 +351,14 @@ const AuthController = class AuthController {
             );
         }
 
+        if (!user.active) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+        }
+
+        if (!user.password) {
+            res.status(HttpStatus.BAD_REQUEST).send(responser.error(`Password belum diatur. Harap masuk dengan metode ${user.registeredBy}`, HttpStatus.BAD_REQUEST));
+        }
+
         const validPass = await bcrypt.compare(req.body.password, user.password)
 
         if (!validPass) {
@@ -360,9 +368,6 @@ const AuthController = class AuthController {
             );
         }
 
-        if (!user.active) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
-        }
 
         user.otpEmail = undefined
         user.otpSms = undefined
@@ -1436,7 +1441,7 @@ const AuthController = class AuthController {
 
                 const refreshToken = uuidv4().toUpperCase()
 
-                jwt.setCache(user._id, token, refreshToken)
+                jwt.setCache(decode.aud, token, refreshToken)
 
                 const tokenList = {
 
