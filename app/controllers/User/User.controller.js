@@ -257,7 +257,7 @@ const UserController = class UserController {
         const otp = nanoid();
 
         let expiredTime = 1200000 //20 minutes on milliseconds
-        let expired = moment().add(expiredTime, 'milliseconds')
+        let expired = date.time(expiredTime, 'milliseconds')
 
         console.log(otp);
 
@@ -285,10 +285,10 @@ const UserController = class UserController {
             })
 
             SendVerifyEmail.send({
-                to: userExist.email,
+                to: req.body.new_email,
                 subject: "Verifikasi Email | Beliayam.com",
                 otp: otp,
-                name: userExist.name ?? ""
+                name: userExist.name ?? "Pelanggan Beliayam.com"
             })
 
             client.set(`emailOtp.${userExist._id}`, JSON.stringify(otp), 'EX', expiredTime);

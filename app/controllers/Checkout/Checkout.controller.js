@@ -153,6 +153,11 @@ const CheckoutController = class CheckoutController {
                 responser.error("Untuk Melanjutkan Checkout, Harap menambahkan alamat email", HttpStatus.OK))
         }
 
+        if (!user.name) {
+            return res.status(HttpStatus.OK).send(
+                responser.error("Untuk Melanjutkan Checkout, Harap Mengisi Nama Anda Pada Bagian Informasi Akun", HttpStatus.OK))
+        }
+
         // if (!user.isEmailVerified && !user.isPhoneVerified) {
         //     return res.status(HttpStatus.OK).send(
         //         responser.error("Untuk Melanjutkan Checkout, Harap Mem-verifikasi Alamat Email", HttpStatus.OK))

@@ -163,7 +163,7 @@ const AuthController = class AuthController {
         let registeredBy = req.body.registerBy // ?? 'phone'
         let registerAt = req.body.registerAt //?? 'website'
 
-        // try {
+        try {
 
             let setPassword = await bcrypt.hash(req.body.password, salt)
 
@@ -187,8 +187,6 @@ const AuthController = class AuthController {
                 }
             })
 
-        console.log(userObject)
-
             await userObject.save()
 
             SMSGateway.sendSms({
@@ -209,9 +207,9 @@ const AuthController = class AuthController {
                     }, `Kode OTP Telah Dikirm Ke Nomor ${req.body.phone}, Harap Cek Telepon Anda`)
             );
 
-        // } catch (err) {
-        //     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
-        // }
+        } catch (err) {
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+        }
     }
 
     async login(req, res) {
@@ -274,7 +272,7 @@ const AuthController = class AuthController {
 
         if (user) {
             if (user.registeredBy !== req.body.loginBy) {
-                return res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan ${user.registerBy}, harap login dengan metode ${user.registerBy}`, HttpStatus.OK));
+                return res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan metode pendaftaran ${user.registeredBy}, harap login dengan metode ${user.registeredBy}`, HttpStatus.OK));
             }
 
             if (!user.active) {
@@ -302,7 +300,7 @@ const AuthController = class AuthController {
             })
         }
 
-        user.password = undefined
+        user.password = undefined ?? null
         user.otpEmail = undefined
         user.otpSms = undefined
         user.addresses = undefined
