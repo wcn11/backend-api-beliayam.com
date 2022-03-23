@@ -673,7 +673,6 @@ const CheckoutController = class CheckoutController {
 
     async deleteProductFromCart(req, total) {
 
-
         await CartModel.updateOne({
             _id: req.body.cart.cart_id,
             "products._id": {

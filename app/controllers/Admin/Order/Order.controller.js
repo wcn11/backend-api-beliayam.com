@@ -544,7 +544,15 @@ const OrderController = class OrderController {
 
                 const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
-                let paymentStatus = this.getPaymentCode(paymentGateway)
+                let paymentStatus = 8
+
+                if (paymentGateway.payment_status_code === '') {
+
+                    paymentStatus = 7
+                } else {
+
+                    paymentStatus = this.getPaymentCode(paymentGateway)
+                }
 
                 await OrderModel.findOneAndUpdate(
                     {

@@ -7,6 +7,7 @@ const OrderModel = require('@model/order/order.model')
 const ProductModel = require('@model/product/product.model')
 const UserModel = require('@model/user/user.model')
 const VoucherModel = require('@model/voucher/voucher.model')
+const CartModel = require('@model/cart/cart.model')
 
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
@@ -448,12 +449,11 @@ const OrderController = class OrderController {
         }
 
         let charges = await this.getAllCharge()
-
         let sub_total_charge = 0
 
-        await charges.reduce(async (accumulator, charge) => {
+        await charges.reduce((accumulator, charge) => {
 
-            let platform = await charge.platform.map(value => {
+            let platform = charge.platform.map(value => {
                 if (value === "all") {
                     return true
                 } else if (value.toLowerCase() === req.body.platform.toLowerCase()) {
@@ -467,6 +467,7 @@ const OrderController = class OrderController {
 
                 if (charge.chargeBy.toLowerCase() === "price") {
                     sub_total_charge += (accumulator + parseInt(charge.chargeValue))
+
                     return accumulator
 
                 }
@@ -619,7 +620,7 @@ const OrderController = class OrderController {
                 isEmailVerified: user.isEmailVerified,
                 registeredBy: user.registeredBy,
                 registeredAt: user.registeredAt,
-                isActive: user.isActive,
+                active: user.active,
                 isPhoneVerified: user.isPhoneVerified,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
@@ -640,6 +641,8 @@ const OrderController = class OrderController {
         await saveOrder.save()
 
         await this.setStockProducts(items)
+
+        await this.deleteProductFromCart(req.body.user_id, items, sub_total)
 
         await CheckoutModel.deleteOne({
             user: user._id
@@ -930,6 +933,63 @@ const OrderController = class OrderController {
             }
         })
 
+    }
+
+    async deleteProductFromCart(user_id, items, sub_total) {
+
+        let cart = await CartModel.findOne({
+            user: user_id,
+        })
+
+        if (!cart) {
+            return
+        }
+
+        let product_ids = []
+
+        let subTotal = 0
+        let baseTotal = 0
+        let totalQuantity = 0
+
+        for (let i = 0; i < items.length; i++) {
+            product_ids.push(items[i].product._id)
+            totalQuantity += items[i].details.quantity
+        }
+
+        totalQuantity = cart.totalQuantity - totalQuantity
+        subTotal = cart.subTotal - sub_total
+        baseTotal = cart.subTotal - sub_total
+
+
+
+        await CartModel.updateOne({
+            user: user_id,
+            "products._id": {
+                $in: product_ids
+            }
+        }, {
+            $unset: {
+                "products.$": {
+                    $in: [product_ids]
+                }
+            }
+        })
+
+        await CartModel.updateOne({
+            _id: cart._id,
+            products: {
+                $eq: null
+            }
+        }, {
+            $set: {
+                subTotal: sub_total,
+                baseTotal: sub_total,
+                totalQuantity: totalQuantity
+            },
+            $pull: {
+                "products": null
+            }
+        })
     }
 
     async getOrderByOrderId(order_id) {
