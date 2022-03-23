@@ -73,6 +73,22 @@ const UsersController = class UsersController {
         }
     }
 
+    async getTotalUsers(req, res) {
+
+        try {
+
+            let user = await UserModel.find({}).count();
+
+            let total = {
+                totalUser: user
+            }
+
+            return res.status(HttpStatus.OK).send(responser.success(total));
+        } catch (err) {
+            return res.status(HttpStatus.NOT_FOUND).send(responser.error("Invalid Format", HttpStatus.NOT_FOUND));
+        }
+    }
+
     async getUsersByRangeTime(req, res) {
 
         let fromDate = moment(req.query.fromDate, "YYYY-MM-DD").toDate()

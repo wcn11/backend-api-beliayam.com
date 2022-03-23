@@ -4,6 +4,8 @@ const UserController = require('@controller/Admin/Users/Users.controller')
 
 router.get('/', (req, res) => UserController.getUsers(req, res))
 
+router.get('/total', (req, res) => UserController.getTotalUsers(req, res))
+
 router.get('/time-range/client', (req, res) => UserController.getUsersByRangeTime(req, res))
 
 router.get('/:userId', (req, res) => UserController.getUserById(req, res))

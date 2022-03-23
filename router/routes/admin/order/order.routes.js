@@ -7,6 +7,10 @@ router.get('/', (req, res) => OrderController.getOrders(req, res))
 
 router.get('/status', (req, res) => OrderController.getOrdersByStatus(req, res))
 
+router.get('/by-payment-method', (req, res) => OrderController.getOrdersByPaymentMethod(req, res))
+
+router.get('/by-payment-gateway', (req, res) => OrderController.getOrdersByPaymentGateway(req, res))
+
 router.get('/time-range', (req, res) => OrderController.getOrdersByRangeTime(req, res))
 
 router.get('/:order_id', (req, res) => OrderController.getOrderById(req, res))

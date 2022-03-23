@@ -11,6 +11,7 @@ const VoucherModel = require('@model/voucher/voucher.model')
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 const PaymentGateway = require('@service/PaymentGateway')
+// const PaymentLists = require('@utility/payment/payment.lists')
 const PaymentResponse = require('@utility/payment/paymentResponse.lists')
 const PaymentStatus = require('@utility/payment/paymentStatus.lists')
 
@@ -19,6 +20,8 @@ const crypto = require('crypto');
 
 const moment = require('moment')
 moment.locale('id-ID');
+
+const _ = require('lodash');
 
 const date = require('@helper/date')
 
@@ -140,6 +143,113 @@ const OrderController = class OrderController {
 
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
         }
+    }
+
+    async getOrdersByPaymentMethod(req, res) {
+
+        try {
+            let countTotalOrderByPaymentCod = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "delivery": {
+                            $exists: true
+                        },
+                        "payment.pg_code": {
+                            $eq: "101"
+                        },
+                    }
+                },
+                {
+                    $group: {
+                        _id: 1,
+                        totalOrderCod: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            let totalPaymentCod = 0
+
+            if (countTotalOrderByPaymentCod.length > 0) {
+                totalPaymentCod += countTotalOrderByPaymentCod[0].totalOrderCod
+            }
+
+            let countTotalOrderByPaymentTransfer = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "delivery": {
+                            $exists: true
+                        },
+                        "payment.pg_code": {
+                            $ne: "101"
+                        },
+                    }
+                },
+                {
+                    $group: {
+                        _id: 1,
+                        totalOrderTransfer: {
+                            $sum: 1,
+                        },
+                    }
+                }
+            ])
+
+            let totalPaymentTransfer = 0
+
+            if (countTotalOrderByPaymentTransfer.length > 0) {
+                totalPaymentTransfer += countTotalOrderByPaymentTransfer[0].totalOrderTransfer
+            }
+
+            let totalOrder = {
+                totalPaymentCod,
+                totalPaymentTransfer
+            }
+            return res.status(HttpStatus.OK).send(responser.success(totalOrder, "OK"));
+        } catch (err) {
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error(HttpStatus.INTERNAL_SERVER_ERROR, "Terjadi Kesalahan"));
+        }
+
+    }
+
+    async getOrdersByPaymentGateway(req, res) {
+
+        try {
+            let countTotalOrderByPaymentGateway = await OrderModel.aggregate([
+                {
+                    $match: {
+                        "delivery": {
+                            $exists: true
+                        },
+                        "payment.pg_code": {
+                            $eq: "101"
+                        },
+                    }
+                }
+
+            ])
+
+            var counts = countTotalOrderByPaymentGateway.reduce((p, c) => {
+
+                var name = c.payment.pg_name;
+                if (!p.hasOwnProperty(name)) {
+                    p[name] = 0;
+                }
+                p[name]++;
+                return p;
+            }, {});
+
+            var countsExtended = Object.keys(counts).map(k => {
+                return { name: k, total: counts[k] };
+            });
+
+
+            return res.status(HttpStatus.OK).send(responser.success(countsExtended, "OK"));
+        } catch (err) {
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error(HttpStatus.INTERNAL_SERVER_ERROR, "Terjadi Kesalahan Saat Memproses Data"));
+        }
+
     }
 
     async getOrdersByRangeTime(req, res) {

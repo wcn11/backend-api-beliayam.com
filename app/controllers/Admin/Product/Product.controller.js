@@ -67,6 +67,31 @@ const ProductController = class ProductController {
         }
     }
 
+    async getTotalProducts(req, res) {
+
+        try {
+
+            let totalNotActiveProducts = await ProductModel.find({
+                status: "nonactive",
+            }).count()
+
+            let totalActiveProducts = await ProductModel.find({
+                status: "active",
+            }).count()
+
+            let totalProduct = {
+                totalNotActiveProducts,
+                totalActiveProducts
+            }
+
+            return res.status(HttpStatus.OK).send(responser.success(totalProduct));
+
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
+
     async getAllProductsOnDiscount(req, res) {
 
 
