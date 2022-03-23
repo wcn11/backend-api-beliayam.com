@@ -693,8 +693,6 @@ const OrderController = class OrderController {
 
                 const paymentGateway = await PaymentGateway.send(url, postDataObject)
 
-                console.log(paymentGateway)
-
                 if (!paymentGateway.trx_id) {
 
                     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
