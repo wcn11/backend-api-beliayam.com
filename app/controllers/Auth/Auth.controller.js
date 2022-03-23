@@ -163,7 +163,7 @@ const AuthController = class AuthController {
         let registeredBy = req.body.registerBy // ?? 'phone'
         let registerAt = req.body.registerAt //?? 'website'
 
-        try {
+        // try {
 
             let setPassword = await bcrypt.hash(req.body.password, salt)
 
@@ -187,6 +187,8 @@ const AuthController = class AuthController {
                 }
             })
 
+        console.log(userObject)
+
             await userObject.save()
 
             SMSGateway.sendSms({
@@ -207,9 +209,9 @@ const AuthController = class AuthController {
                     }, `Kode OTP Telah Dikirm Ke Nomor ${req.body.phone}, Harap Cek Telepon Anda`)
             );
 
-        } catch (err) {
-            res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
-        }
+        // } catch (err) {
+        //     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Sementara Waktu Tidak Dapat Mendaftar", HttpStatus.INTERNAL_SERVER_ERROR))
+        // }
     }
 
     async login(req, res) {

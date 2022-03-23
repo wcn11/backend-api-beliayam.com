@@ -254,6 +254,13 @@ const UserController = class UserController {
             return res.status(HttpStatus.OK).send(responser.error("Alamat Email Yang Anda Masukkan Telah Terdaftar", HttpStatus.OK));
         }
 
+        const otp = nanoid();
+
+        let expiredTime = 1200000 //20 minutes on milliseconds
+        let expired = moment().add(expiredTime, 'milliseconds')
+
+        console.log(otp);
+
         try {
             const user = await User.updateOne({
                 _id: req.body.user_id
@@ -261,10 +268,10 @@ const UserController = class UserController {
                 $set: {
                     email: req.body.new_email,
                     "otpEmail": {
-                        "code": 0,
+                        "code": otp,
                         "attempts": 0,
                         "expired": false,
-                        "expiredDate": Date.now()
+                        "expiredDate": expired
                     },
                     "isEmailVerified": false
                 }
@@ -276,6 +283,15 @@ const UserController = class UserController {
                 addresses: 0,
                 password: 0
             })
+
+            SendVerifyEmail.send({
+                to: userExist.email,
+                subject: "Verifikasi Email | Beliayam.com",
+                otp: otp,
+                name: userExist.name ?? ""
+            })
+
+            client.set(`emailOtp.${userExist._id}`, JSON.stringify(otp), 'EX', expiredTime);
 
             res.status(HttpStatus.OK).send(responser.success(user,
                 "Email Diperbarui, Harap Verifikasi Kembali Email Yang Baru",
@@ -555,7 +571,8 @@ const UserController = class UserController {
             to: userExist.email,
             subject: "Verifikasi Email Anda | PT. BELI AYAM COM",
             text: `Kode Verifikasi Email Anda Adalah ${otp}`,
-            name: userExist.name ?? ""
+            name: userExist.name ?? "",
+            otp: otp
         })
 
         client.set(`emailOtp.${userExist._id}`, JSON.stringify(otp), 'EX', expiredTime);

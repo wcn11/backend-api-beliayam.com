@@ -223,7 +223,7 @@ const OrderController = class OrderController {
                             $exists: true
                         },
                         "payment.pg_code": {
-                            $eq: "101"
+                            $ne: "101"
                         },
                     }
                 }
@@ -864,9 +864,6 @@ const OrderController = class OrderController {
                 return res.status(HttpStatus.OK).send(responser.error("Pengguna belum membayar pesanan!", HttpStatus.OK))
             }
 
-            // if (isOrderExist.order_status !== "PAYMENT_SUCCESS") {
-            //     return res.status(HttpStatus.OK).send(responser.error("Tidak bisa meneruskan pesanan yang dibatalkan", HttpStatus.OK))
-            // }
         }
 
 
