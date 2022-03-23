@@ -70,7 +70,7 @@ const ChargeController = class ChargeController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isValid = await this.isIdValid(req.params.chargeId)
+        let isValid = this.isIdValid(req.params.chargeId)
 
         if (!isValid) {
             return res.status(HttpStatus.BAD_REQUEST).send(
@@ -80,7 +80,9 @@ const ChargeController = class ChargeController {
 
         try {
 
-            let isChargeExist = await this.getChargeByChargeBy(req.params.chargeId)
+            let isChargeExist = await ChargeModel.findOne({
+                _id: req.params.chargeId
+            })
 
             if (!isChargeExist) {
                 return res.status(HttpStatus.NOT_FOUND).send(responser.validation("Biaya Tidak Ditemukan", HttpStatus.NOT_FOUND))
