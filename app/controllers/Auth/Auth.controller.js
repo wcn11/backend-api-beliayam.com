@@ -352,11 +352,11 @@ const AuthController = class AuthController {
         }
 
         if (!user.active) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
+            return res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
         if (!user.password) {
-            res.status(HttpStatus.BAD_REQUEST).send(responser.error(`Password belum diatur. Harap masuk dengan metode ${user.registeredBy}`, HttpStatus.BAD_REQUEST));
+            return res.status(HttpStatus.OK).send(responser.error(`Password belum diatur. Harap masuk dengan metode ${user.registeredBy}`, HttpStatus.OK));
         }
 
         const validPass = await bcrypt.compare(req.body.password, user.password)
