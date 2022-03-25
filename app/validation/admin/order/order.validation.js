@@ -32,9 +32,7 @@ const setDeliveryOrderStatusValidation = (data) => {
     const schema = Joi.object({
         order_id: Joi.string().required(),
         delivery: Joi.object({
-            isDelivery: Joi.boolean().required(),
-            deliveryDate: Joi.date().allow(null, ""),
-            // user_id: Joi.string().required()
+            isDelivery: Joi.boolean().required()
         }),
     })
 
