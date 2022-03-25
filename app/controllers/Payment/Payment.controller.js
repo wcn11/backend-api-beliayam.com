@@ -11,6 +11,8 @@ const PaymentResponse = require('@utility/payment/paymentResponse.lists')
 const paymentStatus = require('@utility/payment/paymentStatus.lists')
 const responser = require('@responser')
 
+const PaymentURL = require('@utility/payment/paymentURL.lists')
+
 const date = require('@helper/date')
 
 const PaymentController = class PaymentController {
