@@ -877,7 +877,7 @@ const OrderController = class OrderController {
                 $set: {
                     delivery: {
                         isDelivery: req.body.delivery.isDelivery,
-                        deliveryDate: new Date.now()
+                        deliveryDate: date.time().toDate()
                     }
                 }
 
