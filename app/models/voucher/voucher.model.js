@@ -11,7 +11,7 @@ const VoucherSchema = mongoose.Schema({
     },
     banner: {
         type: String,
-        default: false
+        default: ""
     },
     discountBy: {
         type: String,
@@ -24,7 +24,8 @@ const VoucherSchema = mongoose.Schema({
     },
     minimumOrderBy: {
         type: String,
-        enum: ['quantity', "percent"],
+        enum: ['quantity', "total"],
+        default: "quantity",
         required: false
     },
     minimumOrderValue: {
@@ -69,9 +70,9 @@ const VoucherSchema = mongoose.Schema({
         type: String
     },
     platform: [{
-        type: Array,
+        type: String,
         enum: ['all', 'website', "mobile"],
-        default: ['all']
+        default: 'all'
     }]
 
 }, {

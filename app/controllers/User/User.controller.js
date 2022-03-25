@@ -113,15 +113,36 @@ const UserController = class UserController {
 
         var otp = parseInt(Math.random() * 10000);
 
-        let sendSms = SMSGateway.sendSms({
+        //5 minutes on milliseconds
+        let expiredTime = 300000
+        let expired = date.time(expiredTime, 'milliseconds')
+
+        if (req.query.sendSms === 'false') {
+
+            await User.updateOne({
+                _id: req.body.user_id
+            }, {
+                phone: req.body.phone,
+                isPhoneVerified: false,
+                otpSms: {
+                    code: 0,
+                    attempts: 0,
+                    expiredDate: Date.now(),
+                    expired: false
+                }
+            }, {
+                upsert: true
+            })
+            return res.status(HttpStatus.OK).send(
+                responser.success({}, "Nomor Telepon Telah Ditambahkan")
+            );
+        }
+
+        SMSGateway.sendSms({
             to: req.body.phone,
             text: `Masukan Kode text: ${otp} ini pada aplikasi beliayamcom. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
 
         });
-
-        //5 minutes on milliseconds
-        let expiredTime = 300000
-        let expired = date.time(expiredTime, 'milliseconds')
 
         await User.updateOne({
             _id: req.body.user_id

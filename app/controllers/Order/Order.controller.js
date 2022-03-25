@@ -615,7 +615,7 @@ const OrderController = class OrderController {
             },
             user: {
                 _id: user._id,
-                name: user._name,
+                name: user.name,
                 email: user.email,
                 isEmailVerified: user.isEmailVerified,
                 registeredBy: user.registeredBy,

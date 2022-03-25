@@ -233,34 +233,41 @@ const VoucherController = class VoucherController {
 
         try {
 
-        let voucherObject = {
-            voucherName: input.voucherName,
-            voucherCode: input.voucherCode,
-            // banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
-            discountBy: input.discountBy,
-            discountValue: input.discountValue,
-            minimumOrderValue: input.minimumOrderValue,
-            max: input.max,
-            termsAndConditions: input.termsAndConditions,
-            discountStart: input.discountStart,
-            discountEnd: input.discountEnd,
-            isActive: input.isActive ?? false,
-            platform: ["all"],
-        }
-
-        if (input.private) {
-            voucherObject.isPrivate = {
-                private: input.private,
-                maxUser: input.maxUser,
-                users: input.user_id
+            let voucherObject = {
+                voucherName: input.voucherName,
+                voucherCode: input.voucherCode,
+                // banner: req.file ? `images/voucher/${req.file.filename}` : "images/voucher/default.jpg", //req.file ? req.file.path : "images/voucher/default.jpg",
+                discountBy: input.discountBy,
+                discountValue: input.discountValue,
+                minimumOrderBy: input.minimumOrderBy,
+                minimumOrderValue: input.minimumOrderValue,
+                max: input.max,
+                termsAndConditions: input.termsAndConditions,
+                discountStart: input.discountStart,
+                discountEnd: input.discountEnd,
+                isActive: input.isActive ?? false,
+                platform: "",
             }
-        }
 
-        let voucher = new VoucherModel(voucherObject)
+            if (input.private) {
+                voucherObject.isPrivate = {
+                    private: input.private,
+                    maxUser: input.maxUser,
+                    users: input.user_id
+                }
+            }
 
-        const savedVoucher = await voucher.save()
+            if (input.platform) {
+                voucherObject['platform'] = input.platform
+            } else {
+                voucherObject['platform'] = 'all'
+            }
 
-        return res.status(HttpStatus.OK).send(responser.success(savedVoucher, "Voucher Ditambahkan"))
+            let voucher = new VoucherModel(voucherObject)
+
+            const savedVoucher = await voucher.save()
+
+            return res.status(HttpStatus.OK).send(responser.success(savedVoucher, "Voucher Ditambahkan"))
 
         } catch (e) {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Membuat Voucher", HttpStatus.BAD_REQUEST))
@@ -303,6 +310,7 @@ const VoucherController = class VoucherController {
                     // banner: req.body.banner,
                     discountBy: req.body.discountBy,
                     discountValue: req.body.discountValue,
+                        minimumOrderBy: input.minimumOrderBy,
                     minimumOrderValue: req.body.minimumOrderValue,
                     isPrivate: {
                         private: input.private ?? false,
@@ -323,9 +331,10 @@ const VoucherController = class VoucherController {
             }).select({
                 voucherName: 1,
                 voucherCode: 1,
-                // banner: 1,
+                banner: 1,
                 discountBy: 1,
                 discountValue: 1,
+                minimumOrderBy: 1,
                 minimumOrderValue: 1,
                 isPrivate: 1,
                 voucherMaxUse: 1,

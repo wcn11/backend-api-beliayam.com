@@ -149,6 +149,7 @@ const VoucherController = class VoucherController {
                         banner: 1,
                         discountBy: 1,
                         discountValue: 1,
+                        minimumOrderBy: 1,
                         minimumOrderValue: 1,
                         termsAndConditions: 1,
                         isActive: 1,

@@ -16,6 +16,7 @@ const createNewVoucherValidation = (data) => {
         termsAndConditions: Joi.string().max(500),
         discountStart: Joi.date().required(),
         discountEnd: Joi.date().required(),
+        platform: Joi.string().valid('all', 'website', 'mobile').required(),
         isActive: Joi.bool(),
         description: Joi.string().max(500)
     })

@@ -7,6 +7,7 @@ const createNewVoucherValidation = (data) => {
         banner: Joi.any(),
         discountBy: Joi.string().valid('percent', 'price').required(),
         discountValue: Joi.number(),
+        minimumOrderBy: Joi.string().valid('quantity', 'price'),
         minimumOrderValue: Joi.number(),
         private: Joi.boolean(),
         maxUser: Joi.number().max(10).default(0),
@@ -15,6 +16,7 @@ const createNewVoucherValidation = (data) => {
         termsAndConditions: Joi.string().max(500),
         discountStart: Joi.date().required(),
         discountEnd: Joi.date().required(),
+        platform: Joi.string().valid('all', 'website', 'mobile'),
         isActive: Joi.bool(),
         description: Joi.string().max(500)
 
@@ -79,6 +81,7 @@ const updateVoucherByVoucherIdValidation = (data) => {
         banner: Joi.any(),
         discountBy: Joi.string().valid('percent', 'price').required(),
         discountValue: Joi.number(),
+        minimumOrderBy: Joi.string().valid('quantity', 'price'),
         minimumOrderValue: Joi.number(),
         private: Joi.boolean(),
         maxUser: Joi.number().max(10).default(0),
@@ -89,7 +92,7 @@ const updateVoucherByVoucherIdValidation = (data) => {
         discountEnd: Joi.date().required(),
         isActive: Joi.bool(),
         description: Joi.string().max(500),
-        // platform: Joi.string().valid('all', 'website', 'mobile'),
+        platform: Joi.string().valid('all', 'website', 'mobile')
     })
 
     return schema.validate(data)
