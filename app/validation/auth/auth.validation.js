@@ -2,7 +2,7 @@ const Joi = require('joi');
 
 const registerValidator = (data) => {
     const schema = Joi.object({
-        name: Joi.string().min(6).max(100).required(),
+        name: Joi.string().min(2).max(100).required(),
         email: Joi.string().lowercase().min(6).max(255).required().email(),
         password: Joi.string().min(6).max(255).required(),
         registerBy: Joi.string().min(3).max(25),
@@ -14,7 +14,7 @@ const registerValidator = (data) => {
 
 const registerByPhoneValidator = (data) => {
     const schema = Joi.object({
-        phone: Joi.string().min(6).max(18).required(),
+        phone: Joi.string().min(8).max(18).required(),
         password: Joi.string().min(6).max(255).required(),
         registerBy: Joi.string().min(3).max(25),
         registerAt: Joi.string().min(3).max(25)
@@ -34,7 +34,7 @@ const loginValidator = (data) => {
 
 const loginBySocialValidator = (data) => {
     const schema = Joi.object({
-        name: Joi.string().min(6).max(100).required(),
+        name: Joi.string().min(2).max(100).required(),
         email: Joi.string().lowercase().min(6).max(255).required().email(),
         loginBy: Joi.string().min(3).max(25),
         loginAt: Joi.string().min(3).max(25)
@@ -45,7 +45,7 @@ const loginBySocialValidator = (data) => {
 
 const loginByPhoneValidator = (data) => {
     const schema = Joi.object({
-        phone: Joi.string().min(6).max(18).required(),
+        phone: Joi.string().min(8).max(18).required(),
         password: Joi.string().min(6).max(1024).required()
     })
 

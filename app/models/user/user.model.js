@@ -15,7 +15,6 @@ const UserSchema = mongoose.Schema({
         max: 255,
         min: 6,
         trim: true,
-        unique: true,
         lowercase: true,
     },
     isEmailVerified: {
