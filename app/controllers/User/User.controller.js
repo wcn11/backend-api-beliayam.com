@@ -280,8 +280,6 @@ const UserController = class UserController {
         let expiredTime = 1200000 //20 minutes on milliseconds
         let expired = date.time(expiredTime, 'milliseconds')
 
-        console.log(otp);
-
         try {
             const user = await User.updateOne({
                 _id: req.body.user_id

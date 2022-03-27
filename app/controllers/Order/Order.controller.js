@@ -550,8 +550,6 @@ const OrderController = class OrderController {
 
                 const paymentGateway = await PaymentGateway.send(`${PaymentURL.POST_DATA_TRANSACTION.baseURL}/${PaymentURL.POST_DATA_TRANSACTION.endpoint}`, postDataObject)
 
-                console.log(paymentGateway)
-
                 if (!paymentGateway.trx_id) {
 
                     return res.status(HttpStatus.REQUEST_TIMEOUT).send(
@@ -768,9 +766,15 @@ const OrderController = class OrderController {
                                 description: PaymentResponse.ORDER_CANCELLED.description
                             },
                             "payment": {
+
+                                pg_code: isOrderExist.payment.pg_code,
+                                pg_name: isOrderExist.payment.pg_name,
+                                pg_type: isOrderExist.payment.pg_type,
                                 payment_status_code: 8,
                                 payment_status_desc: "Pesanan dibatalkan",
+                                payment_reff: `Pembayaran #${isOrderExist.order_id}`,
                                 payment_date: currentTime,
+                                payment_channel_uid: isOrderExist.payment.payment_channel_uid
                             }
                         }
                     }, {
@@ -796,9 +800,14 @@ const OrderController = class OrderController {
                         description: PaymentResponse.ORDER_CANCELLED.description
                     },
                     "payment": {
+                        pg_code: isOrderExist.payment.pg_code,
+                        pg_name: isOrderExist.payment.pg_name,
+                        pg_type: isOrderExist.payment.pg_type,
                         payment_status_code: 8,
                         payment_status_desc: "Pesanan dibatalkan",
+                        payment_reff: `Pembayaran #${isOrderExist.order_id}`,
                         payment_date: currentTime,
+                        payment_channel_uid: isOrderExist.payment.payment_channel_uid,
                     }
                 }
             }, {
