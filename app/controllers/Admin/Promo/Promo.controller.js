@@ -14,6 +14,8 @@ const customId = require("custom-id");
 const HttpStatus = require('@helper/http_status')
 const responser = require('@responser')
 
+const date = require('@helper/date')
+
 const moment = require('moment')
 moment.locale('id-ID');
 
@@ -151,10 +153,10 @@ const PromoController = class PromoController {
         }
 
         if (!promoObject) {
-            return res.status(HttpStatus.OK).send(responser.success([], "OK"));
+            return res.status(HttpStatus.OK).send(responser.error("Promo Tidak Ditemukan"));
         }
 
-        var currentDate = moment().toDate();
+        var currentDate = date.time().toDate();
 
         // benerin dan buat paginasi
         let promo = await ProductModel.find({
@@ -370,7 +372,40 @@ const PromoController = class PromoController {
         if (input.products) {
             for (let i = 0; i < input.products.length; i++) {
 
-                this.validateId(input.products[i], 'Produk')
+                const productId = this.validateId(input.products[i], 'Produk')
+
+                if (!productId) {
+
+                    this.removeFile(req)
+                    return res.status(HttpStatus.BAD_REQUEST).send(responser.validation("Salah Satu Produk Tidak Valid", HttpStatus.BAD_REQUEST))
+                }
+
+
+                if (input.products && input.products.length > 0) {
+
+                    input.products.map(async product => {
+
+                        await ProductModel.findOneAndUpdate(
+                            {
+                                _id: product
+                            }, {
+                            $set: {
+                                hasPromo: [savedPromo._id],
+                                hasDiscount: {
+                                    isDiscount: false,
+                                    discount: 0,
+                                    discountBy: "price",
+                                    discountStart: null,
+                                    discountEnd: null,
+                                    priceAfterDiscount: 0,
+                                }
+                            }
+                        }, {
+                            new: true
+                        })
+
+                    })
+                }
 
             }
         }
@@ -575,24 +610,23 @@ const PromoController = class PromoController {
 
     async deletePromoByPromoId(req, res) {
 
-        this.setConstructor(req, res);
-
         const { error } = deletePromoByPromoIdValidation(req.params)
 
         if (error) {
-            return this.sendError(error.details[0].message, HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
         let isIdValid = this.validateId(req.params.promoId, 'Promo')
 
         if (!isIdValid) {
-            return this.sendError(`ID Promo Tidak Valid`, HttpStatus.BAD_REQUEST)
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error(`ID Promo Tidak Valid`, HttpStatus.BAD_REQUEST))
         }
 
         let isPromoExist = await this.isPromoExist(req.params.promoId, "ID")
 
         if (!isPromoExist) {
-            return this.sendError("Promo Tidak Ditemukan", HttpStatus.BAD_REQUEST)
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Promo Tidak Ditemukan", HttpStatus.BAD_REQUEST))
         }
 
         try {
@@ -601,12 +635,11 @@ const PromoController = class PromoController {
                 _id: req.params.promoId
             });
 
-            this.sendSuccess([], 'Promo Dihapus')
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.success({}, 'Promo Dihapus'))
 
         } catch (err) {
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(responser.error("Kegagalan Menghapus Promo", HttpStatus.INTERNAL_SERVER_ERROR))
 
-            this.sendError("Tidak Dapat Menghapus Promo", HttpStatus.NOT_MODIFIED)
-            return
         }
 
     }
@@ -698,6 +731,8 @@ const PromoController = class PromoController {
         if (!mongoose.isValidObjectId(id)) {
             return false
         }
+
+        return id
 
     }
 

@@ -18,8 +18,7 @@ const createNewPromoValidation = (data) => {
         promoEnd: Joi.date().required(),
         isActive: Joi.bool(),
         description: Joi.string(),
-        platform: Joi.array()
-            .items(Joi.string().valid('all', 'website', 'mobile'))  // only allow(valid) 'Hindi' or 'English' items in array
+        platform: Joi.string().valid('all', 'website', 'mobile')  // only allow(valid) 'Hindi' or 'English' items in array
 
     })
 
@@ -32,8 +31,7 @@ const getAllPromoValidation = (data) => {
         show: Joi.number().min(1).max(100).required(),
         sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC').required(),
         orderBy: Joi.string().min(1).max(10).valid('id', 'name').required(),
-        platform: Joi.array()
-            .items(Joi.string().valid('all', 'website', 'mobile')),
+        platform: Joi.string().valid('all', 'website', 'mobile'),
         isActive: Joi.boolean()
     })
 
@@ -46,8 +44,7 @@ const getAllPromoProductValidation = (data) => {
         show: Joi.number().min(1).max(100).required(),
         sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC').required(),
         orderBy: Joi.string().min(1).max(10).valid('id', 'name').required(),
-        platform: Joi.array()
-            .items(Joi.string().valid('all', 'website', 'mobile')),
+        platform: Joi.string().valid('all', 'website', 'mobile'),
         isActive: Joi.boolean()
     })
 
@@ -80,8 +77,7 @@ const updatePromoByPromoIdValidation = (data) => {
         promoEnd: Joi.date(),
         isActive: Joi.bool(),
         description: Joi.string(),
-        platform: Joi.array()
-            .items(Joi.string().valid('all', 'website', 'mobile'))  // only allow(valid) 'Hindi' or 'English' items in array
+        platform: Joi.string().valid('all', 'website', 'mobile')  // only allow(valid) 'Hindi' or 'English' items in array
 
     })
 
