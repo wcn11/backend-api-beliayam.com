@@ -11,13 +11,13 @@ const createNewPromoValidation = (data) => {
         tags: Joi.string().min(2).max(15),
         products: Joi.array(),
         image_promo: Joi.any(),
-        termsAndConditions: Joi.string().max(5000),
+        termsAndConditions: Joi.string(),
         promoValue: Joi.number().min(1).required(),
         promoBy: Joi.string().valid('percent', 'price'),
         promoStart: Joi.date().required(),
         promoEnd: Joi.date().required(),
         isActive: Joi.bool(),
-        description: Joi.string().max(5000),
+        description: Joi.string(),
         platform: Joi.array()
             .items(Joi.string().valid('all', 'website', 'mobile'))  // only allow(valid) 'Hindi' or 'English' items in array
 
@@ -73,13 +73,13 @@ const updatePromoByPromoIdValidation = (data) => {
         tags: Joi.string().min(2).max(15),
         products: Joi.array(),
         banner: Joi.any(),
-        termsAndConditions: Joi.string().max(5000),
+        termsAndConditions: Joi.string(),
         promoValue: Joi.number().min(1).required(),
         promoBy: Joi.string().valid('percent', 'price'),
         promoStart: Joi.date(),
         promoEnd: Joi.date(),
         isActive: Joi.bool(),
-        description: Joi.string().max(5000),
+        description: Joi.string(),
         platform: Joi.array()
             .items(Joi.string().valid('all', 'website', 'mobile'))  // only allow(valid) 'Hindi' or 'English' items in array
 
