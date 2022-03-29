@@ -274,10 +274,9 @@ const PromoController = class PromoController {
             }
 
             if (input.platform && input.platform.length > 0) {
-
-                for (let i = 0; i < input.platform.length; i++) {
-                    promoObject['platform'].push(input.platform[i])
-                }
+                promoObject['platform'] = [input.platform]
+            } else {
+                promoObject['platform'] = ['all']
             }
 
             let promo = new PromoModel(promoObject)
