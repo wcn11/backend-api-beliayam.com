@@ -332,7 +332,7 @@ const PromoController = class PromoController {
 
         let input = req.body
 
-        let isPromoExist = await this.isPromoExist(input.name, 'name')
+        let isPromoExist = await this.isPromoExist(req.params.promoId, 'id')
 
         if (!isPromoExist) {
 
