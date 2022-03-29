@@ -79,12 +79,6 @@ const PromoController = class PromoController {
             }
 
             let promo = await PromoModel.find({
-                // promoStart: {
-                //     $lte: currentDate
-                // },
-                // promoEnd: {
-                //     $gte: currentDate
-                // },
                 isActive: isActive,
                 platform: {
                     $in: [req.query.platform]
@@ -340,11 +334,11 @@ const PromoController = class PromoController {
 
         let isPromoExist = await this.isPromoExist(input.name, 'name')
 
-        // if (isPromoExist && isPromoExist._id !== req.params.promoId) {
+        if (!isPromoExist) {
 
-        //     this.removeFile(req)
-        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
-        // }
+            this.removeFile(req)
+            return res.status(HttpStatus.OK).send(responser.validation("Promo Tidak Ditemukan", HttpStatus.NOT_FOUND))
+        }
 
         // let isSlugExist = await this.isPromoExist(input.slug, 'slug')
 
@@ -409,8 +403,9 @@ const PromoController = class PromoController {
             }
         }
 
+
         if (req.file) {
-            req.body.banner = req.file.path
+            req.body.image_promo = req.file ? `images/promo/${req.file.filename}` : ""
         }
 
         const promo = await PromoModel.findOneAndUpdate(
@@ -421,7 +416,7 @@ const PromoController = class PromoController {
         }).select({
             name: 1,
             products: 1,
-            banner: 1,
+            image_promo: 1,
             termsAndConditions: 1,
             promoStart: 1,
             promoEnd: 1,
