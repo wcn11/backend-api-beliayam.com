@@ -409,7 +409,7 @@ const PromoController = class PromoController {
         }
 
         const promo = await PromoModel.findOneAndUpdate(
-            req.params.promoId, {
+            { _id: req.params.promoId }, {
             $set: req.body
         }, {
             new: true
