@@ -408,7 +408,7 @@ const PromoController = class PromoController {
             req.body.image_promo = req.file ? `images/promo/${req.file.filename}` : ""
         }
 
-        const promo = await PromoModel.findOneAndUpdate(
+        await PromoModel.findOneAndUpdate(
             { _id: req.params.promoId }, {
             $set: req.body
         }, {
@@ -424,11 +424,13 @@ const PromoController = class PromoController {
             description: 1,
             platform: 1
         })
-        const oldFile = await this.isPromoExist(req.params.promoId, 'id')
 
-        this.removeFile('public/' + oldFile.image_promo)
+        if (isPromoExist.image_promo) {
 
-        return res.status(HttpStatus.OK).send(responser.success(promo, 'Promo Diperbarui'))
+            this.removeFile('public/' + isPromoExist.image_promo)
+        }
+
+        return res.status(HttpStatus.OK).send(responser.success({}, 'Promo Diperbarui'))
 
         // } catch (e) {
         //     return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Tidak Dapat Memperbarui Promo", HttpStatus.BAD_REQUEST))
