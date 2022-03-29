@@ -340,27 +340,27 @@ const PromoController = class PromoController {
 
         let isPromoExist = await this.isPromoExist(input.name, 'name')
 
-        if (isPromoExist && isPromoExist._id !== req.params.promoId) {
+        // if (isPromoExist && isPromoExist._id !== req.params.promoId) {
 
-            this.removeFile(req)
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
-        }
+        //     this.removeFile(req)
+        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Promo '${input.name}' Telah Ada, Harap Gunakan Nama Berbeda`, HttpStatus.NOT_ACCEPTABLE))
+        // }
 
-        let isSlugExist = await this.isPromoExist(input.slug, 'slug')
+        // let isSlugExist = await this.isPromoExist(input.slug, 'slug')
 
-        if (isSlugExist && isSlugExist._id !== req.params.promoId) {
+        // if (isSlugExist && isSlugExist._id !== req.params.promoId) {
 
-            this.removeFile(req)
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Slug Telah Ada, Harap Gunakan Slug Berbeda`, HttpStatus.NOT_ACCEPTABLE))
-        }
+        //     this.removeFile(req)
+        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Slug Telah Ada, Harap Gunakan Slug Berbeda`, HttpStatus.NOT_ACCEPTABLE))
+        // }
 
-        let isTagExist = await this.isPromoExist(input.tags, 'tags')
+        // let isTagExist = await this.isPromoExist(input.tags, 'tags')
 
-        if (isTagExist && isTagExist._id !== req.params.promoId) {
+        // if (isTagExist && isTagExist._id !== req.params.promoId) {
 
-            this.removeFile(req)
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Tag Telah Ada, Harap Gunakan Tag Berbeda`, HttpStatus.NOT_ACCEPTABLE))
-        }
+        //     this.removeFile(req)
+        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Tag Telah Ada, Harap Gunakan Tag Berbeda`, HttpStatus.NOT_ACCEPTABLE))
+        // }
 
         // try {
 
