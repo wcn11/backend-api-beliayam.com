@@ -24,7 +24,7 @@ const setError = require('@utility/errors')
 
 const Whitelist = require('@utility/ipwhitelist')
 
-const CronJob = require('@service/CronJob/Cron')
+const CronJob = require('@service/Cron')
 
 CronJob.CancelPaymentExpired()
 
