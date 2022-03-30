@@ -383,7 +383,7 @@ const PromoController = class PromoController {
                                 _id: product
                             }, {
                             $set: {
-                                hasPromo: [savedPromo._id],
+                                    hasPromo: req.params.promoId,
                                 hasDiscount: {
                                     isDiscount: false,
                                     discount: 0,
