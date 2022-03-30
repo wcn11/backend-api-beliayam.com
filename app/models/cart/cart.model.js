@@ -56,7 +56,7 @@ const CartSchema = mongoose.Schema({
         voucher: String,
     }
 }, {
-    timestamps: { currentTime: () => Math.floor(Date.now() / 1000) }
+    timestamps: { Date }
 })
 
 module.exports = mongoose.model('cart', CartSchema)

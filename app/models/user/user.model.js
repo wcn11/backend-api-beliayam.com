@@ -148,6 +148,8 @@ const UserSchema = mongoose.Schema({
             },
         }
     }]
+}, {
+    timestamps: { Date }
 })
 
 module.exports = mongoose.model('users', UserSchema)

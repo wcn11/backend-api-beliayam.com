@@ -2,11 +2,6 @@ const { string } = require('joi');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const moment = require('moment')
-moment.locale('id-ID');
-
-const now = moment().add(7, 'hour').toDate()
-
 const OrderSchema = mongoose.Schema({
 
     order_id: {
@@ -35,7 +30,7 @@ const OrderSchema = mongoose.Schema({
         pg_code: String,
         pg_name: String,
         pg_type: String,
-        // status: String,
+        pg_icon: String,
         payment_reff: String,
         payment_date: Date,
         payment_status_code: Number,
@@ -68,8 +63,8 @@ const OrderSchema = mongoose.Schema({
     signature: String
 
 }, {
-    timestamps: { currentTime: () => now }
-}, //{ typeKey: '$dataType' }
+    timestamps: { Date }
+}
 )
 
 module.exports = mongoose.model('order', OrderSchema)

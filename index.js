@@ -24,6 +24,10 @@ const setError = require('@utility/errors')
 
 const Whitelist = require('@utility/ipwhitelist')
 
+const CronJob = require('@service/CronJob/Cron')
+
+CronJob.CancelPaymentExpired()
+
 app.use(cors({
     credentials: true,
     origin: '*',

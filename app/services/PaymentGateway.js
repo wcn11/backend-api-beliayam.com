@@ -106,6 +106,9 @@ const PaymentGateway = class PaymentGateway {
         )
     }
 
+    getPaymentMethodIcon(payment) {
+        return PaymentChannel.filter(pg => pg.pg_code == payment.pg_code)
+    }
 }
 
 

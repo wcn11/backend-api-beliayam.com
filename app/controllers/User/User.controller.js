@@ -644,6 +644,22 @@ const UserController = class UserController {
 
             query.$match['payment.payment_status_code'] = {
                 $eq: parseInt(req.query.status)
+            }   
+        }
+
+        if (req.query.delivery === 'true') {
+
+            query.$match['delivery'] = {
+                $exists: true
+            }
+
+            query.$match['delivery.isDelivery'] = {
+                $eq: true
+            }
+        } else {
+
+            query.$match['delivery'] = {
+                $exists: false
             }
         }
 
@@ -654,7 +670,7 @@ const UserController = class UserController {
             }
         }
 
-        sort.$sort[orderBy] = sortBy
+        sort.$sort[`order_status.${orderBy}`] = sortBy
 
         try {
 

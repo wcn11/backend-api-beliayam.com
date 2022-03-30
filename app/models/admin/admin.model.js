@@ -53,6 +53,8 @@ const AdminSchema = mongoose.Schema({
         type: Date,
         default: Date.now()
     }
+}, {
+    timestamps: { Date }
 })
 
 module.exports = mongoose.model('admin', AdminSchema)

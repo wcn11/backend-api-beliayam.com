@@ -26,7 +26,7 @@ const date = require('@helper/date')
 
 const redis = require("redis");
 
-const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNPQRSTUVWXYZ', 12) // NO LETTER O 
+const nanoid = customAlphabet('1234567890', 12) 
 
 const {
     placeOrderValidation,
@@ -500,12 +500,21 @@ const OrderController = class OrderController {
 
         let signature_temp = ""
 
+        const payment = await PaymentGateway.getPaymentMethodIcon(isPaymentGatewayExist.data)
+
+        let icon = ""
+
+        if (payment.length > 0) {
+            icon = payment[0].icon
+        }
+
         switch (isPaymentGatewayExist.data.type.toLowerCase()) {
             case "cash":
                 objectResponse.payment = {
                     "pg_code": isPaymentGatewayExist.data.pg_code,
                     "pg_name": isPaymentGatewayExist.data.pg_name,
-                    "type": isPaymentGatewayExist.data.type
+                    "type": isPaymentGatewayExist.data.type,
+
                 }
 
                 objectResponse.response = {
@@ -529,9 +538,10 @@ const OrderController = class OrderController {
             case "qris":
 
                 objectResponse.payment = {
-                    "pg_code": isPaymentGatewayExist.data.pg_code,
-                    "pg_name": isPaymentGatewayExist.data.pg_name,
-                    "type": isPaymentGatewayExist.data.type
+                    pg_code: isPaymentGatewayExist.data.pg_code,
+                    pg_name: isPaymentGatewayExist.data.pg_name,
+                    pg_type: isPaymentGatewayExist.data.type,
+                    pg_icon: payment || ""
                 }
 
                 const md5 = crypto.createHash('md5', process.env.SIGNATURE_SECRET)
@@ -603,9 +613,9 @@ const OrderController = class OrderController {
                 pg_code: isPaymentGatewayExist.data.pg_code,
                 pg_name: isPaymentGatewayExist.data.pg_name,
                 pg_type: isPaymentGatewayExist.data.type,
-                // status: PaymentStatus.IN_PROCESS,
-                payment_reff: "",
-                payment_date: "",
+                pg_icon: icon,
+                payment_reff: bill_no,
+                payment_date: date.time().toDate(),
                 payment_status_code: PaymentStatus.IN_PROCESS.code,
                 payment_status_desc: "",
                 payment_channel_uid: parseInt(isPaymentGatewayExist.data.pg_code),

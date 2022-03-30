@@ -5,11 +5,11 @@ exports.time = (value = 0, time = 'hour') => {
     return moment().add(value, time)
 };
 
-exports.custom = (value, format) => {
+exports.custom = (value) => {
     return moment(value)
 };
 
-exports.currentTime = (value = 7, time = 'hour') => {
+exports.currentTime = (value = 0, time = 'hour') => {
     return moment().add(value, time)
 };
 

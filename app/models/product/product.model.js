@@ -97,7 +97,7 @@ const ProductSchema = mongoose.Schema({
         required: false,
     }
 }, {
-    timestamps: { currentTime: () => Math.floor(Date.now() / 1000) }
+    timestamps: { Date }
 })
 
 module.exports = mongoose.model('product', ProductSchema)
