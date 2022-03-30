@@ -554,6 +554,28 @@ const PromoController = class PromoController {
                 multi: true
             });
 
+            await ProductModel.updateMany(
+                {
+                    _id: {
+                        $in: [req.body.product_id]
+                    }
+                },
+                {
+                    $set: {
+                        hasPromo: req.params.promoId,
+                        hasDiscount: {
+                            isDiscount: false,
+                            discount: 0,
+                            discountBy: "price",
+                            discountStart: null,
+                            discountEnd: null,
+                            priceAfterDiscount: 0,
+                        }
+                    }
+                }, {
+                new: true
+            })
+
             return res.status(HttpStatus.OK).send(responser.success([], translate('promo.product_updated')))
         } catch (err) {
 
