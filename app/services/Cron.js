@@ -1,7 +1,7 @@
 
 
 const cron = require('node-cron');
-const CancelPayment = require('@service/CronJob/ancelPaymentExpired')
+const CancelPayment = require('@service/CronJob/CancelPaymentExpired')
 
 const CronJob = class CronJob {
 
