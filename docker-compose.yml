@@ -1,28 +1,68 @@
-version: "3"
+version: "3.3"
 
 services:
-  database:
-    container_name: "database"
-    environment:
-      - MONGO_URI=mongodb://database:27017/beliayamcom_main
-    build:
-      context: database
-      dockerfile: Dockerfile
-    ports:
-      - 27017:27017
-    networks:
-      - backend-network
   backend: 
     container_name: "backend-api"
+    image: "backend-api"
     build: 
       context: .
       dockerfile: Dockerfile
     links:
       - database
+      - redis
     ports:
       - 4000:4000
+    restart: always
+    depends_on:
+      - database
+      - redis
     networks:
       - backend-network
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URI=mongodb://database:27017/beliayamcom_main
+      - DATABASE_PORT=27017
+    volumes: 
+      - ../data/public:/public
+  database:
+    container_name: "database"
+    restart: always
+    environment:
+      - AUTH=yes
+      - MONGO_URI=mongodb://database:27017/beliayamcom_main
+    build:
+      context: database
+      dockerfile: Dockerfile
+    ports:
+      - 27018:27017
+    networks:
+      - backend-network
+    volumes: 
+      - ../data/database:/data/db
+
+  redis:
+    container_name: "redis"
+    image: "redis:alpine"
+    build: 
+      context: .
+    restart: always
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - 6380:6379
+    command: "redis-server"
+    networks:
+      - backend-network
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: ghcr.io/joeferner/redis-commander:latest
+    restart: always
+    environment:
+    - REDIS_HOSTS=local:redis:6379
+    ports:
+    - "8081:8081"
 networks:
   backend-network:
     driver: bridge

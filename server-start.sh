@@ -4,4 +4,4 @@
 
 npm install pm2 -g
 
-pm2 start index.js --name backend-api --watch --ignore-watch="public"
+pm2 start index.js --name backend-api --ignore-watch="public" --update-env

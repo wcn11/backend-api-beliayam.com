@@ -1,3 +1,8 @@
 node_modules
 
 package-lock.json
+
+# sh file
+log.sh
+pull-update.sh
+server-start.sh

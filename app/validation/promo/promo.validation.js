@@ -117,28 +117,6 @@ const deletePromoByPromoIdValidation = (data) => {
     return schema.validate(data)
 }
 
-// const updateVoucherByVoucherIdValidation = (data) => {
-//     const schema = Joi.object({
-//         voucherCode: Joi.string().min(3).required(),
-//         banner: Joi.any(),
-//         discountBy: Joi.string().valid('percent', 'price').required(),
-//         discountValue: Joi.number(),
-//         minimumOrderValue: Joi.number(),
-//         private: Joi.boolean(),
-//         maxUser: Joi.number().max(10).default(0),
-//         user_id: Joi.string(),
-//         max: Joi.number().max(10),
-//         termsAndConditions: Joi.string().max(500),
-//         discountStart: Joi.date().required(),
-//         discountEnd: Joi.date().required(),
-//         isActive: Joi.bool(),
-//         description: Joi.string().max(500),
-//         plaform: Joi.string().valid('all', 'website', 'mobile'),
-//     })
-
-//     return schema.validate(data)
-// }
-
 module.exports = {
     createNewPromoValidation,
     getAllPromoValidation,

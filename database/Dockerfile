@@ -15,5 +15,3 @@ RUN mkdir -p /data/db
 COPY . .
 
 # ENTRYPOINT ["sh","./mongo-start.sh"]
-
-# ENTRYPOINT ["sh","./server-start.sh"]
