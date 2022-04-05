@@ -268,19 +268,19 @@ const AuthController = class AuthController {
             return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        const user = await User.findOne({ email: req.body.email })
+        const userExist = await User.findOne({ email: req.body.email })
 
-        if (user) {
-            if (user.registeredBy !== req.body.loginBy) {
-                return res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan metode pendaftaran ${user.registeredBy}, harap login dengan metode ${user.registeredBy}`, HttpStatus.OK));
+        if (userExist) {
+            if (userExist.registeredBy !== req.body.loginBy) {
+                return res.status(HttpStatus.OK).send(responser.error(`Email telah terdaftar dengan metode pendaftaran ${userExist.registeredBy}, harap login dengan metode ${userExist.registeredBy}`, HttpStatus.OK));
             }
 
-            if (!user.active) {
+            if (!userExist.active) {
                 return res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
             }
         }
 
-        if (!user) {
+        if (!userExist) {
 
             const userObject = new User({
                 name: req.body.name,
@@ -300,10 +300,22 @@ const AuthController = class AuthController {
             })
         }
 
-        user.password = undefined ?? null
-        user.otpEmail = undefined
-        user.otpSms = undefined
-        user.addresses = undefined
+        const user = await User.findOne({ email: req.body.email })
+
+        user.password = undefined
+        user.otpEmail = {
+            code: 0,
+            attempts: 0,
+            expired: true,
+            expiredDate: date.time()
+        }
+        user.otpSms = {
+            code: 0,
+            attempts: 0,
+            expired: false,
+            expiredDate: date.time()
+        }
+        user.addresses = []
 
         const loggedUser = {
             user
@@ -367,7 +379,6 @@ const AuthController = class AuthController {
                 responser.error("Telepon Atau Password Salah", HttpStatus.OK)
             );
         }
-
 
         user.otpEmail = undefined
         user.otpSms = undefined

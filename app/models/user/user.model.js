@@ -62,7 +62,7 @@ const UserSchema = mongoose.Schema({
     password: {
         type: String,
         required: false,
-        default: null
+        default: ""
     },
     passwordLastUpdate: {
         type: Date,
