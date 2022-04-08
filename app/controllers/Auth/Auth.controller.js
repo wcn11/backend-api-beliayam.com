@@ -58,7 +58,7 @@ const AuthController = class AuthController {
 
         const emailExist = await User.findOne({ email: req.body.email })
 
-        if (emailExist) return res.status(HttpStatus.OK).send(responser.error("Email Telah Terdaftar", HttpStatus.OK))
+        if (emailExist) return res.status(HttpStatus.OK).send(responser.error(`Email Terkait Dengan ${emailExist.registeredBy}. Silahkan Login Menggunakan ${emailExist.registeredBy}`, HttpStatus.OK))
 
         const salt = await bcrypt.genSalt(10);
 
@@ -90,20 +90,11 @@ const AuthController = class AuthController {
 
             const savedUsers = await userObject.save()
 
-            // SendVerifyEmail.send({
-            //     to: savedUsers.email,
-            //     subject: "Verifikasi Email Anda | Beliayam.com",
-            //     text: `Kode Verifikasi Email Anda Adalah ${otp}`,
-            //     name: req.body.name,
-            //     code: otp
-            // })
             SendGreeting.send({
                 to: savedUsers.email,
                 subject: `Selamat Datang, ${req.body.name} | Beliayam.com`,
                 name: req.body.name
             })
-
-            // client.set(`emailOtp.${savedUsers._id}`, JSON.stringify(otp), 'EX', expiredTime);
 
             let user = await User.findOne({ email: req.body.email })
 
@@ -148,11 +139,7 @@ const AuthController = class AuthController {
 
         const isPhoneExist = await User.findOne({ phone: req.body.phone })
 
-        if (isPhoneExist && !isPhoneExist.isPhoneVerified) {
-            return res.status(HttpStatus.OK).send(
-                responser.error("Nomor Telah Terdaftar Namun Belum Diverifikasi, Harap Verifikasi Untuk Melanjutkan", HttpStatus.OK)
-            );
-        } else if (isPhoneExist && isPhoneExist.isPhoneVerified) {
+        if (isPhoneExist && isPhoneExist.isPhoneVerified) {
             return res.status(HttpStatus.OK).send(
                 responser.error("Nomor Telah Terdaftar", HttpStatus.OK)
             );
@@ -291,7 +278,6 @@ const AuthController = class AuthController {
             })
 
             await userObject.save()
-
 
             SendGreeting.send({
                 to: req.body.email,
@@ -540,7 +526,7 @@ const AuthController = class AuthController {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
-        client.get(`smsOtpForgetPassword.${req.body.phone}`, async (err, request) => {
+        client.get(`smsOtp.${req.body.phone}`, async (err, request) => {
 
             if (!request) {
 
@@ -611,7 +597,7 @@ const AuthController = class AuthController {
                 }
             }, { upsert: true })
 
-            client.expireat(`smsOtpForgetPassword.${req.body.phone}`, 0);
+            client.expireat(`smsOtp.${req.body.phone}`, 0);
 
             const UserData = await User.findOne({ phone: req.body.phone })
 
@@ -795,12 +781,12 @@ const AuthController = class AuthController {
             res.status(HttpStatus.BAD_REQUEST).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.BAD_REQUEST));
         }
 
-        client.get(`smsOtp.${user.id}`, async (err, request) => {
+        client.get(`smsOtp.${req.body.user_id}`, async (err, request) => {
 
             if (!request) {
 
                 await User.updateOne({
-                    _id: user.id
+                    _id: req.body.user_id
                 }, {
                     $set: {
                         "otpSms.code": 0,
@@ -817,7 +803,7 @@ const AuthController = class AuthController {
             if (user['otpSms']['attempts'] >= 5) {
 
                 await User.updateOne({
-                    _id: user.id
+                    _id: req.body.user_id
                 }, {
                     $set: {
                         "otpSms.code": 0,
@@ -839,7 +825,7 @@ const AuthController = class AuthController {
             } else if (parseInt(req.body.code) !== parseInt(user.otpSms.code)) {
 
                 await User.updateOne({
-                    _id: user.id
+                    _id: req.body.user_id
                 }, {
                     $inc: {
                         "otpSms.attempts": 1
@@ -854,7 +840,7 @@ const AuthController = class AuthController {
         })
 
         await User.updateOne({
-            _id: user.id
+            _id: req.body.user_id
         }, {
             $set: {
                 "otpSms.code": 0,
@@ -1119,6 +1105,10 @@ const AuthController = class AuthController {
             res.status(HttpStatus.OK).send(responser.error("Akun Telah Di Non-Aktifkan, Harap Hubungi Administrator Untuk Mengaktifkan Kembali", HttpStatus.OK));
         }
 
+        if (userExist.registeredBy.toLowerCase() == "google" || userExist.registeredBy.toLowerCase() == "facebook") {
+            res.status(HttpStatus.OK).send(responser.error(`Akun Anda Tertaut Dengan ${userExist.registeredBy}, Harap Masuk Dengan Metode ${userExist.registeredBy}`, HttpStatus.OK));
+        }
+
         const token = crypto.randomBytes(32).toString("hex")
 
         const signature = crypto.createHmac('sha1', process.env.SIGNATURE_SECRET)
@@ -1163,11 +1153,11 @@ const AuthController = class AuthController {
         }
         var otp = parseInt(Math.random() * 10000);
 
-        // SMSGateway.sendSms({
-        //     to: req.body.phone,
-        //     text: `Kode reset password OTP: ${otp}. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
+        SMSGateway.sendSms({
+            to: req.body.phone,
+            text: `Kode reset password OTP: ${otp}. JANGAN MEMBERIKAN KODE KEPADA SIAPAPUN TERMASUK PIHAK BELIAYAMCOM`
 
-        // });
+        });
 
         //5 minutes on milliseconds
         let expiredTime = 300000
@@ -1186,7 +1176,7 @@ const AuthController = class AuthController {
             upsert: true
         })
 
-        client.setex(`smsOtp.${user._id}`, expiredTime, JSON.stringify(otp));
+        client.setex(`smsOtp.${req.body.phone}`, expiredTime, JSON.stringify(otp));
 
         return res.status(HttpStatus.OK).send(
             responser.success(
@@ -1339,57 +1329,6 @@ const AuthController = class AuthController {
             }
         })
     }
-
-    // async changePassword(req, res) {
-
-    //     const { error } = changePassword(req.body)
-
-    //     if (error) {
-    //         return res.status(HttpStatus.BAD_REQUEST).send(responser.validation(error.details[0].message, HttpStatus.BAD_REQUEST))
-    //     }
-
-    //     let isValid = await this.isIdValid(req.body.user_id)
-
-    //     if (!isValid) {
-    //         return res.status(HttpStatus.BAD_REQUEST).send(
-    //             responser.error("User ID Tidak Valid", HttpStatus.BAD_REQUEST)
-    //         );
-    //     }
-
-    //     const userExist = await User.findOne({ _id: req.body.user_id })
-
-    //     if (!userExist) {
-    //         return res.status(HttpStatus.NOT_FOUND).send(responser.error("Pengguna Tidak Ditemukan", HttpStatus.NOT_FOUND));
-    //     }
-
-    //     const validPass = await bcrypt.compare(req.body.old_password, userExist.password)
-
-    //     if (!validPass) return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.error("Kata Sandi Salah", HttpStatus.NOT_ACCEPTABLE))
-
-    //     const salt = await bcrypt.genSalt(10);
-    //     const newPassword = await bcrypt.hash(req.body.new_password, salt)
-
-
-    //     try {
-    //         const user = await User.updateOne({
-    //             _id: req.body.user_id
-    //         }, {
-    //             password: newPassword,
-    //             passwordLastUpdate: Date.now()
-    //         }, {
-    //             upsert: true
-    //         })
-
-    //         res.status(HttpStatus.OK).send(responser.success([],
-    //             "Kata Sandi Berhasil Di Perbarui",
-    //             HttpStatus.OK))
-    //     } catch (err) {
-    //         return res.status(HttpStatus.BAD_REQUEST).send(
-    //             responser.error("Tidak Bisa Mengubah Kata Sandi", HttpStatus.BAD_REQUEST)
-    //         );
-    //     }
-
-    // }
 
     async refreshToken(req, res) {
 

@@ -1,0 +1,141 @@
+module.exports = {
+    messages: {
+        //STRING
+        'string.alphanum': '{{#label}} hanya boleh berisi karakter alfanumerik',
+        'string.base': '{{#label}} harus berupa alfabet',
+        'string.base64': '{{#label}} harus berupa string base64 yang valid',
+        'string.creditCard': '{{#label}} harus kartu kredit',
+        'string.dataUri': '{{#label}} harus berupa string dataUri yang valid',
+        'string.domain': '{{#label}} harus berisi nama domain yang valid',
+        'string.email': '{{#label}} harus email yang valid',
+        'string.empty': '{{#label}} tidak boleh kosong',
+        'string.guid': '{{#label}} harus berupa GUID yang valid',
+        'string.hex': '{{#label}} hanya boleh berisi karakter heksadesimal',
+        'string.hexAlign': '{{#label}} representasi dekode hex harus selaras byte',
+        'string.hostname': '{{#label}} harus berupa nama host yang valid',
+        'string.ip': '{{#label}} harus berupa alamat ip yang valid dengan {{#cidr}} CIDR',
+        'string.ipVersion': '{{#label}} harus berupa alamat ip yang valid dari salah satu versi {{#version}} berikut dengan {{#cidr}} CIDR',
+        'string.isoDate': '{{#label}} harus dalam format iso',
+        'string.isoDuration': '{{#label}} harus durasi ISO 8601 yang valid',
+        'string.length': '{{#label}} panjangnya harus {{#limit}} karakter',
+        'string.lowercase': '{{#label}} hanya boleh berisi karakter huruf kecil',
+        'string.max': '{{#label}} harus kurang dari atau sama dengan {{#limit}} karakter',
+        'string.min': '{{#label}} minimal harus {{#limit}} karakter',
+        'string.normalize': '{{#label}} must be unicode normalized in the {{#form}} form',
+        'string.token': '{{#label}} must only contain alpha-numeric and underscore characters',
+        'string.pattern.base': '{{#label}} dengan nilai {:[.]} gagal mencocokkan pola yang diperlukan: {{#regex}}',
+        'string.pattern.slug': '{{#label}} bukanlah sebuah slug yang valid',
+        'string.pattern.name': '{{#label}} dengan nilai {:[.]} gagal untuk mencocokkan pola {{#name}}',
+        'string.pattern.invert.base': '{{#label}} with value {:[.]} matches the inverted pattern: {{#regex}}',
+        'string.pattern.invert.name': '{{#label}} with value {:[.]} matches the inverted {{#name}} pattern',
+        'string.trim': '{{#label}} must not have leading or trailing whitespace',
+        'string.uri': '{{#label}} must be a valid uri',
+        'string.uriCustomScheme': '{{#label}} must be a valid uri with a scheme matching the {{#scheme}} pattern',
+        'string.uriRelativeOnly': '{{#label}} must be a valid relative uri',
+        'string.uppercase': '{{#label}} hanya boleh berisi karakter huruf besar',
+
+        //ARRAY
+        'array.base': '{{#label}} harus berupa array',
+        'array.excludes': '{{#label}} contains an excluded value',
+        'array.hasKnown': '{{#label}} does not contain at least one required match for type {:#patternLabel}',
+        'array.hasUnknown': '{{#label}} does not contain at least one required match',
+        'array.includes': '{{#label}} does not match any of the allowed types',
+        'array.includesRequiredBoth': '{{#label}} does not contain {{#knownMisses}} and {{#unknownMisses}} other required value(s)',
+        'array.includesRequiredKnowns': '{{#label}} does not contain {{#knownMisses}}',
+        'array.includesRequiredUnknowns': '{{#label}} does not contain {{#unknownMisses}} required value(s)',
+        'array.length': '{{#label}} harus berisi {{#limit}} item',
+        'array.max': '{{#label}} harus berisi kurang dari atau sama dengan {{#limit}} item',
+        'array.min': '{{#label}} harus berisi setidaknya {{#limit}} item',
+        'array.orderedLength': '{{#label}} must contain at most {{#limit}} items',
+        'array.sort': '{{#label}} must be sorted in {#order} order by {{#by}}',
+        'array.sort.mismatching': '{{#label}} cannot be sorted due to mismatching types',
+        'array.sort.unsupported': '{{#label}} cannot be sorted due to unsupported type {#type}',
+        'array.sparse': '{{#label}} must not be a sparse array item',
+        'array.unique': '{{#label}} mengandung nilai duplikat',
+
+        //ALTERNATIVE
+        'alternatives.all': '{{#label}} does not match all of the required types',
+        'alternatives.any': '{{#label}} does not match any of the allowed types',
+        'alternatives.match': '{{#label}} does not match any of the allowed types',
+        'alternatives.one': '{{#label}} matches more than one allowed type',
+        'alternatives.types': '{{#label}} must be one of {{#types}}',
+
+        //ANY
+        'any.custom': '{{#label}} failed custom validation because {{#error.message}}',
+        'any.default': '{{#label}} threw an error when running default method',
+        'any.failover': '{{#label}} threw an error when running failover method',
+        'any.invalid': '{{#label}} contains an invalid value',
+        'any.only': '{{#label}} must be {if(#valids.length == 1, "", "one of ")}{{#valids}}',
+        'any.ref': '{{#label}} {{#arg}} references {{:#ref}} which {{#reason}}',
+        'any.required': '{{#label}} is required',
+        'any.unknown': '{{#label}} is not allowed',
+
+        //BINARY
+        'binary.base': '{{#label}} must be a buffer or a string',
+        'binary.length': '{{#label}} must be {{#limit}} bytes',
+        'binary.max': '{{#label}} must be less than or equal to {{#limit}} bytes',
+        'binary.min': '{{#label}} must be at least {{#limit}} bytes',
+
+        //BOOLEAN
+        'boolean.base': '{{#label}} harus berupa boolean',
+
+        //DATE
+        'date.base': '{{#label}} harus tanggal yang valid',
+        'date.format': '{{#label}} harus dalam {msg("date.format." + #format) || #format} format',
+        'date.greater': '{{#label}} must be greater than {{:#limit}}',
+        'date.less': '{{#label}} must be less than {{:#limit}}',
+        'date.max': '{{#label}} harus kurang dari atau sama dengan {{:#limit}}',
+        'date.min': '{{#label}} harus lebih besar atau sama dengan {{:#limit}}',
+        // Messages used in date.format
+        'date.format.iso': 'ISO 8601 date',
+        'date.format.javascript': 'timestamp or number of milliseconds',
+        'date.format.unix': 'timestamp or number of seconds',
+
+        //FUNCTION
+        'function.arity': '{{#label}} must have an arity of {{#n}}',
+        'function.class': '{{#label}} must be a class',
+        'function.maxArity': '{{#label}} must have an arity lesser or equal to {{#n}}',
+        'function.minArity': '{{#label}} must have an arity greater or equal to {{#n}}',
+
+        //KEYS
+        'object.and': '{{#label}} contains {{#presentWithLabels}} without its required peers {{#missingWithLabels}}',
+        'object.assert': '{{#label}} is invalid because {if(#subject.key, `"` + #subject.key + `" failed to ` + (#message || "pass the assertion test"), #message || "the assertion failed")}',
+        'object.base': '{{#label}} harus bertipe {{#type}}',
+        'object.instance': '{{#label}} must be an instance of {{:#type}}',
+        'object.length': '{{#label}} must have {{#limit}} key{if(#limit == 1, "", "s")}',
+        'object.max': '{{#label}} must have less than or equal to {{#limit}} key{if(#limit == 1, "", "s")}',
+        'object.min': '{{#label}} must have at least {{#limit}} key{if(#limit == 1, "", "s")}',
+        'object.missing': '{{#label}} must contain at least one of {{#peersWithLabels}}',
+        'object.nand': '{{:#mainWithLabel}} must not exist simultaneously with {{#peersWithLabels}}',
+        'object.oxor': '{{#label}} contains a conflict between optional exclusive peers {{#peersWithLabels}}',
+        'object.pattern.match': '{{#label}} keys failed to match pattern requirements',
+        'object.refType': '{{#label}} must be a Joi reference',
+        'object.regex': '{{#label}} must be a RegExp object',
+        'object.rename.multiple': '{{#label}} cannot rename {{:#from}} because multiple renames are disabled and another key was already renamed to {{:#to}}',
+        'object.rename.override': '{{#label}} cannot rename {{:#from}} because override is disabled and target {{:#to}} exists',
+        'object.schema': '{{#label}} must be a Joi schema of {{#type}} type',
+        'object.unknown': '{{#label}} is not allowed',
+        'object.with': '{{:#mainWithLabel}} missing required peer {{:#peerWithLabel}}',
+        'object.without': '{{:#mainWithLabel}} conflict with forbidden peer {{:#peerWithLabel}}',
+        'object.xor': '{{#label}} contains a conflict between exclusive peers {{#peersWithLabels}}',
+
+        //NUMBER
+        'number.base': '{{#label}} harus berupa angka',
+        'number.greater': '{{#label}} harus lebih besar dari {{#limit}}',
+        'number.infinity': '{{#label}} tidak bisa tak terhingga',
+        'number.integer': '{{#label}} harus angka',
+        'number.less': '{{#label}} harus kurang dari {{#limit}}',
+        'number.max': '{{#label}} harus kurang dari atau sama dengan {{#limit}}',
+        'number.min': '{{#label}} harus lebih besar dari atau sama dengan {{#limit}}',
+        'number.multiple': '{{#label}} harus kelipatan dari {{#multiple}}',
+        'number.negative': '{{#label}} harus bilangan negatif',
+        'number.port': '{{#label}} harus port yang valid',
+        'number.positive': '{{#label}} harus bilangan positif',
+        'number.precision': '{{#label}} tidak boleh lebih dari {{#limit}} tempat desimal',
+        'number.unsafe': '{{#label}} harus nomor yang aman',
+
+        //SYMBOL
+        'symbol.base': '{{#label}} harus simbol',
+        'symbol.map': '{{#label}} harus salah satu dari {{#map}}'
+    }
+}

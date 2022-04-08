@@ -77,7 +77,6 @@ const OrderController = class OrderController {
         }
     }
 
-
     async placeOrder(req, res) {
 
         const { error } = placeOrderValidation(req.body)

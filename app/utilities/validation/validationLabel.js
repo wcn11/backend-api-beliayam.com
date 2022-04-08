@@ -1,0 +1,23 @@
+module.exports = {
+    USER_ID: "ID Pengguna",
+    NAME: "Nama",
+    EMAIL: "Email",
+    PASSWORD: "Kata Sandi",
+    PASSWORD_CONFIRMATION: "Konfirmasi Kata Sandi",
+    PHONE: "Nomor Telepon",
+    REGISTER_BY: "Terdaftar Dengan",
+    REGISTER_AT: "Terdaftar Pada",
+    REGISTERED_BY: "Terdaftar Dengan",
+    REGISTERED_AT: "Terdaftar Pada",
+
+    LOGIN_BY: "Masuk Dengan",
+    LOGIN_AT: "Masuk Pada",
+    CODE: "Kode",
+    ID: "ID",
+    TOKEN: "Token",
+    SIGNATURE: "SIGNATURE",
+    REFRESH_TOKEN: "Refresh Token",
+    REGISTERED_BY: "Terdaftar Dengan",
+    REGISTERED_BY: "Terdaftar Dengan",
+    REGISTERED_BY: "Terdaftar Dengan",
+}

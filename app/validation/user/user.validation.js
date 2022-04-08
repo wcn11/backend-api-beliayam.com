@@ -2,7 +2,11 @@ const Joi = require('joi');
 
 const addPhone = (data) => {
     const schema = Joi.object({
-        user_id: Joi.string().min(6).max(255).required(),
+        user_id: Joi.string().min(6).max(255).required()
+            .messages({
+                "string.required": `{{#label}} Berupa Karakter`,
+                "string.required": `{{#label}} Berupa Karakter`,
+            }),
         phone: Joi.string().min(6).max(255).required()
     })
 

@@ -621,10 +621,16 @@ const UserController = class UserController {
             orderBy = req.query.orderBy === "payment_date" ? 1 : -1
         }
 
+        const userId = req.user.user._id
+
         orderBy = req.query.orderBy ?? 1
 
         let query = {
-            $match: {}
+            $match: {
+                "user._id": {
+                    $eq: userId
+                }
+            }
         }
 
         let sort = {

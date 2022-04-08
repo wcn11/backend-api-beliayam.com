@@ -1,8 +1,12 @@
 const Joi = require('joi');
+const Message = require('@utility/validation/validationMessage')
 
 const maps = (data) => {
     const schema = Joi.object({
-        latitude: Joi.string(),
+        latitude: Joi.string()
+            .messages({
+                "any.string": `{{#label}} Harus Berupa Huruf`
+            }),
         longitude: Joi.string()
     })
 
