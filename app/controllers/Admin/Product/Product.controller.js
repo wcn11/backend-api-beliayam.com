@@ -9,7 +9,6 @@ const date = require('@helper/date')
 
 var fs = require('fs');
 
-
 const {
     addProductValidation,
     getProductsValidation,
@@ -17,6 +16,7 @@ const {
     updateProductByIdValidation,
     getProductByIdValidation,
     deleteProductByIdValidation,
+    getProductsByKeywordValidation,
     getProductsByCategoryIdValidation
 
 } = require('@validation/admin/product/product.validation')
@@ -65,6 +65,68 @@ const ProductController = class ProductController {
 
             return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
         }
+    }
+
+    async getProductsByKeyword(req, res) {
+
+        const { error } = getProductsByKeywordValidation(req.query)
+
+        if (error) {
+            return res.status(HttpStatus.BAD_REQUEST).send(
+                responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
+        }
+
+        try {
+
+            let page = req.query.page ?? 1
+            let show = req.query.show ?? 10
+
+            let sortBy;
+
+            let orderBy;
+
+            if (!req.query.sortBy) {
+                sortBy = req.query.sortBy === "ASC" ? 1 : -1
+            }
+
+            sortBy = req.query.sortBy ?? 1
+
+            if (!req.query.orderBy) {
+                orderBy = req.query.orderBy ?? "name"
+            }
+            orderBy = req.query.orderBy ?? 1
+
+            let productsCount = await ProductModel.find({
+                $text: {
+                    $search: req.query.keywords,
+                    $caseSensitive: false,
+                },
+                // active: true,
+            }).count()
+
+            let products = await ProductModel.find({
+                $text: {
+                    $search: req.query.keywords,
+                    $caseSensitive: false,
+                },
+                // active: true,
+            }).populate(['category', 'hasPromo'])
+                .sort({
+                    orderBy: sortBy
+                }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
+
+            const data = {
+                total: productsCount,
+                products
+            }
+
+            return res.status(HttpStatus.OK).send(responser.success(data));
+
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+
     }
 
     async getTotalProducts(req, res) {

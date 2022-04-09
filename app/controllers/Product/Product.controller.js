@@ -65,6 +65,33 @@ const ProductController = class ProductController {
         }
     }
 
+    async getProductHomepage(req, res) {
+
+        try {
+
+            let show = req.query.show ?? 10
+            let products = await ProductModel.aggregate([
+                {
+                    $match: {
+                        status: {
+                            $eq: 'active',
+                        }
+                    }
+                },
+                {
+                    $sample: { size: 10 }
+                },
+                { $limit: parseInt(show) }
+            ])
+
+            return res.status(HttpStatus.OK).send(responser.success(products, HttpStatus.OK));
+
+        } catch (err) {
+
+            return res.status(HttpStatus.BAD_REQUEST).send(responser.error("Format Query Salah", HttpStatus.BAD_REQUEST));
+        }
+    }
+
     async getProductsByCategoryId(req, res) {
 
         const { error } = getProductsByCategoryIdValidation(req.query)

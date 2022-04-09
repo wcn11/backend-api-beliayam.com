@@ -47,6 +47,18 @@ const getProductsValidation = (data) => {
     return schema.validate(data)
 }
 
+const getProductsByKeywordValidation = (data) => {
+    const schema = Joi.object({
+        keywords: Joi.string(),
+        page: Joi.number().min(1).max(20).required(),
+        show: Joi.number().min(1).max(100).required(),
+        sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC').required(),
+        orderBy: Joi.string().min(1).max(10).valid('name', 'position').required()
+    })
+
+    return schema.validate(data)
+}
+
 const getProductsByCategoryIdValidation = (data) => {
     const schema = Joi.object({
         page: Joi.number().min(1).max(20).required(),
@@ -119,5 +131,6 @@ module.exports = {
     getProductByIdValidation,
     updateProductByIdValidation,
     deleteProductByIdValidation,
+    getProductsByKeywordValidation,
     getProductsByCategoryIdValidation
 }

@@ -30,4 +30,8 @@ router.put('/:productId', verifyToken, imageProduct.single('image_product'), (re
 
 router.delete('/:productId', verifyToken, (req, res) => ProductController.deleteProductById(req, res))
 
+
+
+router.get('/_s/homepage', (req, res) => ProductController.getProductHomepage(req, res))
+
 module.exports = router;

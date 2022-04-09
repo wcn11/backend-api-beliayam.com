@@ -32,8 +32,6 @@ const registerByPhoneValidator = (data) => {
             return catched(err.message);
         }
     });
-
-    // return schema.validate(data).messages(ValidationMessages.messages)
 }
 
 const loginValidator = (data) => {

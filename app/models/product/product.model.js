@@ -100,4 +100,8 @@ const ProductSchema = mongoose.Schema({
     timestamps: { Date }
 })
 
+ProductSchema.index({ name: 'text', slug: 'text' });
+// const products = Local.model('products', ProductSchema);
+// products.createIndexes();
+
 module.exports = mongoose.model('product', ProductSchema)

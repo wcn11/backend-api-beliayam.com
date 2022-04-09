@@ -1,5 +1,15 @@
 module.exports = {
+    ID: "ID",
     USER_ID: "ID Pengguna",
+    CHARGE_ID: "ID Biaya",
+    PRODUCT_ID: "ID Produk",
+    VOUCHER_ID: "ID Voucher",
+    CART_ID: "ID Keranjang",
+    ADDRESS_ID: "ID Alamat",
+    CATEGORY_ID: "ID Kategori",
+    VOUCHER_ID: "ID Voucher",
+    ORDER_ID: "ID Pesanan",
+
     NAME: "Nama",
     EMAIL: "Email",
     PASSWORD: "Kata Sandi",
@@ -13,11 +23,76 @@ module.exports = {
     LOGIN_BY: "Masuk Dengan",
     LOGIN_AT: "Masuk Pada",
     CODE: "Kode",
-    ID: "ID",
     TOKEN: "Token",
     SIGNATURE: "SIGNATURE",
-    REFRESH_TOKEN: "Refresh Token",
-    REGISTERED_BY: "Terdaftar Dengan",
-    REGISTERED_BY: "Terdaftar Dengan",
-    REGISTERED_BY: "Terdaftar Dengan",
+    CREATED_AT: "Dibuat Pada",
+    UPDATED_AT: "Diubah Pada",
+    STATUS: "Status",
+
+    RECEIVER_NAME: "Nama Penerima",
+    LABEL: "Label",
+    ADDRESS_1: "Alamat 1",
+    ADDRESS_2: "Alamat 2",
+    CITY: "Kota",
+    STATE: "Provinsi",
+    DISTRICT: "Daerah",
+    SUB_DISTRICT: "Kecamatan/Wilayah",
+    POSTCODE: "Kode Pos",
+    DEFAULT: "Default",
+    DETAILS: "Detail",
+    LATITUDE: "Latitude",
+
+
+    QUANTITY: "Kuantitas",
+    NOTE: "Catatan",
+
+    PAGE: "Halaman",
+    SHOW: "Tampil",
+    SORT_BY: "Sortir Berdasarkan",
+    ORDER_BY: "Atur Berdasarkan",
+
+    NEW_EMAIL: "Email Baru",
+    OLD_PASSWORD: "Kata Sandi Lama",
+    NEW_EMAIL: "Email Baru",
+    NEW_EMAIL: "Email Baru",
+
+    PLATFORM: "Platform",
+
+    TYPE: "Tipe",
+
+    SKU: "SKU",
+    SLUG: "Slug",
+    POSITION: "Posisi",
+    IMAGE_CATEGORY: "Gambar Kategori",
+    IMAGE_PRODUCT: "Gambar Produk",
+    WEIGHT: "Berat",
+    PRICE: "Harga",
+    STOCK: "Stok",
+    IS_DISCOUNT: "Apakah Discount",
+    ADDITIONAL: "Tambahan",
+    DESCRIPTION: "Deskripsi",
+
+
+
+    CHARGE_NAME: "Nama Biaya",
+    CHARGE_BY: "Biaya Berdasarkan",
+    CHARGE_VALUE: "Nilai Biaya",
+    SHORT_DESCRIPTION: "Deskripsi Singkat",
+    PRIVATE: "Khusus",
+    USERS: "Para Pengguna",
+    TERMS_AND_CONDITIONS: "Syarat & Ketentuan",
+    IS_ACTIVE: "Status Aktif",
+    VOUCHER_CODE: "Kode Voucher",
+
+    PRODUCTS: "Produk",
+    VOUCHERS: "Voucher",
+
+
+    SHIPPING_ADDRESS: "Alamat Pengiriman",
+    PG_CODE: "Kode Payment Gateway",
+    VOUCHER_CODE: "Kode Voucher",
+    VOUCHER_CODE: "Kode Voucher",
+    VOUCHER_CODE: "Kode Voucher",
+    VOUCHER_CODE: "Kode Voucher",
+    VOUCHER_CODE: "Kode Voucher",
 }
