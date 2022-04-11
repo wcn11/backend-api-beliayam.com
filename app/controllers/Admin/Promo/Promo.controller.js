@@ -340,6 +340,22 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.OK).send(responser.validation("Promo Tidak Ditemukan", HttpStatus.NOT_FOUND))
         }
 
+        // let isSlugExist = await this.isPromoExist(input.slug, 'slug')
+
+        // if (isSlugExist && isSlugExist._id !== req.params.promoId) {
+
+        //     this.removeFile(req)
+        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Slug Telah Ada, Harap Gunakan Slug Berbeda`, HttpStatus.NOT_ACCEPTABLE))
+        // }
+
+        // let isTagExist = await this.isPromoExist(input.tags, 'tags')
+
+        // if (isTagExist && isTagExist._id !== req.params.promoId) {
+
+        //     this.removeFile(req)
+        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Tag Telah Ada, Harap Gunakan Tag Berbeda`, HttpStatus.NOT_ACCEPTABLE))
+        // }
+
         // try {
 
         if (input.products) {
@@ -404,11 +420,14 @@ const PromoController = class PromoController {
             description: 1,
             platform: 1
         })
+        if (req.file) {
 
-        if (isPromoExist.image_promo) {
+            if (isPromoExist.image_promo) {
 
-            this.removeFile('public/' + isPromoExist.image_promo)
+                this.removeFile('public/' + isPromoExist.image_promo)
+            }
         }
+
 
         return res.status(HttpStatus.OK).send(responser.success({}, 'Promo Diperbarui'))
 
