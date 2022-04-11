@@ -119,8 +119,6 @@ const PromoController = class PromoController {
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
 
-        let isPromoExist = false
-
         let isActive
 
         if (req.query.isActive) {

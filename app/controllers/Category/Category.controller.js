@@ -47,7 +47,7 @@ const CategoryController = class CategoryController {
             orderBy = req.query.orderBy ?? 1
 
             let category = await CategoryModel.find({
-                isActive: req.query.status || false
+                status: req.query.status 
             }).sort({
                 orderBy: sortBy
             }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
@@ -92,7 +92,7 @@ const CategoryController = class CategoryController {
                 category: {
                     $in: [category._id]
                 },
-                isActive: req.query.status || 'inactive'
+                status: req.query.status || 'active'
             }).sort({
                 orderBy: sortBy
             }).skip((parseInt(page) - 1) * parseInt(show)).limit(parseInt(show))
@@ -118,8 +118,6 @@ const CategoryController = class CategoryController {
             return res.status(HttpStatus.BAD_REQUEST).send(
                 responser.error(error.details[0].message, HttpStatus.BAD_REQUEST))
         }
-
-        let isPromoExist = false
 
         let isActive
 

@@ -269,8 +269,6 @@ const CategoryController = class CategoryController {
             "slug": input.slug,
             "name": input.name,
             "position": input.position,
-            "icon": "",
-            "image": "",
             "status": input.status,
             "additional": input.additional,
             "description": input.description

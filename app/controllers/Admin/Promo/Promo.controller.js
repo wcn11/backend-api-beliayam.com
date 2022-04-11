@@ -340,27 +340,7 @@ const PromoController = class PromoController {
             return res.status(HttpStatus.OK).send(responser.validation("Promo Tidak Ditemukan", HttpStatus.NOT_FOUND))
         }
 
-        // let isSlugExist = await this.isPromoExist(input.slug, 'slug')
-
-        // if (isSlugExist && isSlugExist._id !== req.params.promoId) {
-
-        //     this.removeFile(req)
-        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Slug Telah Ada, Harap Gunakan Slug Berbeda`, HttpStatus.NOT_ACCEPTABLE))
-        // }
-
-        // let isTagExist = await this.isPromoExist(input.tags, 'tags')
-
-        // if (isTagExist && isTagExist._id !== req.params.promoId) {
-
-        //     this.removeFile(req)
-        //     return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Tag Telah Ada, Harap Gunakan Tag Berbeda`, HttpStatus.NOT_ACCEPTABLE))
-        // }
-
         // try {
-
-        // if (input.products && input.products.length < 0) {
-        //     this.sendError("Minimal 1 Produk Ditambahkan", HttpStatus.BAD_REQUEST)
-        // }
 
         if (input.products) {
             for (let i = 0; i < input.products.length; i++) {
