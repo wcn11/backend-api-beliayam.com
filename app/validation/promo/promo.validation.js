@@ -69,6 +69,7 @@ const updatePromoByPromoIdValidation = (data) => {
             }),
         tags: Joi.string().min(2).max(15),
         products: Joi.array(),
+        image_promo: Joi.any(),
         banner: Joi.any(),
         termsAndConditions: Joi.string(),
         promoValue: Joi.number().min(1).required(),

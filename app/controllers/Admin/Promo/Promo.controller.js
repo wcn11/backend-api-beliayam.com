@@ -399,7 +399,6 @@ const PromoController = class PromoController {
             }
         }
 
-
         if (req.file) {
             req.body.image_promo = req.file ? `images/promo/${req.file.filename}` : ""
         }
