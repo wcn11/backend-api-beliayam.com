@@ -19,6 +19,26 @@ const addCategory = (data) => {
     return schema.validate(data)
 }
 
+const updateCategory = (data) => {
+    const schema = Joi.object({
+        sku: Joi.string().min(1).max(20).required(),
+        slug: Joi.string().min(1).required().regex(/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/).label('Slug')
+            .messages({
+                "any.required": `{{#label}} dibutuhkan`,
+                "any.regex": "Slug tidak valid"
+            }),
+        name: Joi.string().min(3).max(100).required(),
+        icon: Joi.any(),
+        position: Joi.number().min(1).max(10),
+        image_category: Joi.any(),
+        status: Joi.string().min(3).max(50),
+        additional: Joi.string().min(3).max(50),
+        description: Joi.string(),
+    })
+
+    return schema.validate(data)
+}
+
 const getAllCategory = (data) => {
     const schema = Joi.object({
         page: Joi.number().min(1).max(20),
@@ -64,5 +84,6 @@ module.exports = {
     getAllCategory,
     getCategoryByCategoryId,
     deleteCategoryByCategoryId,
+    updateCategory,
     getProductByCategoryIdOrSlugValidation
 }

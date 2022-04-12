@@ -11,6 +11,7 @@ var fs = require('fs');
 const {
     addCategory,
     getAllCategory,
+    updateCategory,
     getCategoryByCategoryId,
     deleteCategoryByCategoryId,
     getProductByCategoryIdOrSlugValidation
@@ -232,7 +233,7 @@ const CategoryController = class CategoryController {
 
     async updateCategory(req, res) {
 
-        const { error } = addCategory(req.body)
+        const { error } = updateCategory(req.body)
 
         if (error) {
 
