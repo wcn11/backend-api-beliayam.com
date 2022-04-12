@@ -31,8 +31,8 @@ const addAddress = (data) => {
         phone: Joi.number().custom((value, helper) => ValidationCustom.phone(value, helper)).required().label(ValidationLabel.PHONE),
         default: Joi.boolean().default(false).label(ValidationLabel.DEFAULT),
         details: Joi.string().allow("").max(100).label(ValidationLabel.DETAILS),
-        createdAt: Date.now().label(ValidationLabel.CREATED_AT),
-        updatedAt: Date.now().label(ValidationLabel.UPDATED_AT),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         maps: maps
     }).messages(ValidationMessages.messages)
 
@@ -60,8 +60,8 @@ const updateAddress = (data) => {
         default: Joi.boolean().default(false),
         details: Joi.string().allow("").max(100),
         maps: maps,
-        createdAt: Date.now().label(ValidationLabel.CREATED_AT),
-        updatedAt: Date.now().label(ValidationLabel.UPDATED_AT),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
     }).messages(ValidationMessages.messages)
 
     return schema.validate(data, function (err) {
