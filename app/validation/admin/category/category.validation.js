@@ -11,8 +11,8 @@ const addCategory = (data) => {
         name: Joi.string().min(3).max(100).required(),
         position: Joi.number().min(1).max(10),
         image_category: Joi.any(),
-        status: Joi.string().min(3).max(50),
-        additional: Joi.string().min(3).max(50),
+        status: Joi.string(),
+        additional: Joi.string(),
         description: Joi.string(),
     })
 
@@ -31,8 +31,8 @@ const updateCategory = (data) => {
         icon: Joi.any(),
         position: Joi.number().min(1).max(10),
         image_category: Joi.any(),
-        status: Joi.string().min(3).max(50),
-        additional: Joi.string().min(3).max(50),
+        status: Joi.string(),
+        additional: Joi.string(),
         description: Joi.string(),
     })
 
@@ -43,7 +43,7 @@ const getAllCategory = (data) => {
     const schema = Joi.object({
         page: Joi.number().min(1).max(20),
         show: Joi.number().min(1).max(100),
-        status: Joi.string().min(3).max(50),
+        status: Joi.string(),
         sortBy: Joi.string().min(1).max(10).valid('ASC', 'DESC'),
         orderBy: Joi.string().min(1).max(10).valid('name', 'position')
     })

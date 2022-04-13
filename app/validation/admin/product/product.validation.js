@@ -27,8 +27,8 @@ const addProductValidation = (data) => {
         promotionStart: Joi.date(),
         promotionEnd: Joi.date(),
         priceAfterPromotion: Joi.number(),
-        status: Joi.string().min(3).max(50),
-        additional: Joi.string().min(3).max(50),
+        status: Joi.string(),
+        additional: Joi.string(),
         description: Joi.string(),
     })
 
@@ -115,8 +115,8 @@ const updateProductByIdValidation = (data) => {
         discountStart: Joi.date(),
         discountEnd: Joi.date(),
         promo: Joi.array(),
-        status: Joi.string().min(3).max(50),
-        additional: Joi.string().min(3).max(50),
+        status: Joi.string(),
+        additional: Joi.string(),
         description: Joi.string(),
     })
 
