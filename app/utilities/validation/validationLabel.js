@@ -24,6 +24,7 @@ module.exports = {
     LOGIN_AT: "Masuk Pada",
     CODE: "Kode",
     TOKEN: "Token",
+    REFRESH_TOKEN: "Refresh Token",
     SIGNATURE: "SIGNATURE",
     CREATED_AT: "Dibuat Pada",
     UPDATED_AT: "Diubah Pada",
@@ -87,12 +88,9 @@ module.exports = {
     PRODUCTS: "Produk",
     VOUCHERS: "Voucher",
 
+    VOUCHER_CODE: "Kode Voucher",
 
     SHIPPING_ADDRESS: "Alamat Pengiriman",
     PG_CODE: "Kode Payment Gateway",
-    VOUCHER_CODE: "Kode Voucher",
-    VOUCHER_CODE: "Kode Voucher",
-    VOUCHER_CODE: "Kode Voucher",
-    VOUCHER_CODE: "Kode Voucher",
-    VOUCHER_CODE: "Kode Voucher",
+    REFRESH_TOKEN: "Refresh Token",
 }
