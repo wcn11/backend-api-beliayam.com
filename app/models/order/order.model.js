@@ -31,6 +31,11 @@ const OrderSchema = mongoose.Schema({
         pg_name: String,
         pg_type: String,
         pg_icon: String,
+        payment_qrcode: {
+            type: String,
+            default: "",
+            required: false
+        },
         payment_reff: String,
         payment_date: Date,
         payment_status_code: Number,
