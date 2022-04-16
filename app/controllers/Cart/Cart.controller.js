@@ -187,7 +187,7 @@ const CartController = class CartController {
 
                 if (isProductExist.length > 0) {
 
-                    if ((isProductExist[0].quantity + input.quantity) > isProductExist[0].stock) {
+                    if ((isProductExist[0].quantity + input.quantity) > product.stock) {
                         return res.status(HttpStatus.OK).send(responser.validation(`Stok barang ini sisa ${product.stock} dan kamu sudah punya ${isProductExist[0].quantity} di keranjangmu.`, HttpStatus.OK))
                     }
 
