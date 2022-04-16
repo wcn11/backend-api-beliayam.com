@@ -16,7 +16,7 @@ const PaymentURL = require('@utility/payment/paymentURL.lists')
 const PaymentResponse = require('@utility/payment/paymentResponse.lists')
 const PaymentStatus = require('@utility/payment/paymentStatus.lists')
 
-const request = require('request').defaults({ encoding: null });
+const axios = require('axios')
 
 const { customAlphabet } = require('nanoid')
 const crypto = require('crypto');
@@ -509,6 +509,8 @@ const OrderController = class OrderController {
                 icon = payment[0].icon
             }
 
+            let image_qrcode = ""
+
             switch (isPaymentGatewayExist.data.type.toLowerCase()) {
                 case "cash":
                     objectResponse.payment = {
@@ -527,6 +529,8 @@ const OrderController = class OrderController {
                         "response_desc": `Metode Pembayaran Dengan ${isPaymentGatewayExist.data.pg_name}`,
                         "redirect_url": ""
                     }
+
+                    later = moment().add(7, 'day').format('YYYY-MM-DD HH:mm:ss')
 
                     break
                 case "va":
@@ -565,6 +569,12 @@ const OrderController = class OrderController {
 
                         return res.status(HttpStatus.REQUEST_TIMEOUT).send(
                             responser.error(`Server Pembayaran Sedang Sibuk, Harap Coba Kembali`, HttpStatus.REQUEST_TIMEOUT))
+                    }
+
+                    if (isPaymentGatewayExist.data.type.toLowerCase() == 'qris' && paymentGateway.web_url) {
+
+                        let image = await axios.get(paymentGateway.web_url, { responseType: 'arraybuffer' });
+                        image_qrcode = "data:" + image.headers["content-type"] + ";base64," + Buffer.from(image.data).toString('base64');
                     }
 
                     objectResponse.response = {
@@ -615,7 +625,7 @@ const OrderController = class OrderController {
                     pg_name: isPaymentGatewayExist.data.pg_name,
                     pg_type: isPaymentGatewayExist.data.type,
                     pg_icon: icon,
-                    payment_qrcode: "",
+                    payment_qrcode: image_qrcode ?? "",
                     payment_reff: bill_no,
                     payment_date: date.time().toDate(),
                     payment_status_code: PaymentStatus.IN_PROCESS.code,
@@ -644,11 +654,6 @@ const OrderController = class OrderController {
                 },
                 response: objectResponse.response,
                 signature: signature_temp
-            }
-
-            if (isPaymentGatewayExist.data.type.toLowerCase() == 'qris' && PaymentGateway.web_url) {
-                let imageBase64 = await this.changeImageToBase64(PaymentGateway.web_url)
-                orderObject.payment.payment_qrcode = imageBase64
             }
 
             let saveOrder = new OrderModel(orderObject)
@@ -1101,18 +1106,6 @@ const OrderController = class OrderController {
 
         return sha_signature
 
-    }
-
-    async changeImageToBase64(image) {
-
-        request.get(image, function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                let data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(body).toString('base64');
-
-                return data
-            }
-            return ""
-        });
     }
 
 }

@@ -10,8 +10,6 @@ router.get('/:order_id', verifyToken, (req, res) => OrderController.getOrderById
 
 router.post('/', verifyToken, (req, res) => OrderController.placeOrder(req, res))
 
-router.get('/', (req, res) => OrderController.change(req, res))
-
 router.put('/cancel-order', verifyToken, (req, res) => OrderController.cancelPayment(req, res))
 
 module.exports = router;
