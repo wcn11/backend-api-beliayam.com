@@ -186,7 +186,7 @@ const CheckoutController = class CheckoutController {
 
             let discount = products[i].hasDiscount
 
-            let productAtCart = await this.getProductAtCart(products[i]._id)
+            let productAtCart = await this.getProductAtCart(products[i]._id, req.body.user_id)
 
             if (!productAtCart || productAtCart.length <= 0) {
                 return res.status(HttpStatus.OK).send(
@@ -706,10 +706,11 @@ const CheckoutController = class CheckoutController {
         })
     }
 
-    async getProductAtCart(productId) {
+    async getProductAtCart(productId, user_id) {
 
         const products = await CartModel.find({
-            "products._id": productId
+            "products._id": productId,
+            "user": user_id
         }, {
             'products.$': true
         })
