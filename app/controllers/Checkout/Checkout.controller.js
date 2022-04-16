@@ -223,6 +223,9 @@ const CheckoutController = class CheckoutController {
                             products[i].price = (products[i].price - promo.promoValue)
 
                         }
+                    } else {
+                        calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
+                        products[i].price = products[i].price
                     }
                 }
                 else if (discount.isDiscount && !promo) {
@@ -256,6 +259,7 @@ const CheckoutController = class CheckoutController {
                 }
 
             } else {
+
                 calculateItem += products[i].price * productAtCart[0]['products'][0].quantity
                 products[i].price = products[i].price
             }

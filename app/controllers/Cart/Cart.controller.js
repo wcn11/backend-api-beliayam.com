@@ -384,10 +384,6 @@ const CartController = class CartController {
             return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation("Stok Tidak Tersedia", HttpStatus.NOT_ACCEPTABLE))
         }
 
-        if ((product[0].quantity + req.body.quantity) > isProductExist.stock) {
-            return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Stok barang ini sisa ${isProductExist.stock}, dan kamu sudah punya ${product[0].quantity} di keranjangmu.`, HttpStatus.NOT_ACCEPTABLE))
-        }
-
         let quantity
         let totalQuantity
         let subTotal
@@ -395,6 +391,10 @@ const CartController = class CartController {
 
         switch (req.body.type) {
             case "plus":
+
+                if ((product[0].quantity + req.body.quantity) > isProductExist.stock) {
+                    return res.status(HttpStatus.NOT_ACCEPTABLE).send(responser.validation(`Stok barang ini sisa ${isProductExist.stock}, dan kamu sudah punya ${product[0].quantity} di keranjangmu.`, HttpStatus.NOT_ACCEPTABLE))
+                }
                 quantity = product[0].quantity + req.body.quantity
                 totalQuantity = carts.totalQuantity + req.body.quantity
                 subTotal = carts.subTotal + (product[0].price * req.body.quantity)

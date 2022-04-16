@@ -60,7 +60,7 @@ const PromoController = class PromoController {
             }
             orderBy = req.query.orderBy ?? 1
 
-            let currentDate = moment().add(7, 'hour').toDate()
+            let currentDate = moment().time().toDate()
 
             let isActive
 
@@ -73,12 +73,12 @@ const PromoController = class PromoController {
             }
 
             let promo = await PromoModel.find({
-                // promoStart: {
-                //     $lte: currentDate
-                // },
-                // promoEnd: {
-                //     $gte: currentDate
-                // },
+                promoStart: {
+                    $lte: currentDate
+                },
+                promoEnd: {
+                    $gte: currentDate
+                },
                 isActive: isActive,
                 platform: {
                     $in: [req.query.platform]
